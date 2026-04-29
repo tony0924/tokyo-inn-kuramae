@@ -68,7 +68,7 @@ export function HomeTab() {
 
       <div className="glass-card welcome-note-card">
         <div className="card-header">
-          <div className="card-icon">🌿</div>
+          <div className="card-icon">🥳</div>
           <div className="card-title">歡迎來玩</div>
         </div>
         <p className="welcome-note-lead">
@@ -77,10 +77,20 @@ export function HomeTab() {
         <div className="welcome-tip">
           <div className="welcome-tip-number">01</div>
           <div>
-            <div className="welcome-tip-title">衣服可以帶少量就好</div>
+            <div className="welcome-tip-title">衣服帶少量即可</div>
             <p>
-              房內可以洗衣服，日本天氣也比較乾燥，晚上洗完通常隔天就會乾，不用太擔心。
-              行李空間可以多留一點給日本購物，回程會比較從容。
+              房內可以洗衣服，加上日本天氣比較乾燥，晚上洗完通常隔天就會乾，不用太擔心。
+              行李空間建議多留一點給日本購物，回程會比較從容。
+            </p>
+          </div>
+        </div>
+        <div className="welcome-tip">
+          <div className="welcome-tip-number">02</div>
+          <div>
+            <div className="welcome-tip-title">餐廳避雷</div>
+            <p>
+              門口斜對面的麵包店我們不太推薦，巷口的鰻魚飯也不太推薦。
+              附近還有很多更值得吃的選擇，可以優先參考餐廳分頁。
             </p>
           </div>
         </div>

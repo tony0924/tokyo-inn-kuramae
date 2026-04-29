@@ -693,6 +693,10 @@
       background: rgba(0,0,0,0.16);
     }
 
+    .welcome-tip + .welcome-tip {
+      margin-top: 12px;
+    }
+
     .welcome-tip-number {
       width: 42px;
       height: 42px;
