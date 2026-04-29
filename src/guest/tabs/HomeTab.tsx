@@ -94,6 +94,20 @@ export function HomeTab() {
             </p>
           </div>
         </div>
+        <div className="welcome-tip">
+          <div className="welcome-tip-number">03</div>
+          <div>
+            <div className="welcome-tip-title">機場到住宿交通</div>
+            <p>
+              從成田機場過來，不太推薦搭 Skyliner，票價較高，而且到住宿還需要再轉車。
+              比較推薦搭 Sky Access，車程大約 1 小時。
+            </p>
+            <p>
+              如果是 Sky Access 特急，通常可以直達藏前站；如果是 Sky Access 機場特快，
+              車不會停藏前站，請在前一站淺草站下車，同月台等下一班往藏前方向的車再上車。
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="glass-card">
