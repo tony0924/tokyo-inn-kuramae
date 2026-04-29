@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>藏前NEXT · 房客指南</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <style>
+    /* ════════════════════════════════════════
+       DESIGN TOKENS — Premium Dark
+    ════════════════════════════════════════ */
+    :root {
+      /* Gold accent */
+      --gold:        #c9a84c;
+      --gold-light:  #e8cc7a;
+      --gold-pale:   rgba(201,168,76,0.10);
+      --gold-glow:   rgba(201,168,76,0.20);
+
+      /* Near-black surface stack */
+      --bg:          #0c0c0e;   /* page background */
+      --bg-mid:      #111113;   /* slightly lifted */
+      --bg-high:     #17171b;   /* card surface */
+      --bg-hover:    #1e1e24;   /* hover surface */
+      --bg-glass:    rgba(20,20,24,0.95);
+
+      /* Soft accent (subtle, not dominant) */
+      --indigo:      #4a6fa5;
+      --indigo-lt:   #7aa0d0;
+      --sakura:      #c97a8a;
+      --sakura-lt:   #e8a4b4;
+      --vermilion:   #c0392b;
+
+      /* Legacy alias for text-on-gold */
+      --ink:         #1c1814;
+
+      /* Text hierarchy */
+      --text:        #e4e0da;
+      --text-mid:    #8a8278;
+      --text-soft:   #4e4a44;
+      --text-inv:    #1c1814;
+
+      /* Borders — very subtle */
+      --border:      rgba(201,168,76,0.16);
+      --border-soft: rgba(255,255,255,0.05);
+      --border-card: rgba(255,255,255,0.07);
+
+      /* Shadows */
+      --shadow-sm:   0 1px 8px rgba(0,0,0,0.4);
+      --shadow-md:   0 6px 28px rgba(0,0,0,0.55);
+      --shadow-lg:   0 18px 56px rgba(0,0,0,0.7);
+
+      /* Shape */
+      --radius-sm:   10px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ════════════════════════════════════════
+       RESET & BASE
+    ════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ════════════════════════════════════════
+       BACKGROUND — near-black with subtle gold bloom
+    ════════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 70% 5%,  rgba(201,168,76,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 0%  90%,  rgba(201,168,76,0.04) 0%, transparent 55%),
+        linear-gradient(180deg, #0e0e10 0%, #0c0c0e 100%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════ */
+    /* Thin gold accent bar at very top of page */
+    body > .top-bar {
+      height: 2px;
+      background: linear-gradient(to right, transparent 0%, var(--gold) 40%, var(--gold-light) 60%, transparent 100%);
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 201;
+    }
+
+    .site-header {
+      background: rgba(10,10,12,0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: white;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.05), 0 4px 24px rgba(0,0,0,0.8);
+      margin-top: 2px;
+    }
+
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0 10px;
+      gap: 12px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(201,168,76,0.4);
+    }
+
+    .brand-text .title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+
+    .brand-text .subtitle {
+      font-size: 0.68rem;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    /* Search */
+    .search-wrap {
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 50px;
+      padding: 7px 14px;
+      gap: 8px;
+      transition: var(--transition);
+    }
+
+    .search-box:focus-within {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(201,168,76,0.5);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 0.85rem;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .search-box input::placeholder { color: rgba(255,255,255,0.35); }
+    .search-icon { color: var(--gold); font-size: 0.9rem; flex-shrink: 0; }
+
+    /* Nav tabs */
+    .nav-tabs {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      gap: 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 0 0 0;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+
+    .nav-tab {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+      user-select: none;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .nav-tab .tab-icon { font-size: 0.95rem; }
+
+    .nav-tab:hover { color: rgba(255,255,255,0.75); }
+
+    .nav-tab.active {
+      color: var(--gold-light);
+      border-bottom-color: var(--gold);
+      text-shadow: 0 0 12px rgba(201,168,76,0.4);
+    }
+
+    /* ════════════════════════════════════════
+       MAIN CONTENT
+    ════════════════════════════════════════ */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 20px 80px;
+    }
+
+    /* ════════════════════════════════════════
+       SECTIONS
+    ════════════════════════════════════════ */
+    .section { display: none; animation: fadeUp 0.4s ease both; }
+    .section.active { display: block; }
+    #search-results { display: none; animation: fadeUp 0.3s ease both; }
+    #search-results.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ════════════════════════════════════════
+       HERO (HOME)
+    ════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      background: linear-gradient(120deg, #0a0a0c 0%, #111114 55%, #161618 100%);
+      border-radius: var(--radius-lg);
+      padding: 48px 42px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 90% 50%, rgba(201,168,76,0.13) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 40% at 5%  20%, rgba(201,168,76,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '蔵前';
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Noto Serif TC', serif;
+      font-size: 10rem;
+      font-weight: 700;
+      color: rgba(201,168,76,0.05);
+      letter-spacing: -0.04em;
+      pointer-events: none;
+      line-height: 1;
+      user-select: none;
+    }
+
+    /* Hero two-column layout */
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+
+    .hero-left  { flex: 1; min-width: 0; }
+    .hero-right { flex-shrink: 0; width: 230px; }
+
+    /* Info panel inside hero */
+    .hero-info-panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hip-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hip-icon {
+      font-size: 1.2rem;
+      width: 28px;
+      flex-shrink: 0;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .hip-label {
+      font-size: 0.65rem;
+      color: var(--text-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .hip-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .hip-copy {
+      margin-left: auto;
+      background: rgba(201,168,76,0.12);
+      color: var(--gold-light);
+      border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .hip-copy:hover {
+      background: rgba(201,168,76,0.22);
+    }
+
+    .hip-copy.copied {
+      color: #7ed4a0;
+      border-color: rgba(86,184,112,0.3);
+      background: rgba(86,184,112,0.1);
+    }
+
+    .hip-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 12px 0;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.22);
+      color: var(--gold-light);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      letter-spacing: 0.01em;
+      text-shadow: 0 2px 30px rgba(201,168,76,0.18);
+    }
+
+    .hero-divider {
+      width: 36px;
+      height: 2px;
+      background: linear-gradient(to right, var(--gold), transparent);
+      margin-bottom: 16px;
+      border-radius: 2px;
+    }
+
+    .hero-sub {
+      font-size: 0.88rem;
+      color: rgba(180,170,155,0.7);
+      margin-bottom: 24px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 10px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: var(--transition);
+      box-shadow: 0 4px 16px rgba(201,168,76,0.4);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(201,168,76,0.5);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+      font-weight: 500;
+      font-size: 0.82rem;
+      padding: 10px 18px;
+      border-radius: 50px;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: var(--transition);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    /* ════════════════════════════════════════
+       WIFI CARD
+    ════════════════════════════════════════ */
+    .wifi-card {
+      background: linear-gradient(120deg, #111114 0%, #17171b 60%, #1a1a1e 100%);
+      border: 1px solid rgba(201,168,76,0.18);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(201,168,76,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wifi-card::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .wifi-icon-wrap {
+      width: 48px; height: 48px;
+      background: rgba(201,168,76,0.15);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(201,168,76,0.25);
+      box-shadow: 0 0 16px rgba(201,168,76,0.15);
+    }
+
+    .wifi-info { flex: 1; }
+
+    .wifi-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+    .wifi-row:last-child { margin-bottom: 0; }
+
+    .wifi-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      width: 36px;
+      flex-shrink: 0;
+      opacity: 0.75;
+    }
+
+    .wifi-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.02em;
+    }
+
+    .copy-btn {
+      background: rgba(201,168,76,0.12);
+      color: var(--gold-light);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 50px;
+      padding: 8px 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:hover {
+      background: rgba(201,168,76,0.22);
+      border-color: rgba(201,168,76,0.4);
+    }
+
+    .copy-btn.copied {
+      color: #7ed4a0;
+      border-color: rgba(86,184,112,0.35);
+      background: rgba(86,184,112,0.12);
+    }
+
+    /* ════════════════════════════════════════
+       INFO CARD
+    ════════════════════════════════════════ */
+    .glass-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 22px 24px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .glass-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: rgba(201,168,76,0.2);
+      background: var(--bg-hover);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+
+    .card-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.08));
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+
+    /* Info rows */
+    .info-row {
+      display: flex;
+      gap: 14px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+      align-items: flex-start;
+    }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .info-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      min-width: 58px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .info-value {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .info-value a { color: var(--indigo-lt); text-decoration: none; }
+    .info-value a:hover { color: var(--gold-light); text-decoration: underline; }
+
+    /* ════════════════════════════════════════
+       SECTION NAV GRID (HOME)
+    ════════════════════════════════════════ */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .nav-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 18px 12px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .nav-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(74,111,165,0.06));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .nav-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md), 0 0 24px rgba(201,168,76,0.08);
+      border-color: rgba(201,168,76,0.25);
+      background: var(--bg-hover);
+    }
+
+    .nav-card:hover::before { opacity: 1; }
+
+    .nav-card:active { transform: translateY(-1px); }
+
+    .nc-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      display: block;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    }
+
+    .nc-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      letter-spacing: 0.01em;
+    }
+
+    /* ════════════════════════════════════════
+       SECTION PAGE HEADER
+    ════════════════════════════════════════ */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .page-header-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 12px rgba(201,168,76,0.35);
+      flex-shrink: 0;
+    }
+
+    .page-header h2 {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    /* ════════════════════════════════════════
+       CALLOUT BOXES
+    ════════════════════════════════════════ */
+    .callout {
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin: 12px 0;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .callout-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .callout.info {
+      background: rgba(74,111,165,0.12);
+      border-left: 3px solid var(--indigo-lt);
+      color: #a8bfdf;
+    }
+
+    .callout.warn {
+      background: rgba(201,168,76,0.10);
+      border-left: 3px solid var(--gold);
+      color: #d4b870;
+    }
+
+    .callout.success {
+      background: rgba(52,168,83,0.10);
+      border-left: 3px solid #56b870;
+      color: #7ed4a0;
+    }
+
+    /* ════════════════════════════════════════
+       ACCORDION
+    ════════════════════════════════════════ */
+    .accordion { margin-bottom: 10px; }
+
+    .acc-header {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--text);
+      user-select: none;
+      transition: var(--transition);
+    }
+
+    .acc-header:hover {
+      background: var(--bg-hover);
+      border-color: rgba(201,168,76,0.2);
+    }
+
+    .acc-header.open {
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      border-bottom-color: transparent;
+      background: var(--bg-hover);
+    }
+
+    .acc-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .acc-title-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.06));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .acc-arrow {
+      width: 22px; height: 22px;
+      background: rgba(201,168,76,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--gold);
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+
+    .acc-arrow.open { transform: rotate(180deg); }
+
+    .acc-body {
+      display: none;
+      background: var(--bg-mid);
+      border: 1px solid var(--border-card);
+      border-top: none;
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      padding: 18px 20px;
+    }
+
+    .acc-body.open { display: block; }
+
+    /* ════════════════════════════════════════
+       LISTS
+    ════════════════════════════════════════ */
+    .bullet-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .bullet-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--text);  /* inherits from dark theme */
+    }
+
+    .bullet-list li:last-child { border-bottom: none; padding-bottom: 2px; }
+
+    .bullet-list li::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 8px;
+    }
+
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+
+    .step-list li {
+      counter-increment: step;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .step-list li:last-child { border-bottom: none; }
+
+    .step-list li::before {
+      content: counter(step);
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--ink);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 1px;
+      box-shadow: 0 2px 8px rgba(201,168,76,0.35);
+    }
+
+    /* ════════════════════════════════════════
+       PLACE CARDS (Services / City Guide)
+    ════════════════════════════════════════ */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, rgba(201,168,76,0.3), transparent);
+    }
+
+    .place-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition);
+    }
+
+    .place-card:hover {
+      background: var(--bg-hover);
+      border-color: rgba(201,168,76,0.2);
+      transform: translateX(4px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .place-name {
+      font-size: 0.93rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .place-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    /* ════════════════════════════════════════
+       TAGS
+    ════════════════════════════════════════ */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .tag-green  { background: rgba(52,168,83,0.15);  color: #7ed4a0; border: 1px solid rgba(52,168,83,0.25); }
+    .tag-red    { background: rgba(192,57,43,0.15);  color: #f0928a; border: 1px solid rgba(192,57,43,0.25); }
+    .tag-purple { background: rgba(91,33,182,0.18);  color: #b794f4; border: 1px solid rgba(91,33,182,0.3); }
+    .tag-pink   { background: rgba(201,122,138,0.15); color: var(--sakura-lt); border: 1px solid rgba(201,122,138,0.25); }
+    .tag-yellow { background: rgba(201,168,76,0.12); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.25); }
+    .tag-gold   { background: rgba(201,168,76,0.15); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.3); }
+
+    /* ════════════════════════════════════════
+       MAP BUTTON
+    ════════════════════════════════════════ */
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(74,111,165,0.15);
+      color: var(--indigo-lt);
+      border: 1px solid rgba(74,111,165,0.3);
+      padding: 7px 14px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: var(--transition);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .map-btn:hover {
+      background: rgba(74,111,165,0.28);
+      border-color: rgba(74,111,165,0.5);
+      transform: scale(1.03);
+      color: #9ab8e4;
+    }
+
+    /* ════════════════════════════════════════
+       EMERGENCY GRID
+    ════════════════════════════════════════ */
+    .emergency-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .emg-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 18px 12px;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .emg-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .emg-card.urgent {
+      background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));
+      border-color: rgba(239,68,68,0.2);
+    }
+
+    .emg-card.urgent:hover { border-color: rgba(239,68,68,0.4); }
+
+    .emg-icon { font-size: 2rem; margin-bottom: 7px; }
+    .emg-name { font-size: 0.78rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .emg-num  { font-size: 1.3rem; font-weight: 800; color: #ef4444; }
+    .emg-sub  { font-size: 0.68rem; color: var(--text-soft); margin-top: 2px; }
+
+    /* ════════════════════════════════════════
+       ITEMS GRID
+    ════════════════════════════════════════ */
+    .items-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .item-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 18px 18px;
+    }
+
+    .item-card-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    /* ════════════════════════════════════════
+       IMAGES
+    ════════════════════════════════════════ */
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .img-item {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-high);
+      aspect-ratio: 4/3;
+      position: relative;
+    }
+
+    .img-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: none;
+      transition: var(--transition);
+    }
+
+    .img-item img.loaded { display: block; }
+
+    .img-item:hover img { transform: scale(1.04); }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(14,14,16,0.95), rgba(20,20,24,0.95));
+      font-size: 0.72rem;
+      color: var(--text-soft);
+    }
+
+    .loading-overlay.hidden { display: none; }
+
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2.5px solid rgba(201,168,76,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .img-single {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin: 12px 0;
+      background: var(--bg-high);
+      position: relative;
+    }
+
+    .img-single img {
+      max-width: 100%;
+      display: block;
+      border-radius: var(--radius-sm);
+    }
+
+    .img-single .loading-overlay {
+      height: 100px;
+      position: relative;
+      inset: auto;
+    }
+
+    /* ════════════════════════════════════════
+       SUB SECTION LABEL
+    ════════════════════════════════════════ */
+    .sub-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-mid);
+      margin: 14px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sub-label::before {
+      content: '';
+      width: 3px; height: 14px;
+      background: linear-gradient(to bottom, var(--gold), var(--gold-light));
+      border-radius: 2px;
+    }
+
+    /* ════════════════════════════════════════
+       SEARCH RESULTS
+    ════════════════════════════════════════ */
+    .search-result-item {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .search-result-item:hover {
+      background: var(--bg-hover);
+      border-color: rgba(201,168,76,0.22);
+      transform: translateX(4px);
+    }
+
+    .sri-section {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .sri-title { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .sri-preview { font-size: 0.8rem; color: var(--text-mid); line-height: 1.5; }
+    mark { background: rgba(201,168,76,0.28); color: var(--gold-light); border-radius: 2px; padding: 0 2px; }
+
+    .no-results {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-soft);
+    }
+    .no-results .nr-icon { font-size: 3.5rem; margin-bottom: 14px; opacity: 0.6; }
+    .no-results p { font-size: 0.9rem; line-height: 1.7; }
+
+    /* ════════════════════════════════════════
+       DIVIDER
+    ════════════════════════════════════════ */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(201,168,76,0.25), transparent);
+      margin: 18px 0;
+    }
+
+    /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
+    @media (max-width: 680px) {
+      .hero-inner { flex-direction: column; gap: 24px; }
+      .hero-right { width: 100%; }
+      .hero-info-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+      .hip-divider { display: none; }
+      .hero-info-panel .hip-row { padding: 8px 0; }
+    }
+
+    @media (max-width: 600px) {
+      .nav-grid { grid-template-columns: repeat(3, 1fr); }
+      .hero h1 { font-size: 1.9rem; }
+      .hero { padding: 28px 22px; }
+      .emergency-grid { grid-template-columns: repeat(3, 1fr); }
+      .items-grid { grid-template-columns: 1fr; }
+      .img-grid { grid-template-columns: repeat(2, 1fr); }
+      .place-card { flex-direction: column; align-items: flex-start; }
+      .search-wrap { max-width: unset; flex: 1; }
+    }
+
+    @media (max-width: 420px) {
+      .nav-grid { grid-template-columns: repeat(3, 1fr); }
+      .header-top { gap: 8px; }
+      .brand-text .title { font-size: 0.88rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+  HEADER
+══════════════════════════════════════════ -->
+<div class="top-bar"></div>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="brand-icon">🏯</div>
+        <div class="brand-text">
+          <div class="title">藏前NEXT</div>
+          <div class="subtitle">Guest Guide · Room 204</div>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="搜尋…" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <div class="nav-tab active" data-tab="home"><span class="tab-icon">🏠</span> 首頁</div>
+      <div class="nav-tab" data-tab="checkin"><span class="tab-icon">📋</span> 入退房</div>
+      <div class="nav-tab" data-tab="arrival"><span class="tab-icon">🚃</span> 抵達</div>
+      <div class="nav-tab" data-tab="facilities"><span class="tab-icon">🔧</span> 設施</div>
+      <div class="nav-tab" data-tab="items"><span class="tab-icon">📦</span> 備品</div>
+      <div class="nav-tab" data-tab="services"><span class="tab-icon">🏪</span> 附近</div>
+      <div class="nav-tab" data-tab="cityguide"><span class="tab-icon">🗺️</span> 城市</div>
+      <div class="nav-tab" data-tab="emergency"><span class="tab-icon">🆘</span> 緊急</div>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════════════════
+  SEARCH RESULTS
+══════════════════════════════════════════ -->
+<div id="search-results">
+  <div class="page-header">
+    <div class="page-header-icon">🔍</div>
+    <h2>搜尋結果</h2>
+  </div>
+  <div id="search-results-list"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  HOME
+══════════════════════════════════════════ -->
+<div class="section active" id="sec-home">
+
+  <div class="hero">
+    <div class="hero-badge">✦ Welcome · 歡迎入住</div>
+    <h1>藏前NEXT<br>房客指南</h1>
+    <div class="hero-divider"></div>
+    <p class="hero-sub">
+      日神デュオステージ蔵前ＮＥＸＴ · Room 204<br>
+      台東区蔵前 4丁目23−7 · Tokyo
+    </p>
+    <div class="hero-actions">
+      <a href="https://maps.app.goo.gl/oK5pP3odKRNFN2oi7" target="_blank" class="btn-primary">
+        📍 開啟地圖
+      </a>
+      <button class="btn-ghost" onclick="switchTab('checkin')">
+        📋 查看入退房須知
+      </button>
+    </div>
+  </div>
+
+  <div class="wifi-card">
+    <div class="wifi-icon-wrap">📶</div>
+    <div class="wifi-info">
+      <div class="wifi-row">
+        <span class="wifi-label">名稱</span>
+        <span class="wifi-val">chen204</span>
+      </div>
+      <div class="wifi-row">
+        <span class="wifi-label">密碼</span>
+        <span class="wifi-val">12345678</span>
+      </div>
+    </div>
+    <button class="copy-btn" id="copy-btn" onclick="copyWifi()">複製密碼</button>
+  </div>
+
+  <div class="glass-card">
+    <div class="card-header">
+      <div class="card-icon">📍</div>
+      <div class="card-title">住宿資訊</div>
+    </div>
+    <div class="info-row">
+      <span class="info-label">地址</span>
+      <span class="info-value">
+        <a href="https://maps.app.goo.gl/oK5pP3odKRNFN2oi7" target="_blank">
+          〒111-0051 東京都台東区蔵前 4丁目23−7
+        </a>
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">建物</span>
+      <span class="info-value">日神デュオステージ蔵前ＮＥＸＴ</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">房號</span>
+      <span class="info-value">204（二樓，出電梯左轉第一間）</span>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding-bottom:16px;">
+    <div class="card-header">
+      <div class="card-icon">🧭</div>
+      <div class="card-title">快速導覽</div>
+    </div>
+    <div class="nav-grid">
+      <div class="nav-card" onclick="switchTab('checkin')">
+        <span class="nc-icon">📋</span>
+        <div class="nc-label">入退房</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('arrival')">
+        <span class="nc-icon">🚃</span>
+        <div class="nc-label">抵達方式</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('facilities')">
+        <span class="nc-icon">🔧</span>
+        <div class="nc-label">設施說明</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('items')">
+        <span class="nc-icon">📦</span>
+        <div class="nc-label">備品清單</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('services')">
+        <span class="nc-icon">🏪</span>
+        <div class="nc-label">附近服務</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('cityguide')">
+        <span class="nc-icon">🗺️</span>
+        <div class="nc-label">城市導覽</div>
+      </div>
+      <div class="nav-card" onclick="switchTab('emergency')" style="grid-column:3;">
+        <span class="nc-icon">🆘</span>
+        <div class="nc-label">緊急聯絡</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  CHECK-IN & CHECK-OUT
+══════════════════════════════════════════ -->
+<div class="section" id="sec-checkin">
+  <div class="page-header">
+    <div class="page-header-icon">📋</div>
+    <h2>入退房</h2>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">🔑</span>
+    <div><strong>取得鑰匙：</strong>請聯絡我們拿鑰匙，並轉帳住宿費用（TWD 2,500 / 晚）。同時取得電子鎖數位密碼。</div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title">
+        <div class="acc-title-icon">✅</div>
+        Check-In 注意事項
+      </div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <ul class="bullet-list">
+        <li>冰箱插電（如有需要使用）</li>
+        <li>取出客廳壁櫃右側的拋棄式床單組，並套在床＆枕頭上</li>
+        <li>客廳的壁櫃內為主人個人物品，<strong>請勿翻動</strong></li>
+        <li>全室（含陽台）<strong>禁菸</strong></li>
+        <li>使用廚房／浴室熱水前，請先開啟熱水機（詳見設施說明）</li>
+        <li>若有必需品不足，請通知我們後自行購入並回傳收據，金額會退回</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title">
+        <div class="acc-title-icon">🏁</div>
+        Check-Out 注意事項
+      </div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <ul class="bullet-list">
+        <li>冷氣＆電視遙控器擺回客廳餐桌上</li>
+        <li>全室地板用吸塵器清潔</li>
+        <li>移除拋棄式床單</li>
+        <li>清空冰箱</li>
+        <li>丟棄所有垃圾（請見「抵達」頁的垃圾分類說明）</li>
+        <li>關燈、關浴室抽風機、關熱水機</li>
+        <li>拍照或錄影並回傳：臥室、客廳、冰箱、廚房、浴室</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ARRIVAL
+══════════════════════════════════════════ -->
+<div class="section" id="sec-arrival">
+  <div class="page-header">
+    <div class="page-header-icon">🚃</div>
+    <h2>抵達指南</h2>
+  </div>
+
+  <div class="glass-card">
+    <div class="card-header">
+      <div class="card-icon">📍</div>
+      <div class="card-title">住宿地址</div>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;margin-bottom:14px;">
+      〒111-0051 東京都台東区蔵前 4丁目23−7<br>
+      日神デュオステージ蔵前ＮＥＸＴ
+    </p>
+    <a href="https://maps.app.goo.gl/fdn49QNQ2yPVje9F7" target="_blank" class="map-btn">📍 在 Google Maps 開啟</a>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🚇</div>交通方式</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <div class="sub-label">附近車站</div>
+      <ul class="bullet-list">
+        <li><strong>都營大江戶線：藏前站</strong><br>
+          <span style="color:var(--text-soft);font-size:0.82rem;">往羽田機場 → A2（手扶梯）/ A1b（電梯）　往成田機場 → A0（電梯）</span></li>
+        <li><strong>都營淺草線：藏前站</strong><br>
+          <span style="color:var(--text-soft);font-size:0.82rem;">不分方向 → A5（電梯）</span></li>
+        <li><strong>東京 Metro 銀座線：田原町站</strong></li>
+      </ul>
+      <div class="divider"></div>
+      <div class="sub-label">✈️ 成田機場 → 民宿</div>
+      <ul class="bullet-list">
+        <li>搭乘 <strong>Sky Access（約每 40 分鐘一班）→ 淺草線</strong>，多數列車直達。</li>
+        <li>第一航廈：往 1 號月台搭乘 Access 特快。</li>
+        <li>第二航廈：共用月台，請確認是 Sky Access 後再上車。</li>
+        <li>需換車時，在 <strong>押上</strong> 或 <strong>淺草</strong> 同月台換淺草線。</li>
+        <li>不推薦 Skyliner（票價約 2 倍，且需步行約 1 公里轉乘大江戶線）。</li>
+      </ul>
+      <div class="sub-label">✈️ 羽田機場 → 民宿</div>
+      <ul class="bullet-list">
+        <li>搭乘 <strong>京急機場線 → 淺草線</strong>，多數列車直達。</li>
+        <li>需換車時，在 <strong>東日本橋</strong> 站同月台換淺草線。</li>
+      </ul>
+      <div class="divider"></div>
+      <div class="sub-label">🚇 交通便利地點</div>
+      <ul class="bullet-list">
+        <li><strong>淺草線</strong>：東京車站、銀座、築地、晴空塔、橫濱、成田／羽田機場</li>
+        <li><strong>大江戶線</strong>：新宿、市政廳、東京巨蛋、清澄白河</li>
+        <li><strong>銀座線</strong>：澀谷</li>
+        <li><strong>公車「都 02」</strong>：上野、Skyliner 接駁</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🏢</div>建築進入方式</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <ul class="bullet-list">
+        <li>第一扇玻璃門 — 直接進入</li>
+        <li>第二扇玻璃門 — <strong>需用鑰匙上的磁扣，感應右側牆上黑色感應區</strong></li>
+        <li>右側樓梯跟後門皆可使用鑰匙開門</li>
+        <li>進入後搭電梯到二樓</li>
+        <li>出電梯左轉，第一間房即為 <strong>204 室</strong>（門上有數字電子鎖）</li>
+        <li>可使用數字密碼或用鑰匙轉動「上方」門鎖進入（下方門鎖請保留開啟狀態）</li>
+      </ul>
+      <div class="img-single">
+        <div class="loading-overlay" id="lo-building"><div class="spinner"></div><span>載入中…</span></div>
+        <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3357.heic" src="" alt="建築外觀" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');">
+      </div>
+      <div class="img-single">
+        <img src="html/Welcome to ÞùÅÕëìNEXT/Arrival/6af73800-f13b-496b-97c8-78db94253032.png" alt="門鎖說明" style="max-width:100%;">
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🛋️</div>屋內照片</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <div style="margin-bottom:14px;">
+        <img src="html/Welcome to ÞùÅÕëìNEXT/Arrival/image.png" alt="室內平面圖" style="max-width:100%;border-radius:10px;">
+        <div style="font-size:0.72rem;color:var(--text-soft);text-align:center;margin-top:5px;">室內平面圖</div>
+      </div>
+      <div class="sub-label">廚房</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3354.heic" src="" alt="廚房" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+      <div class="sub-label">客廳</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3351.heic" src="" alt="客廳" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3350.heic" src="" alt="客廳" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+      <div class="sub-label">臥室</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3340.heic" src="" alt="臥室" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+      <div class="sub-label">浴室</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3332.heic" src="" alt="浴室" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3333.heic" src="" alt="浴室" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">📷</div>細節物品擺放</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <div class="sub-label">廚房</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3345.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3344.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3346.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3342.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+      <div class="sub-label">客廳壁櫃（棉被、枕頭、拋棄式床單）</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3335.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3338.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3336.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+      <div class="sub-label">玄關鞋櫃（拋棄式拖鞋）</div>
+      <div class="img-grid">
+        <div class="img-item"><div class="loading-overlay"><div class="spinner"></div></div>
+          <img data-heic="html/Welcome to ÞùÅÕëìNEXT/Arrival/IMG_3322.heic" src="" alt="" onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden');"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🗑️</div>垃圾分類</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <div class="callout info"><span class="callout-icon">📍</span><div><strong>位置：</strong>面對一樓電梯右手邊</div></div>
+      <ul class="bullet-list">
+        <li><strong>一般垃圾</strong>：裝袋後，放在右手邊的檯面上</li>
+        <li><strong>廚餘</strong>：視同一般垃圾，一起裝袋放置</li>
+        <li><strong>寶特瓶</strong>：撕掉瓶身標籤，放入左側下方的籃子</li>
+        <li><strong>其他塑膠類</strong>：走到底，丟入大型網袋</li>
+        <li><strong>紙板</strong>：走到底左轉，放在檯面上</li>
+        <li>其餘未標明者，請參考其他日本人放置方式</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  FACILITIES
+══════════════════════════════════════════ -->
+<div class="section" id="sec-facilities">
+  <div class="page-header">
+    <div class="page-header-icon">🔧</div>
+    <h2>設施說明</h2>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🚪</div>玄關 — 門鎖</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <ul class="bullet-list">
+        <li>Open：往<strong>逆時針</strong>轉 → 鎖起</li>
+        <li>Lock：往<strong>順時針</strong>轉 → 打開</li>
+      </ul>
+      <div class="img-grid" style="grid-template-columns:1fr 1fr;">
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/1f164cc3-3760-4954-b86c-d88c7751e33d.png" alt="Open" style="width:100%;border-radius:8px;"></div>
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/28ef3eae-cc20-437c-94a4-9a2124e150e0.png" alt="Lock" style="width:100%;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">💡</div>燈具遙控器</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <ul class="bullet-list">
+        <li>當吸頂燈已開啟，可用遙控器統一控制全室燈光。</li>
+        <li>出門前在門口一鍵關閉全室；回家時一鍵開啟。</li>
+      </ul>
+      <div class="img-single"><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/79f66e50-5737-4573-b396-0a88ce5e5fd8.png" alt="燈具遙控器" style="max-width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🛋️</div>沙發床</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <ul class="bullet-list">
+        <li>攤開：將沙發拉起 90 度，用力折疊後攤平</li>
+        <li>收起：反之</li>
+      </ul>
+      <div class="img-grid" style="grid-template-columns:1fr 1fr;">
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image.png" alt="展開" style="width:100%;border-radius:8px;"></div>
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 1.png" alt="收起" style="width:100%;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🪑</div>翻轉茶几</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <ul class="bullet-list"><li>桌板可拆，根據需求選擇高度後再安裝桌板。</li></ul>
+      <div class="img-single"><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 2.png" alt="翻轉茶几" style="max-width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">📺</div>電視</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <div class="callout success"><span class="callout-icon">✅</span><div>電視可以<strong>自由移動</strong>，不要懷疑！</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🍳</div>廚房 — IH 爐</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <ol class="step-list">
+        <li>先開啟最右側「電源」</li>
+        <li>選取對應火爐的開關「切 / start」</li>
+        <li>選擇火力（弱火、中火、強火）</li>
+      </ol>
+      <div class="img-single"><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 3.png" alt="IH爐" style="max-width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">💨</div>抽油煙機</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <ul class="bullet-list">
+        <li>使用 IH 爐前，請先將上方抽油煙機板子放下。</li>
+        <li>同時按下左右兩側的扣環即可拉下。</li>
+      </ul>
+      <div class="img-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/16c9176d-d607-4195-8162-e09c642a8c02.png" alt="" style="width:100%;border-radius:8px;"></div>
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 4.png" alt="" style="width:100%;border-radius:8px;"></div>
+        <div><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 5.png" alt="" style="width:100%;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header open" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🚿</div>浴室 — 熱水機</div>
+      <div class="acc-arrow open">▼</div>
+    </div>
+    <div class="acc-body open">
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div>使用熱水前，<strong>請務必先打開熱水機</strong>（廚房和浴室皆適用）。</div></div>
+      <ul class="bullet-list">
+        <li>熱水器開關在 <strong>廚房洗手槽旁</strong> 及 <strong>浴缸旁</strong></li>
+        <li>先將浴缸堵好，再按下最右邊的自動放水按鈕</li>
+      </ul>
+      <div class="img-single"><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/image 6.png" alt="熱水機" style="max-width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🌬️</div>浴室 — 抽風機</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <ul class="bullet-list">
+        <li><strong>換氣</strong>：洗澡時建議開啟</li>
+        <li><strong>衣類乾燥</strong>：衣服掛在浴室內，使用衣類乾燥模式約 4 小時即可</li>
+      </ul>
+      <div class="img-single"><img src="html/Welcome to ÞùÅÕëìNEXT/Facilities/d50a4b1a-e367-48e9-ba65-f01f6db89dcf.png" alt="抽風機" style="max-width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <div class="acc-title"><div class="acc-title-icon">🗑️</div>垃圾處理</div>
+      <div class="acc-arrow">▼</div>
+    </div>
+    <div class="acc-body">
+      <div class="callout info"><span class="callout-icon">📍</span><div><strong>位置：</strong>面對一樓電梯右手邊</div></div>
+      <ul class="bullet-list">
+        <li><strong>一般垃圾</strong>：裝袋後，放在右手邊的檯面上</li>
+        <li><strong>廚餘</strong>：視同一般垃圾，一起裝袋放置</li>
+        <li><strong>寶特瓶</strong>：撕掉瓶身標籤，放入左側下方的籃子</li>
+        <li><strong>其他塑膠類</strong>：走到底，丟入大型網袋</li>
+        <li><strong>紙板</strong>：走到底左轉，放在檯面上</li>
+        <li>其餘未標明者，請參考其他日本人放置方式</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ITEMS
+══════════════════════════════════════════ -->
+<div class="section" id="sec-items">
+  <div class="page-header">
+    <div class="page-header-icon">📦</div>
+    <h2>備品清單</h2>
+  </div>
+
+  <div class="callout info" style="margin-bottom:16px;">
+    <span class="callout-icon">ℹ️</span>
+    <div>如有消耗式物品使用完畢，請告知我們。</div>
+  </div>
+
+  <div class="items-grid">
+    <div class="item-card">
+      <div class="item-card-title">🛏️ 臥室</div>
+      <ul class="bullet-list">
+        <li>日式標準雙人床</li>
+        <li>沙發床（等同雙人床）</li>
+        <li>衣櫃</li>
+        <li>枕頭 ×5</li>
+        <li>厚雙人被 ×3</li>
+        <li>薄單人被 ×2</li>
+        <li>拋棄式床單</li>
+        <li>衣架 ×35</li>
+        <li>冷暖氣</li>
+      </ul>
+    </div>
+    <div class="item-card">
+      <div class="item-card-title">🚪 玄關</div>
+      <ul class="bullet-list">
+        <li>拋棄式拖鞋</li>
+        <li>透明大雨傘 ×2</li>
+      </ul>
+      <div style="height:14px;"></div>
+      <div class="item-card-title">🛋️ 客廳</div>
+      <ul class="bullet-list">
+        <li>移動式 43 吋電視</li>
+        <li>餐桌＆椅子 ×4</li>
+        <li>沙發</li>
+        <li>翻轉茶几</li>
+        <li>冷暖氣</li>
+        <li>延長線</li>
+        <li>無線離子夾</li>
+        <li>剪刀、美工刀</li>
+        <li>牙線、棉花棒</li>
+      </ul>
+    </div>
+    <div class="item-card">
+      <div class="item-card-title">🍽️ 廚房</div>
+      <ul class="bullet-list">
+        <li>冰箱＆製冰器</li>
+        <li>IH 爐</li>
+        <li>Brita 淨水器</li>
+        <li>微波爐</li>
+        <li>吸塵器</li>
+        <li>碗盤、餐具、馬克杯</li>
+        <li>鍋具組、菜刀、削皮器</li>
+        <li>熱水壺</li>
+        <li>油、鹽、白黑胡椒、醬油</li>
+        <li>洗碗精、菜瓜布</li>
+        <li>垃圾袋、食物保存袋</li>
+        <li>一次性餐具</li>
+      </ul>
+    </div>
+    <div class="item-card">
+      <div class="item-card-title">🚿 衛浴</div>
+      <ul class="bullet-list">
+        <li>洗衣機、洗衣精、洗衣袋</li>
+        <li>洗髮精、沐浴乳（BOTANIST）</li>
+        <li>潤髮乳（潘婷膠囊髮膜）</li>
+        <li>卸妝油（IPSA）</li>
+        <li>酵素洗顏</li>
+        <li>吹風機（Panasonic）</li>
+        <li>洗手乳</li>
+        <li>拋棄式牙刷＆浴帽</li>
+        <li>梳子</li>
+        <li>拋棄式擦澡巾</li>
+        <li>毛巾（用後請補充）</li>
+        <li>捲筒衛生紙</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  NEAR SERVICES
+══════════════════════════════════════════ -->
+<div class="section" id="sec-services">
+  <div class="page-header">
+    <div class="page-header-icon">🏪</div>
+    <h2>附近服務</h2>
+  </div>
+
+  <div class="section-label">便利商店</div>
+
+  <div class="place-card">
+    <div><div class="place-name">LAWSON</div><div class="place-meta"><span class="tag tag-green">便利商店</span></div></div>
+    <a href="https://maps.app.goo.gl/1qyxZVsHN8fjJJJb8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">7-Eleven</div><div class="place-meta"><span class="tag tag-green">便利商店</span></div></div>
+    <a href="https://maps.app.goo.gl/rkChJxLzP3TXZwS37" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">全家 FamilyMart</div><div class="place-meta"><span class="tag tag-green">便利商店</span></div></div>
+    <a href="https://maps.app.goo.gl/CRD1vhzZ4pLTK4Ae6" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+
+  <div class="section-label">超市</div>
+
+  <div class="place-card">
+    <div><div class="place-name">Life スーパー</div><div class="place-meta"><span class="tag tag-red">超市</span></div></div>
+    <a href="https://maps.app.goo.gl/hMA7DQ3HvzoVufwk7" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">24H 生鮮超市</div><div class="place-meta"><span class="tag tag-red">超市</span></div></div>
+    <a href="https://maps.app.goo.gl/3yYTJEdMT1aM7gFAA" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  CITY GUIDE
+══════════════════════════════════════════ -->
+<div class="section" id="sec-cityguide">
+  <div class="page-header">
+    <div class="page-header-icon">🗺️</div>
+    <h2>城市導覽</h2>
+  </div>
+
+  <div class="section-label">景點</div>
+  <div class="place-card">
+    <div><div class="place-name">淺草寺 雷門</div><div class="place-meta"><span class="tag tag-red">景點</span><span class="tag tag-yellow">免費</span></div></div>
+    <a href="https://maps.app.goo.gl/fyTC7p2m1Y5xuSiJ8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">合羽橋道具街</div><div class="place-meta"><span class="tag tag-red">景點</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/m6hZEB2JAdfLJAPt6" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">東京國立博物館</div><div class="place-meta"><span class="tag tag-red">景點</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/WJAeSJR8MFNKQx9g8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">上野之森美術館</div><div class="place-meta"><span class="tag tag-red">景點</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/K7pb2C99ocwrM4uEA" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+
+  <div class="section-label">餐廳</div>
+  <div class="place-card">
+    <div><div class="place-name">淺草炸肉餅</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/HZgQinzc4uosJ811A" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">Tonkatsu Yutaka</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/x4rxxq62xu4hp8pE7" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">融化漢堡排福吉 淺草倉前</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/WZkreq6NqbJp1h5S8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">拉麵 改</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/DrsdxorzpLxPoap56" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">拉麵元樂 總本店</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/eSCs8YCrwFfX1qLA9" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">麺 みつヰ</div><div class="place-meta"><span class="tag tag-pink">餐廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/77MX6NtLyx6AYXKk9" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+
+  <div class="section-label">咖啡廳 &amp; 甜點</div>
+  <div class="place-card">
+    <div><div class="place-name">HATCOFFEE</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/9a37J2WRaW7TPrDx8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">KURAMAE CANNELE</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/NREE8yXrPA25R9F58" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">Confectionery Lemon Pie</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/TYu9BfZPq8gGEywo9" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">Shinonome Seipansho</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/qbCnfMA6DrvJQZ9C8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">淺草花月堂</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/qVjSRJ1GNGNU5CpG8" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+  <div class="place-card">
+    <div><div class="place-name">蒲公英巧克力 Dandelion Chocolate</div><div class="place-meta"><span class="tag tag-purple">咖啡廳</span><span class="tag tag-gold">🤑🤑</span></div></div>
+    <a href="https://maps.app.goo.gl/6W2HiebuinWijLPE9" target="_blank" class="map-btn">📍 地圖</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  EMERGENCY
+══════════════════════════════════════════ -->
+<div class="section" id="sec-emergency">
+  <div class="page-header">
+    <div class="page-header-icon">🆘</div>
+    <h2>緊急聯絡</h2>
+  </div>
+
+  <div class="callout warn" style="margin-bottom:20px;">
+    <span class="callout-icon">⚠️</span>
+    <div>如遇緊急情況，請先撥打以下號碼。如語言不通，可先說「English please」或「中文」。</div>
+  </div>
+
+  <div class="section-label">緊急號碼</div>
+  <div class="emergency-grid">
+    <a href="tel:110" class="emg-card urgent">
+      <div class="emg-icon">👮</div>
+      <div class="emg-name">警察</div>
+      <div class="emg-num">110</div>
+    </a>
+    <a href="tel:119" class="emg-card urgent">
+      <div class="emg-icon">🚒</div>
+      <div class="emg-name">消防／救護</div>
+      <div class="emg-num">119</div>
+    </a>
+    <a href="tel:189" class="emg-card urgent">
+      <div class="emg-icon">👶</div>
+      <div class="emg-name">兒童保護</div>
+      <div class="emg-num">189</div>
+    </a>
+  </div>
+
+  <div class="section-label">公共事業</div>
+  <div class="emergency-grid">
+    <div class="emg-card">
+      <div class="emg-icon">⚡</div>
+      <div class="emg-name">電力</div>
+      <div class="emg-sub">東京電力</div>
+    </div>
+    <div class="emg-card">
+      <div class="emg-icon">🔥</div>
+      <div class="emg-name">瓦斯</div>
+      <div class="emg-sub">東京瓦斯</div>
+    </div>
+    <div class="emg-card">
+      <div class="emg-icon">💧</div>
+      <div class="emg-name">自來水</div>
+      <div class="emg-sub">東京都水道局</div>
+    </div>
+  </div>
+
+  <div class="glass-card" style="margin-top:8px;">
+    <div class="card-header">
+      <div class="card-icon">🏥</div>
+      <div class="card-title">最近醫院</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div>如需就醫，請搜尋「台東区 病院」或向我們詢問最近的醫療機構。<br>
+      <a href="https://maps.app.goo.gl/oK5pP3odKRNFN2oi7" target="_blank" style="color:#4285f4;">→ 從住宿附近搜尋醫院</a></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ══════════════════════════════════════════
+  JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ── Tab switching ─────────────────────────────────
+function switchTab(id) {
+  document.getElementById('search-input').value = '';
+  hideSearch();
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + id));
+  if (id === 'arrival') loadHeic();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+// ── Accordion ─────────────────────────────────────
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.acc-arrow');
+  const open = header.classList.contains('open');
+  header.classList.toggle('open', !open);
+  body.classList.toggle('open', !open);
+  arrow.classList.toggle('open', !open);
+}
+
+// ── WiFi copy ─────────────────────────────────────
+function copyWifi() {
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText('12345678').then(() => {
+    btn.textContent = '✅ 已複製！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '複製密碼'; btn.classList.remove('copied'); }, 2500);
+  }).catch(() => alert('密碼：12345678'));
+}
+
+function copyPw(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2200);
+  }).catch(() => alert(text));
+}
+
+// ── HEIC conversion ───────────────────────────────
+let heicDone = false;
+
+function loadHeic() {
+  if (heicDone) return;
+  heicDone = true;
+  document.querySelectorAll('img[data-heic]').forEach(img => {
+    const overlay = img.previousElementSibling;
+    fetch(img.dataset.heic)
+      .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+      .then(blob => heic2any({ blob, toType: 'image/jpeg', quality: 0.8 }))
+      .then(res => {
+        img.src = URL.createObjectURL(Array.isArray(res) ? res[0] : res);
+      })
+      .catch(() => {
+        if (overlay?.classList.contains('loading-overlay')) {
+          overlay.innerHTML = '<span style="font-size:0.72rem;color:#aaa;">無法載入</span>';
+        }
+      });
+  });
+}
+
+// ── Search ────────────────────────────────────────
+const searchIndex = [
+  { section:'首頁', tab:'home', title:'Wi-Fi 密碼', content:'wifi chen204 12345678 網路 密碼 wireless' },
+  { section:'首頁', tab:'home', title:'住宿地址', content:'台東区 蔵前 4丁目23 Room 204 地址 address 房間號碼' },
+  { section:'入退房', tab:'checkin', title:'Check-In 注意事項', content:'入住 冰箱 床單 禁菸 熱水機 checkin 入房' },
+  { section:'入退房', tab:'checkin', title:'Check-Out 注意事項', content:'退房 遙控器 吸塵器 清潔 冰箱 垃圾 關燈 checkout' },
+  { section:'抵達', tab:'arrival', title:'附近車站', content:'大江戶線 淺草線 銀座線 藏前站 田原町站 電梯 車站 地鐵 捷運' },
+  { section:'抵達', tab:'arrival', title:'成田機場交通', content:'成田機場 sky access 淺草線 機場 交通 narita airport' },
+  { section:'抵達', tab:'arrival', title:'羽田機場交通', content:'羽田機場 京急 淺草線 機場 交通 haneda airport' },
+  { section:'抵達', tab:'arrival', title:'建築進入方式', content:'玻璃門 磁扣 鑰匙 感應 電梯 204室 門鎖 入口 building entrance' },
+  { section:'抵達', tab:'arrival', title:'垃圾分類', content:'垃圾 一般垃圾 廚餘 寶特瓶 塑膠 紙板 資源回收 trash garbage' },
+  { section:'設施', tab:'facilities', title:'門鎖使用', content:'門鎖 開門 鎖門 順時針 逆時針 open lock door' },
+  { section:'設施', tab:'facilities', title:'燈具遙控器', content:'燈 遙控器 全室燈光 一鍵 關燈 開燈 light remote' },
+  { section:'設施', tab:'facilities', title:'沙發床', content:'沙發床 展開 攤開 收起 折疊 sofa bed sleep' },
+  { section:'設施', tab:'facilities', title:'IH 爐使用', content:'IH爐 煮飯 電源 火爐 弱火 中火 強火 廚房 怎麼用 induction cooktop' },
+  { section:'設施', tab:'facilities', title:'抽油煙機', content:'抽油煙機 扣環 廚房 range hood 油煙' },
+  { section:'設施', tab:'facilities', title:'熱水機', content:'熱水機 熱水 浴缸 洗澡 開關 water heater 熱水器' },
+  { section:'設施', tab:'facilities', title:'浴室抽風機', content:'抽風 換氣 衣類乾燥 洗衣 晾衣 浴室 bathroom fan' },
+  { section:'備品', tab:'items', title:'廚房備品', content:'冰箱 IH爐 微波爐 碗盤 餐具 鍋具 熱水壺 洗碗精 廚房' },
+  { section:'備品', tab:'items', title:'臥室備品', content:'床 被子 枕頭 床單 衣架 衣櫃 冷氣 bedroom' },
+  { section:'備品', tab:'items', title:'衛浴備品', content:'洗髮精 沐浴乳 潤髮 卸妝 吹風機 洗手乳 牙刷 毛巾 洗衣機 衛生紙' },
+  { section:'備品', tab:'items', title:'客廳備品', content:'電視 沙發 茶几 餐桌 椅子 延長線 離子夾 剪刀' },
+  { section:'附近服務', tab:'services', title:'LAWSON', content:'LAWSON 便利商店 convenience store 超商' },
+  { section:'附近服務', tab:'services', title:'7-Eleven', content:'7-11 7eleven 便利商店 超商 convenience store' },
+  { section:'附近服務', tab:'services', title:'全家 FamilyMart', content:'全家 familymart 便利商店 超商' },
+  { section:'附近服務', tab:'services', title:'Life 超市', content:'life 超市 生鮮 grocery market 買菜 supermarket' },
+  { section:'附近服務', tab:'services', title:'24H 生鮮超市', content:'24小時 生鮮超市 超市 買菜 24H open' },
+  { section:'城市導覽', tab:'cityguide', title:'淺草寺 雷門', content:'淺草寺 雷門 景點 temple asakusa 免費 senso-ji' },
+  { section:'城市導覽', tab:'cityguide', title:'合羽橋道具街', content:'合羽橋 道具街 廚房用品 景點 kappabashi shopping' },
+  { section:'城市導覽', tab:'cityguide', title:'東京國立博物館', content:'博物館 上野 museum tokyo national' },
+  { section:'城市導覽', tab:'cityguide', title:'淺草炸肉餅', content:'淺草炸肉餅 炸肉餅 menchi katsu 淺草 asakusa 餐廳' },
+  { section:'城市導覽', tab:'cityguide', title:'Tonkatsu Yutaka', content:'豬排 tonkatsu 餐廳 restaurant' },
+  { section:'城市導覽', tab:'cityguide', title:'融化漢堡排福吉', content:'融化漢堡排 福吉 漢堡排 hamburger steak 淺草 餐廳' },
+  { section:'城市導覽', tab:'cityguide', title:'拉麵 改', content:'拉麵 改 ramen 麵 restaurant 餐廳' },
+  { section:'城市導覽', tab:'cityguide', title:'HATCOFFEE', content:'hatcoffee 咖啡 cafe coffee 蔵前 kuramae' },
+  { section:'城市導覽', tab:'cityguide', title:'KURAMAE CANNELE', content:'kuramae cannele canelé 咖啡 甜點 dessert 蔵前' },
+  { section:'城市導覽', tab:'cityguide', title:'Dandelion Chocolate', content:'蒲公英 dandelion chocolate 巧克力 甜點 cafe' },
+  { section:'緊急聯絡', tab:'emergency', title:'警察 110', content:'警察 110 police emergency 緊急 報警' },
+  { section:'緊急聯絡', tab:'emergency', title:'消防／救護 119', content:'消防 119 救護車 ambulance fire 緊急' },
+  { section:'緊急聯絡', tab:'emergency', title:'最近醫院', content:'醫院 hospital 就醫 看病 台東区 診所' },
+];
+
+const inp = document.getElementById('search-input');
+const srWrap = document.getElementById('search-results');
+const srList = document.getElementById('search-results-list');
+
+inp.addEventListener('input', () => {
+  const q = inp.value.trim().toLowerCase();
+  q ? doSearch(q) : hideSearch();
+});
+
+function doSearch(q) {
+  const hits = searchIndex.filter(i =>
+    i.title.toLowerCase().includes(q) ||
+    i.content.toLowerCase().includes(q) ||
+    i.section.toLowerCase().includes(q)
+  );
+  srWrap.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  srList.innerHTML = hits.length
+    ? hits.map(r => `
+        <div class="search-result-item" onclick="switchTab('${r.tab}')">
+          <div class="sri-section">${esc(r.section)}</div>
+          <div class="sri-title">${hl(r.title, q)}</div>
+          <div class="sri-preview">${hl(r.content.split(' ').slice(0,10).join(' '), q)}</div>
+        </div>`).join('')
+    : `<div class="no-results"><div class="nr-icon">🔍</div><p>找不到「${esc(q)}」的相關資訊<br><small style="font-size:0.78rem;opacity:0.7;">試試：Wi-Fi · 熱水 · 地鐵 · 餐廳</small></p></div>`;
+}
+
+function hideSearch() {
+  srWrap.classList.remove('active');
+  const active = document.querySelector('.nav-tab.active');
+  const id = active ? active.dataset.tab : 'home';
+  document.getElementById('sec-' + id)?.classList.add('active');
+  if (!active) document.querySelector('[data-tab="home"]').classList.add('active');
+}
+
+function hl(text, q) {
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
+  return esc(text).replace(re, m => `<mark>${m}</mark>`);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function getUserDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function hasEmailAccess(email) {
+      return exists(/databases/$(database)/documents/emailAccess/$(email));
+    }
+
+    function getEmailAccess(email) {
+      return get(/databases/$(database)/documents/emailAccess/$(email)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && getUserDoc(request.auth.uid).role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+
+      // First-time self-registration: must create with role='pending', active=false
+      allow create: if isSelf(uid)
+        && request.resource.data.email == request.auth.token.email
+        && (
+          (
+            request.resource.data.role == 'pending'
+            && request.resource.data.active == false
+            && request.resource.data.bookingId == null
+          )
+          || (
+            hasEmailAccess(request.auth.token.email)
+            && request.resource.data.role == getEmailAccess(request.auth.token.email).role
+            && request.resource.data.active == getEmailAccess(request.auth.token.email).active
+            && request.resource.data.bookingId == getEmailAccess(request.auth.token.email).bookingId
+          )
+        );
+
+      // Self can update only displayName/photoURL (NOT role/active/bookingId)
+      allow update: if isAdmin()
+        || (isSelf(uid)
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.active == resource.data.active
+            && request.resource.data.bookingId == resource.data.bookingId
+            && request.resource.data.email == resource.data.email);
+
+      allow delete: if isAdmin();
+    }
+
+    match /emailAccess/{email} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.token.email == email);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/{id} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /keys/{code} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /guestAccessCodes/{code} {
+      allow get: if isAdmin()
+        || (
+          resource.data.active == true
+          && resource.data.startsAt <= request.time
+          && resource.data.expiresAt > request.time
+        );
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /bookings/{id} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.guestUid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

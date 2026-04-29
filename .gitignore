@@ -1,0 +1,22 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+*.local
+
+# env files
+.env.local
+.env.*.local
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.claude/
+
+# Firebase
+.firebase/
+*.log
+
+# OS
+Thumbs.db

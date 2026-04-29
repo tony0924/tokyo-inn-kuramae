@@ -1,0 +1,55 @@
+/* ════════════════════════════════════════
+   DESIGN TOKENS — Premium Dark
+   (Migrated from legacy index.html)
+   ════════════════════════════════════════ */
+:root {
+  /* Gold accent */
+  --gold:        #c9a84c;
+  --gold-light:  #e8cc7a;
+  --gold-pale:   rgba(201, 168, 76, 0.10);
+  --gold-glow:   rgba(201, 168, 76, 0.20);
+
+  /* Near-black surface stack */
+  --bg:          #0c0c0e;
+  --bg-mid:      #111113;
+  --bg-high:     #17171b;
+  --bg-hover:    #1e1e24;
+  --bg-glass:    rgba(20, 20, 24, 0.95);
+
+  /* Soft accents */
+  --indigo:      #4a6fa5;
+  --indigo-lt:   #7aa0d0;
+  --sakura:      #c97a8a;
+  --sakura-lt:   #e8a4b4;
+  --vermilion:   #c0392b;
+
+  /* Legacy alias for text-on-gold */
+  --ink:         #1c1814;
+
+  /* Text hierarchy */
+  --text:        #e4e0da;
+  --text-mid:    #8a8278;
+  --text-soft:   #4e4a44;
+  --text-inv:    #1c1814;
+
+  /* Borders */
+  --border:      rgba(201, 168, 76, 0.16);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(255, 255, 255, 0.07);
+
+  /* Shadows */
+  --shadow-sm:   0 1px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md:   0 6px 28px rgba(0, 0, 0, 0.55);
+  --shadow-lg:   0 18px 56px rgba(0, 0, 0, 0.7);
+
+  /* Shape */
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   24px;
+  --transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Payment status colours (admin calendar) */
+  --pay-unpaid:  #c0392b;
+  --pay-partial: #d97a3e;
+  --pay-paid:    var(--gold);
+}
