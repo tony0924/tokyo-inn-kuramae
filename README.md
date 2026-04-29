@@ -62,5 +62,5 @@ firebase deploy --only functions
 ## Notes
 
 - `.env.local` is intentionally ignored and should never be committed.
-- `Previous/`, `.7z`, `node_modules/`, `dist/`, and Firebase build artifacts are ignored.
+- `html/`, `Previous/`, `.zip`, `.7z`, `.heic`, `node_modules/`, `dist/`, and Firebase build artifacts are ignored.
 - Project context and handoff notes are documented in [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md).

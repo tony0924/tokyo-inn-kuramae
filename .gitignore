@@ -4,7 +4,10 @@ dist/
 .DS_Store
 *.local
 *.7z
+*.zip
+*.heic
 Previous/
+html/
 
 # env files
 .env.local
