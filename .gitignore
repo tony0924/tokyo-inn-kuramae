@@ -3,6 +3,8 @@ dist/
 *.tsbuildinfo
 .DS_Store
 *.local
+*.7z
+Previous/
 
 # env files
 .env.local
