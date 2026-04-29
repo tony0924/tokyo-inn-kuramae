@@ -19,7 +19,6 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'services', icon: '🏪', label: '超市' },
   { id: 'restaurant', icon: '🍜', label: '餐廳' },
   { id: 'cityguide', icon: '🗺️', label: '景點' },
-  { id: 'emergency', icon: '🆘', label: '緊急' },
 ];
 
 function highlight(text: string, q: string): string {

@@ -8,7 +8,6 @@ import { ItemsTab } from '@/guest/tabs/ItemsTab';
 import { ServicesTab } from '@/guest/tabs/ServicesTab';
 import { RestaurantTab } from '@/guest/tabs/RestaurantTab';
 import { CityguideTab } from '@/guest/tabs/CityguideTab';
-import { EmergencyTab } from '@/guest/tabs/EmergencyTab';
 
 export default function GuestApp() {
   return (
@@ -23,7 +22,6 @@ export default function GuestApp() {
         <Route path="services" element={<ServicesTab />} />
         <Route path="restaurant" element={<RestaurantTab />} />
         <Route path="cityguide" element={<CityguideTab />} />
-        <Route path="emergency" element={<EmergencyTab />} />
         <Route path="*" element={<Navigate to="home" replace />} />
       </Route>
     </Routes>

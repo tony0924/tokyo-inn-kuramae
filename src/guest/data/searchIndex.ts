@@ -6,8 +6,7 @@ export type GuestTabId =
   | 'items'
   | 'services'
   | 'restaurant'
-  | 'cityguide'
-  | 'emergency';
+  | 'cityguide';
 
 export interface SearchEntry {
   section: string;
@@ -55,7 +54,4 @@ export const searchIndex: SearchEntry[] = [
   { section: '餐廳推薦', tab: 'restaurant', title: 'HATCOFFEE', content: 'hatcoffee 咖啡 cafe coffee 蔵前 kuramae' },
   { section: '餐廳推薦', tab: 'restaurant', title: 'KURAMAE CANNELE', content: 'kuramae cannele canelé 咖啡 甜點 dessert 蔵前' },
   { section: '餐廳推薦', tab: 'restaurant', title: 'Dandelion Chocolate', content: '蒲公英 dandelion chocolate 巧克力 甜點 cafe' },
-  { section: '緊急聯絡', tab: 'emergency', title: '警察 110', content: '警察 110 police emergency 緊急 報警' },
-  { section: '緊急聯絡', tab: 'emergency', title: '消防／救護 119', content: '消防 119 救護車 ambulance fire 緊急' },
-  { section: '緊急聯絡', tab: 'emergency', title: '最近醫院', content: '醫院 hospital 就醫 看病 台東区 診所' },
 ];

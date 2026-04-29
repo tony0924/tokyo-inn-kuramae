@@ -66,6 +66,26 @@ export function HomeTab() {
         </button>
       </div>
 
+      <div className="glass-card welcome-note-card">
+        <div className="card-header">
+          <div className="card-icon">🌿</div>
+          <div className="card-title">歡迎來玩</div>
+        </div>
+        <p className="welcome-note-lead">
+          歡迎大家來東京玩，這裡整理幾個我們自己的小推薦，讓旅程可以更輕鬆一點。
+        </p>
+        <div className="welcome-tip">
+          <div className="welcome-tip-number">01</div>
+          <div>
+            <div className="welcome-tip-title">衣服可以帶少量就好</div>
+            <p>
+              房內可以洗衣服，日本天氣也比較乾燥，晚上洗完通常隔天就會乾，不用太擔心。
+              行李空間可以多留一點給日本購物，回程會比較從容。
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="glass-card">
         <div className="card-header">
           <div className="card-icon">📍</div>
@@ -107,7 +127,6 @@ export function HomeTab() {
             ['services', '🏪', '超市'],
             ['restaurant', '🍜', '餐廳'],
             ['cityguide', '🗺️', '景點'],
-            ['emergency', '🆘', '緊急聯絡'],
           ].map(([id, icon, label]) => (
             <div key={id} className="nav-card" onClick={() => navTo(id)}>
               <span className="nc-icon">{icon}</span>
