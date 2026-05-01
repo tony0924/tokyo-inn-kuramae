@@ -1,10 +1,12 @@
 const STAY_ADDRESS = '東京都台東区蔵前4丁目23-7 日神デュオステージ蔵前NEXT';
+const NARITA_AIRPORT = 'Narita International Airport';
+const HANEDA_AIRPORT = 'Haneda Airport';
 
-const googleMapsTransitUrl = (origin: string) => {
+const googleMapsTransitUrl = (origin: string, destination: string) => {
   const params = new URLSearchParams({
     api: '1',
     origin,
-    destination: STAY_ADDRESS,
+    destination,
     travelmode: 'transit',
   });
 
@@ -25,11 +27,11 @@ export function AirportTransitTab() {
           <div className="card-title">Google Maps 路線</div>
         </div>
         <p className="airport-lead">
-          下方按鈕會直接帶入「機場 → 住宿」的起點與目的地，打開後建議再確認出發時間與當天班次。
+          下方按鈕會直接帶入起點與目的地，打開後建議再確認出發時間與當天班次。
         </p>
         <div className="airport-map-actions">
           <a
-            href={googleMapsTransitUrl('Narita International Airport')}
+            href={googleMapsTransitUrl(NARITA_AIRPORT, STAY_ADDRESS)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -37,12 +39,28 @@ export function AirportTransitTab() {
             🛫 成田機場 → 住宿
           </a>
           <a
-            href={googleMapsTransitUrl('Haneda Airport')}
+            href={googleMapsTransitUrl(HANEDA_AIRPORT, STAY_ADDRESS)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
           >
             🛫 羽田機場 → 住宿
+          </a>
+          <a
+            href={googleMapsTransitUrl(STAY_ADDRESS, NARITA_AIRPORT)}
+            target="_blank"
+            rel="noreferrer"
+            className="map-btn"
+          >
+            🧳 住宿 → 成田機場
+          </a>
+          <a
+            href={googleMapsTransitUrl(STAY_ADDRESS, HANEDA_AIRPORT)}
+            target="_blank"
+            rel="noreferrer"
+            className="map-btn"
+          >
+            🧳 住宿 → 羽田機場
           </a>
         </div>
       </div>
@@ -80,13 +98,34 @@ export function AirportTransitTab() {
             <li>到住宿還需要再轉車，整體不一定比較省事。</li>
           </ul>
 
+          <div className="sub-label">住宿 → 成田機場</div>
+          <ul className="bullet-list">
+            <li>
+              從 <strong>藏前站</strong> 搭都營淺草線方向，選擇往成田機場方向的
+              <strong> Access 特急 / Sky Access</strong> 班次。
+            </li>
+            <li>
+              若 Google Maps 顯示需換車，通常在 <strong>淺草</strong>、<strong>押上</strong>
+              或沿線車站換乘，請以當天 App 顯示為準。
+            </li>
+            <li>回機場建議預留行李移動與等車時間，班次方向請再次確認是成田機場。</li>
+          </ul>
+
           <a
-            href={googleMapsTransitUrl('Narita International Airport')}
+            href={googleMapsTransitUrl(NARITA_AIRPORT, STAY_ADDRESS)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
           >
             📍 用 Google Maps 查看成田路線
+          </a>
+          <a
+            href={googleMapsTransitUrl(STAY_ADDRESS, NARITA_AIRPORT)}
+            target="_blank"
+            rel="noreferrer"
+            className="map-btn"
+          >
+            📍 查看住宿到成田機場
           </a>
         </section>
 
@@ -118,13 +157,34 @@ export function AirportTransitTab() {
             <li>藏前站下車後，建議優先找有電梯的出口，拖行李比較省力。</li>
           </ul>
 
+          <div className="sub-label">住宿 → 羽田機場</div>
+          <ul className="bullet-list">
+            <li>
+              從 <strong>藏前站</strong> 搭都營淺草線，選擇往羽田機場方向並直通
+              <strong> 京急線</strong> 的班次。
+            </li>
+            <li>
+              若需要換車，通常會在 <strong>泉岳寺</strong> 或沿線車站銜接京急線，
+              請以 Google Maps 當天顯示的月台與班次為準。
+            </li>
+            <li>羽田航廈分為第 1、第 2、第 3 航廈，出發前請確認航空公司所在航廈。</li>
+          </ul>
+
           <a
-            href={googleMapsTransitUrl('Haneda Airport')}
+            href={googleMapsTransitUrl(HANEDA_AIRPORT, STAY_ADDRESS)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
           >
             📍 用 Google Maps 查看羽田路線
+          </a>
+          <a
+            href={googleMapsTransitUrl(STAY_ADDRESS, HANEDA_AIRPORT)}
+            target="_blank"
+            rel="noreferrer"
+            className="map-btn"
+          >
+            📍 查看住宿到羽田機場
           </a>
         </section>
       </div>
