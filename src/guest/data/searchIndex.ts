@@ -2,6 +2,7 @@ export type GuestTabId =
   | 'home'
   | 'checkin'
   | 'arrival'
+  | 'airport'
   | 'facilities'
   | 'items'
   | 'services'
@@ -21,8 +22,8 @@ export const searchIndex: SearchEntry[] = [
   { section: '入退房', tab: 'checkin', title: 'Check-In 注意事項', content: '入住 冰箱 床單 禁菸 熱水機 checkin 入房' },
   { section: '入退房', tab: 'checkin', title: 'Check-Out 注意事項', content: '退房 遙控器 吸塵器 清潔 冰箱 垃圾 關燈 checkout' },
   { section: '抵達', tab: 'arrival', title: '附近車站', content: '大江戶線 淺草線 銀座線 藏前站 田原町站 電梯 車站 地鐵 捷運' },
-  { section: '抵達', tab: 'arrival', title: '成田機場交通', content: '成田機場 sky access 淺草線 機場 交通 narita airport' },
-  { section: '抵達', tab: 'arrival', title: '羽田機場交通', content: '羽田機場 京急 淺草線 機場 交通 haneda airport' },
+  { section: '機場交通', tab: 'airport', title: '成田機場交通', content: '成田機場 sky access skyliner 淺草線 機場 交通 narita airport google maps' },
+  { section: '機場交通', tab: 'airport', title: '羽田機場交通', content: '羽田機場 京急 淺草線 機場 交通 haneda airport google maps' },
   { section: '抵達', tab: 'arrival', title: '建築進入方式', content: '玻璃門 磁扣 鑰匙 感應 電梯 204室 門鎖 入口 building entrance' },
   { section: '抵達', tab: 'arrival', title: '垃圾分類', content: '垃圾 一般垃圾 廚餘 寶特瓶 塑膠 紙板 資源回收 trash garbage' },
   { section: '設施', tab: 'facilities', title: '門鎖使用', content: '門鎖 開門 鎖門 順時針 逆時針 open lock door' },

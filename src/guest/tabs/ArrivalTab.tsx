@@ -63,32 +63,6 @@ export function ArrivalTab() {
         </ul>
 
         <div className="divider"></div>
-        <div className="sub-label">✈️ 成田機場 → 民宿</div>
-        <ul className="bullet-list">
-          <li>
-            搭乘 <strong>Sky Access（約每 40 分鐘一班）→ 淺草線</strong>
-            ，多數列車直達。
-          </li>
-          <li>第一航廈：往 1 號月台搭乘 Access 特快。</li>
-          <li>第二航廈：共用月台，請確認是 Sky Access 後再上車。</li>
-          <li>
-            需換車時，在 <strong>押上</strong> 或 <strong>淺草</strong>{' '}
-            同月台換淺草線。
-          </li>
-          <li>不推薦 Skyliner（票價約 2 倍，且需步行約 1 公里轉乘大江戶線）。</li>
-        </ul>
-
-        <div className="sub-label">✈️ 羽田機場 → 民宿</div>
-        <ul className="bullet-list">
-          <li>
-            搭乘 <strong>京急機場線 → 淺草線</strong>，多數列車直達。
-          </li>
-          <li>
-            需換車時，在 <strong>東日本橋</strong> 站同月台換淺草線。
-          </li>
-        </ul>
-
-        <div className="divider"></div>
         <div className="sub-label">🚇 交通便利地點</div>
         <ul className="bullet-list">
           <li>

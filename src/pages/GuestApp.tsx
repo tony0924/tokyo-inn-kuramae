@@ -3,6 +3,7 @@ import { GuestLayout } from '@/guest/GuestLayout';
 import { HomeTab } from '@/guest/tabs/HomeTab';
 import { CheckinTab } from '@/guest/tabs/CheckinTab';
 import { ArrivalTab } from '@/guest/tabs/ArrivalTab';
+import { AirportTransitTab } from '@/guest/tabs/AirportTransitTab';
 import { FacilitiesTab } from '@/guest/tabs/FacilitiesTab';
 import { ItemsTab } from '@/guest/tabs/ItemsTab';
 import { ServicesTab } from '@/guest/tabs/ServicesTab';
@@ -17,6 +18,7 @@ export default function GuestApp() {
         <Route path="home" element={<HomeTab />} />
         <Route path="checkin" element={<CheckinTab />} />
         <Route path="arrival" element={<ArrivalTab />} />
+        <Route path="airport" element={<AirportTransitTab />} />
         <Route path="facilities" element={<FacilitiesTab />} />
         <Route path="items" element={<ItemsTab />} />
         <Route path="services" element={<ServicesTab />} />

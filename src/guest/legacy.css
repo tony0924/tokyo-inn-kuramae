@@ -1093,6 +1093,46 @@
     }
 
     /* ════════════════════════════════════════
+       AIRPORT TRANSIT
+    ════════════════════════════════════════ */
+    .airport-lead {
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      line-height: 1.8;
+      margin: 0 0 14px;
+    }
+
+    .airport-map-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .airport-route-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .airport-route-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .airport-route-card .map-btn {
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .route-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    /* ════════════════════════════════════════
        ITEMS GRID
     ════════════════════════════════════════ */
     .items-grid {
@@ -1461,6 +1501,7 @@
       .hero h1 { font-size: 1.9rem; }
       .hero { padding: 28px 22px; }
       .items-grid { grid-template-columns: 1fr; }
+      .airport-route-grid { grid-template-columns: 1fr; }
       .img-grid { grid-template-columns: repeat(2, 1fr); }
       .place-card { flex-direction: column; align-items: flex-start; }
       .search-wrap { max-width: unset; flex: 1; }

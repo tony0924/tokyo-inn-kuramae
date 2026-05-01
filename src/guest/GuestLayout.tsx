@@ -14,6 +14,7 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: '首頁' },
   { id: 'checkin', icon: '📋', label: '入退房' },
   { id: 'arrival', icon: '🚃', label: '抵達' },
+  { id: 'airport', icon: '✈️', label: '機場' },
   { id: 'facilities', icon: '🔧', label: '設施' },
   { id: 'items', icon: '📦', label: '備品' },
   { id: 'services', icon: '🏪', label: '超市' },

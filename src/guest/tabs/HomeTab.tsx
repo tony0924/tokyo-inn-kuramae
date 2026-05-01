@@ -146,6 +146,7 @@ export function HomeTab() {
           {[
             ['checkin', '📋', '入退房'],
             ['arrival', '🚃', '抵達方式'],
+            ['airport', '✈️', '機場交通'],
             ['facilities', '🔧', '設施說明'],
             ['items', '📦', '備品清單'],
             ['services', '🏪', '超市'],
