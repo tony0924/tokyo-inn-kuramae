@@ -6,6 +6,7 @@ import {
   saveGuestAccessSession,
   validateGuestAccessCode,
 } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 
 export default function GuestCodeLoginPage() {
   const { fbUser, user, loading } = useAuth();
@@ -29,6 +30,12 @@ export default function GuestCodeLoginPage() {
         setError('此訪客碼不存在、尚未生效或已過期。請確認後再試一次。');
         return;
       }
+      await recordGuestPageEvent({
+        eventType: 'code_login',
+        path: '/code-login',
+        guestAccessCode: access.code,
+        guestAccess: access,
+      }).catch((err) => console.warn('record guest code login failed', err));
       saveGuestAccessSession(access.code);
       navigate('/guest/home', { replace: true });
     } catch (err) {

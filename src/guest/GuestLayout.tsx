@@ -7,6 +7,7 @@ import {
   getStoredGuestAccessCode,
   formatGuestCode,
 } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 import { searchIndex, type GuestTabId, type SearchEntry } from './data/searchIndex';
 import './legacy.css';
 
@@ -53,6 +54,25 @@ export function GuestLayout() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (user) {
+      recordGuestPageEvent({
+        eventType: 'page_view',
+        path: location.pathname,
+        user,
+      }).catch((err) => console.warn('record guest page view failed', err));
+      return;
+    }
+
+    if (guestCode) {
+      recordGuestPageEvent({
+        eventType: 'page_view',
+        path: location.pathname,
+        guestAccessCode: guestCode,
+      }).catch((err) => console.warn('record guest code page view failed', err));
+    }
+  }, [guestCode, location.pathname, user]);
 
   return (
     <LightboxProvider>

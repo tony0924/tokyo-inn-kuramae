@@ -86,6 +86,28 @@ export interface GuestAccessCode extends GuestAccessCodeDoc {
   id: string;
 }
 
+export type GuestPageViewEventType = 'page_view' | 'code_login';
+export type GuestPageViewVisitorType = 'gmail' | 'guest_code' | 'admin_preview';
+
+export interface GuestPageViewDoc {
+  eventType: GuestPageViewEventType;
+  visitorType: GuestPageViewVisitorType;
+  path: string;
+  userUid: string | null;
+  userEmail: string | null;
+  userName: string | null;
+  guestAccessCode: string | null;
+  guestEmail: string | null;
+  guestName: string | null;
+  userAgent: string;
+  deviceId: string;
+  createdAt: Timestamp;
+}
+
+export interface GuestPageView extends GuestPageViewDoc {
+  id: string;
+}
+
 export interface KeyDoc {
   code: string;
   label: string;

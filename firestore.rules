@@ -84,6 +84,36 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    function isValidGuestAccessCode(code) {
+      return code is string
+        && exists(/databases/$(database)/documents/guestAccessCodes/$(code))
+        && get(/databases/$(database)/documents/guestAccessCodes/$(code)).data.active == true
+        && get(/databases/$(database)/documents/guestAccessCodes/$(code)).data.startsAt <= request.time
+        && get(/databases/$(database)/documents/guestAccessCodes/$(code)).data.expiresAt > request.time;
+    }
+
+    match /guestPageViews/{id} {
+      allow read, list, delete: if isAdmin();
+      allow create: if request.resource.data.createdAt == request.time
+        && request.resource.data.eventType in ['page_view', 'code_login']
+        && request.resource.data.path is string
+        && request.resource.data.deviceId is string
+        && request.resource.data.userAgent is string
+        && (
+          (
+            isSignedIn()
+            && request.resource.data.visitorType in ['gmail', 'admin_preview']
+            && request.resource.data.userUid == request.auth.uid
+            && request.resource.data.userEmail == request.auth.token.email
+          )
+          || (
+            request.resource.data.visitorType == 'guest_code'
+            && isValidGuestAccessCode(request.resource.data.guestAccessCode)
+          )
+        );
+      allow update: if false;
+    }
+
     match /bookings/{id} {
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.guestUid == request.auth.uid);
