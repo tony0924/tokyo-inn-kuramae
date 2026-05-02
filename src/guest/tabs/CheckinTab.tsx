@@ -51,18 +51,20 @@ export function CheckinTab() {
             全室（含陽台）<strong>禁菸</strong>
           </li>
           <li>
-            使用廚房／浴室熱水前，請先開啟熱水機（
-            <a
-              href="#"
-              className="inline-link"
-              onClick={(e) => {
-                e.preventDefault();
-                jumpTo('facilities', 'anchor-hotwater');
-              }}
-            >
-              詳見設施說明 →
-            </a>
-            ）
+            <span>
+              使用廚房／浴室熱水前，請先開啟熱水機（
+              <a
+                href="#"
+                className="inline-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  jumpTo('facilities', 'anchor-hotwater');
+                }}
+              >
+                詳見設施說明 →
+              </a>
+              ）
+            </span>
           </li>
           <li>若有必需品不足，請通知我們後自行購入並回傳收據，金額會退回</li>
         </ul>
@@ -75,18 +77,20 @@ export function CheckinTab() {
           <li>移除拋棄式床單</li>
           <li>清空冰箱</li>
           <li>
-            丟棄所有垃圾（
-            <a
-              href="#"
-              className="inline-link"
-              onClick={(e) => {
-                e.preventDefault();
-                jumpTo('arrival', 'anchor-garbage');
-              }}
-            >
-              請見「抵達」頁垃圾分類說明 →
-            </a>
-            ）
+            <span>
+              丟棄所有垃圾（
+              <a
+                href="#"
+                className="inline-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  jumpTo('arrival', 'anchor-garbage');
+                }}
+              >
+                請見「抵達」頁垃圾分類說明 →
+              </a>
+              ）
+            </span>
           </li>
           <li>關燈、關浴室抽風機、關熱水機</li>
           <li>拍照或錄影並回傳：臥室、客廳、冰箱、廚房、浴室</li>

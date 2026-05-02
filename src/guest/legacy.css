@@ -1018,6 +1018,7 @@
 
     .checklist .inline-link {
       display: inline;
+      white-space: nowrap;
     }
 
     .instruction-card {
