@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   /** Optional anchor id for cross-tab jumps (jumpTo target) */
@@ -12,6 +13,12 @@ interface Props {
 
 export function Accordion({ id, icon, title, defaultOpen = false, children }: Props) {
   const [open, setOpen] = useState(defaultOpen);
+  const location = useLocation();
+
+  useEffect(() => {
+    const anchor = (location.state as { anchor?: string } | null)?.anchor;
+    if (id && anchor === id) setOpen(true);
+  }, [id, location.state]);
 
   return (
     <div className="accordion" id={id}>

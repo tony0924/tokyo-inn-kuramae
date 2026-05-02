@@ -676,6 +676,51 @@
       z-index: 1;
     }
 
+    .must-see-card {
+      border-color: rgba(201,168,76,0.18);
+    }
+
+    .must-see-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .must-see-item {
+      text-align: left;
+      border: 1px solid rgba(201,168,76,0.14);
+      border-radius: var(--radius-sm);
+      background: rgba(0,0,0,0.14);
+      padding: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .must-see-item:hover {
+      border-color: rgba(201,168,76,0.36);
+      background: rgba(201,168,76,0.08);
+      transform: translateY(-2px);
+    }
+
+    .must-see-item span {
+      display: inline-flex;
+      color: var(--gold-light);
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .must-see-item strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .must-see-item small {
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
     .welcome-note-lead {
       color: var(--text-mid);
       font-size: 0.92rem;
@@ -1198,6 +1243,42 @@
       color: #9ab8e4;
     }
 
+    .photo-hint {
+      margin: -4px 0 10px;
+      color: var(--text-soft);
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+
+    .avoid-card {
+      border-color: rgba(192,57,43,0.2);
+    }
+
+    .faq-answer {
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    .inline-button-link {
+      display: inline;
+      padding: 0;
+      margin-left: 6px;
+      border: none;
+      background: transparent;
+      color: var(--gold-light);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .inline-button-link:hover {
+      color: var(--gold);
+    }
+
     /* ════════════════════════════════════════
        AIRPORT TRANSIT
     ════════════════════════════════════════ */
@@ -1642,6 +1723,7 @@
       .nav-grid { grid-template-columns: repeat(3, 1fr); }
       .hero h1 { font-size: 1.9rem; }
       .hero { padding: 28px 22px; }
+      .must-see-grid { grid-template-columns: 1fr; }
       .items-grid { grid-template-columns: 1fr; }
       .airport-summary-grid { grid-template-columns: 1fr; }
       .airport-route-grid { grid-template-columns: 1fr; }

@@ -21,6 +21,7 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'services', icon: '🏪', label: '超市' },
   { id: 'restaurant', icon: '🍜', label: '餐廳' },
   { id: 'cityguide', icon: '🗺️', label: '景點' },
+  { id: 'faq', icon: '❓', label: 'FAQ' },
 ];
 
 function highlight(text: string, q: string): string {
@@ -167,7 +168,7 @@ export function GuestLayout() {
                     className="search-result-item"
                     onClick={() => {
                       setQuery('');
-                      navigate(`/guest/${r.tab}`);
+                      navigate(`/guest/${r.tab}`, r.anchor ? { state: { anchor: r.anchor } } : undefined);
                     }}
                   >
                     <div className="sri-section">{r.section}</div>

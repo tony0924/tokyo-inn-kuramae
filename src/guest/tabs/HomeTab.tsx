@@ -66,6 +66,30 @@ export function HomeTab() {
         </button>
       </div>
 
+      <div className="glass-card must-see-card">
+        <div className="card-header">
+          <div className="card-icon">✨</div>
+          <div className="card-title">第一次入住先看</div>
+        </div>
+        <div className="must-see-grid">
+          <button type="button" className="must-see-item" onClick={() => navTo('checkin')}>
+            <span>01</span>
+            <strong>入退房須知</strong>
+            <small>床單、熱水機、退房整理</small>
+          </button>
+          <button type="button" className="must-see-item" onClick={() => navTo('arrival')}>
+            <span>02</span>
+            <strong>抵達與進房</strong>
+            <small>磁扣、電梯、204 室</small>
+          </button>
+          <button type="button" className="must-see-item" onClick={() => navTo('facilities')}>
+            <span>03</span>
+            <strong>設施使用</strong>
+            <small>門鎖、IH 爐、熱水機</small>
+          </button>
+        </div>
+      </div>
+
       <div className="glass-card welcome-note-card">
         <div className="card-header">
           <div className="card-icon">🥳</div>
@@ -162,6 +186,7 @@ export function HomeTab() {
             ['services', '🏪', '超市'],
             ['restaurant', '🍜', '餐廳'],
             ['cityguide', '🗺️', '景點'],
+            ['faq', '❓', 'FAQ'],
           ].map(([id, icon, label]) => (
             <div key={id} className="nav-card" onClick={() => navTo(id)}>
               <span className="nc-icon">{icon}</span>

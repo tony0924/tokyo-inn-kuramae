@@ -13,7 +13,7 @@ export function FacilitiesTab() {
         <h2>設施說明</h2>
       </div>
 
-      <Accordion icon="🚪" title="玄關 — 門鎖" defaultOpen>
+      <Accordion id="anchor-door-lock" icon="🚪" title="玄關 — 門鎖" defaultOpen>
         <ul className="bullet-list">
           <li>
             Open：往<strong>逆時針</strong>轉 → 鎖起

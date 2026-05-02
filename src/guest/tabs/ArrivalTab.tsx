@@ -13,7 +13,7 @@ export function ArrivalTab() {
         <h2>抵達指南</h2>
       </div>
 
-      <div className="glass-card">
+      <div className="glass-card" id="anchor-arrival-flow">
         <div className="card-header">
           <div className="card-icon">📍</div>
           <div className="card-title">住宿地址</div>
@@ -94,7 +94,7 @@ export function ArrivalTab() {
         </ul>
       </Accordion>
 
-      <Accordion icon="🏢" title="建築進入方式" defaultOpen>
+      <Accordion id="anchor-building" icon="🏢" title="建築進入方式" defaultOpen>
         <ul className="bullet-list">
           <li>第一扇玻璃門 — 直接進入</li>
           <li>
@@ -141,19 +141,20 @@ export function ArrivalTab() {
           </div>
         </div>
 
-        <PhotoGroup label="廚房" srcs={arrivalPhotos.kitchen} />
-        <PhotoGroup label="客廳" srcs={arrivalPhotos.livingRoom} />
-        <PhotoGroup label="臥室" srcs={arrivalPhotos.bedroom} />
-        <PhotoGroup label="浴室" srcs={arrivalPhotos.bathroom} />
+        <PhotoGroup label="廚房" hint="找 IH 爐、冰箱與備品位置" srcs={arrivalPhotos.kitchen} />
+        <PhotoGroup label="客廳" hint="找沙發床、壁櫃與餐桌位置" srcs={arrivalPhotos.livingRoom} />
+        <PhotoGroup label="臥室" hint="確認床、枕頭、棉被與冷氣位置" srcs={arrivalPhotos.bedroom} />
+        <PhotoGroup label="浴室" hint="找洗衣機、熱水機與浴室設備" srcs={arrivalPhotos.bathroom} />
       </Accordion>
 
       <Accordion icon="📷" title="細節物品擺放">
-        <PhotoGroup label="廚房" srcs={arrivalPhotos.kitchenDetails} />
+        <PhotoGroup label="廚房" hint="餐具、鍋具與調味料位置" srcs={arrivalPhotos.kitchenDetails} />
         <PhotoGroup
           label="客廳壁櫃（棉被、枕頭、拋棄式床單）"
+          hint="找床單、枕頭、棉被請看這裡"
           srcs={arrivalPhotos.cabinetDetails}
         />
-        <PhotoGroup label="玄關鞋櫃（拋棄式拖鞋）" srcs={arrivalPhotos.shoeCabinet} />
+        <PhotoGroup label="玄關鞋櫃（拋棄式拖鞋）" hint="找拖鞋與玄關備品" srcs={arrivalPhotos.shoeCabinet} />
       </Accordion>
 
       <Accordion id="anchor-garbage" icon="🗑️" title="垃圾分類" defaultOpen>
@@ -186,10 +187,11 @@ export function ArrivalTab() {
   );
 }
 
-function PhotoGroup({ label, srcs }: { label: string; srcs: string[] }) {
+function PhotoGroup({ label, hint, srcs }: { label: string; hint?: string; srcs: string[] }) {
   return (
     <>
       <div className="sub-label">{label}</div>
+      {hint && <div className="photo-hint">{hint}</div>}
       <div className="img-grid">
         {srcs.map((src) => (
           <ZoomableImg

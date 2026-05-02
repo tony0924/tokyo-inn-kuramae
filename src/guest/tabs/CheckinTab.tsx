@@ -19,7 +19,7 @@ export function CheckinTab() {
         </div>
       </div>
 
-      <Accordion icon="✅" title="Check-In 注意事項" defaultOpen>
+      <Accordion id="anchor-checkin" icon="✅" title="Check-In 注意事項" defaultOpen>
         <ul className="checklist">
           <li>冰箱插電（如有需要使用）</li>
         </ul>
@@ -70,7 +70,7 @@ export function CheckinTab() {
         </ul>
       </Accordion>
 
-      <Accordion icon="🏁" title="Check-Out 注意事項" defaultOpen>
+      <Accordion id="anchor-checkout" icon="🏁" title="Check-Out 注意事項" defaultOpen>
         <ul className="checklist">
           <li>冷氣＆電視遙控器擺回客廳餐桌上</li>
           <li>全室地板用吸塵器清潔</li>

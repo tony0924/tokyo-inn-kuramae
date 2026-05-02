@@ -35,6 +35,17 @@ export function RestaurantTab() {
         <h2>餐廳推薦</h2>
       </div>
 
+      <div className="glass-card avoid-card">
+        <div className="card-header">
+          <div className="card-icon">⚠️</div>
+          <div className="card-title">餐廳避雷</div>
+        </div>
+        <ul className="bullet-list">
+          <li>門口斜對面的麵包店不太推薦。</li>
+          <li>巷口的鰻魚飯不太推薦。</li>
+        </ul>
+      </div>
+
       <PlaceMap
         places={places}
         sidebar={
