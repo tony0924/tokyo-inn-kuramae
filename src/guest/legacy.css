@@ -974,6 +974,34 @@
       margin-top: 8px;
     }
 
+    .nested-bullet-list {
+      list-style: none;
+      padding: 8px 0 0;
+      margin: 0;
+      width: 100%;
+    }
+
+    .nested-bullet-list li {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      padding: 6px 0;
+      border-bottom: none;
+      color: var(--text-mid);
+      font-size: 0.84rem;
+      line-height: 1.7;
+    }
+
+    .nested-bullet-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold-light);
+      flex-shrink: 0;
+      margin-top: 9px;
+    }
+
     .step-list {
       counter-reset: step;
       list-style: none;

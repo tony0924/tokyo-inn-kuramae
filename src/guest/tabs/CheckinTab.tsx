@@ -22,7 +22,20 @@ export function CheckinTab() {
       <Accordion icon="✅" title="Check-In 注意事項" defaultOpen>
         <ul className="bullet-list">
           <li>冰箱插電（如有需要使用）</li>
-          <li>取出客廳壁櫃右側的拋棄式床單組，並套在床＆枕頭上</li>
+          <li>
+            <strong>床單／枕頭套使用說明（二擇一）：</strong>
+            <ul className="nested-bullet-list">
+              <li>
+                <strong>不用洗：</strong>
+                取出客廳壁櫃右側的拋棄式床單組，並套在床與枕頭上。
+              </li>
+              <li>
+                <strong>需要洗：</strong>
+                將現有的床單和枕頭套放入洗衣機清洗，從櫃子中拿出乾淨的床單和枕頭套使用。
+                洗完的床單與枕頭套晾乾後，請整理好放回櫃子。
+              </li>
+            </ul>
+          </li>
           <li>
             客廳的壁櫃內為主人個人物品，<strong>請勿翻動</strong>
           </li>
