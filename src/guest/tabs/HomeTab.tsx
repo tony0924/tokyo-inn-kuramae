@@ -106,6 +106,13 @@ export function HomeTab() {
               如果是 Sky Access 特急，通常可以直達藏前站；如果是 Sky Access 機場特快，
               車不會停藏前站，請在前一站淺草站下車，同月台等下一班往藏前方向的車再上車。
             </p>
+            <button
+              type="button"
+              className="welcome-tip-link"
+              onClick={() => navTo('airport')}
+            >
+              查看機場交通詳細指引 →
+            </button>
           </div>
         </div>
       </div>
