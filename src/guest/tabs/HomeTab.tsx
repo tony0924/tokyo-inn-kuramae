@@ -103,8 +103,11 @@ export function HomeTab() {
               比較推薦搭 Sky Access，車程大約 1 小時。
             </p>
             <p>
-              如果是 Sky Access 特急，通常可以直達藏前站；如果是 Sky Access 機場特快，
-              車不會停藏前站，請在前一站淺草站下車，同月台等下一班往藏前方向的車再上車。
+              如果是「Sky Access 特急」，通常可以直達藏前站。
+            </p>
+            <p>
+              如果是「Sky Access 機場特快」，車不會停藏前站，請在前一站淺草站下車，
+              同月台等下一班往藏前方向的車再上車。
             </p>
             <button
               type="button"
