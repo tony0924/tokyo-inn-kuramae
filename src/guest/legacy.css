@@ -974,32 +974,35 @@
       margin-top: 8px;
     }
 
-    .nested-bullet-list {
-      list-style: none;
-      padding: 8px 0 0;
-      margin: 0;
-      width: 100%;
+    .instruction-card {
+      margin: 10px 0 8px;
+      padding: 14px 16px;
+      border: 1px solid rgba(201,168,76,0.14);
+      border-radius: var(--radius-sm);
+      background: rgba(0,0,0,0.14);
     }
 
-    .nested-bullet-list li {
-      display: flex;
+    .instruction-card-title {
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .instruction-option {
+      display: grid;
+      grid-template-columns: auto 1fr;
       gap: 8px;
-      align-items: flex-start;
-      padding: 6px 0;
-      border-bottom: none;
       color: var(--text-mid);
-      font-size: 0.84rem;
-      line-height: 1.7;
+      font-size: 0.86rem;
+      line-height: 1.75;
+      padding: 8px 0;
+      border-top: 1px solid rgba(201,168,76,0.08);
     }
 
-    .nested-bullet-list li::before {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--gold-light);
-      flex-shrink: 0;
-      margin-top: 9px;
+    .instruction-option strong {
+      color: var(--gold-light);
+      white-space: nowrap;
     }
 
     .step-list {
