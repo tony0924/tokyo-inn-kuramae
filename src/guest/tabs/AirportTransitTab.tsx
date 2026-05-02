@@ -65,6 +65,39 @@ export function AirportTransitTab() {
         </div>
       </div>
 
+      <div className="airport-summary-grid">
+        <div className="airport-summary-card">
+          <div className="airport-summary-title">成田機場</div>
+          <div className="airport-summary-row">
+            <span>推薦</span>
+            <strong>Sky Access</strong>
+          </div>
+          <div className="airport-summary-row">
+            <span>時間</span>
+            <strong>約 1 小時</strong>
+          </div>
+          <div className="airport-summary-row">
+            <span>提醒</span>
+            <strong>不推薦 Skyliner</strong>
+          </div>
+        </div>
+        <div className="airport-summary-card">
+          <div className="airport-summary-title">羽田機場</div>
+          <div className="airport-summary-row">
+            <span>推薦</span>
+            <strong>京急機場線</strong>
+          </div>
+          <div className="airport-summary-row">
+            <span>優點</span>
+            <strong>離市區較近</strong>
+          </div>
+          <div className="airport-summary-row">
+            <span>提醒</span>
+            <strong>確認出發航廈</strong>
+          </div>
+        </div>
+      </div>
+
       <div className="airport-route-grid">
         <section className="glass-card airport-route-card">
           <div className="card-header">

@@ -974,6 +974,44 @@
       margin-top: 8px;
     }
 
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+      color: var(--text);
+      font-size: 0.875rem;
+      line-height: 1.65;
+    }
+
+    .checklist li:last-child {
+      border-bottom: none;
+      padding-bottom: 2px;
+    }
+
+    .checklist li::before {
+      content: '✓';
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.28);
+      color: var(--gold-light);
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-top: 1px;
+    }
+
     .instruction-card {
       margin: 10px 0 8px;
       padding: 14px 16px;
@@ -1023,6 +1061,14 @@
     }
 
     .step-list li:last-child { border-bottom: none; }
+
+    .step-list.compact {
+      margin-top: 4px;
+    }
+
+    .step-list.compact li {
+      padding: 8px 0;
+    }
 
     .step-list li::before {
       content: counter(step);
@@ -1156,6 +1202,42 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+    }
+
+    .airport-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .airport-summary-card {
+      background: var(--bg-high);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    .airport-summary-title {
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .airport-summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-top: 1px solid rgba(201,168,76,0.08);
+      font-size: 0.86rem;
+      color: var(--text-mid);
+    }
+
+    .airport-summary-row strong {
+      color: var(--gold-light);
+      text-align: right;
     }
 
     .airport-route-grid {
@@ -1551,6 +1633,7 @@
       .hero h1 { font-size: 1.9rem; }
       .hero { padding: 28px 22px; }
       .items-grid { grid-template-columns: 1fr; }
+      .airport-summary-grid { grid-template-columns: 1fr; }
       .airport-route-grid { grid-template-columns: 1fr; }
       .img-grid { grid-template-columns: repeat(2, 1fr); }
       .place-card { flex-direction: column; align-items: flex-start; }

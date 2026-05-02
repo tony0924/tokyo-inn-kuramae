@@ -40,6 +40,20 @@ export function ArrivalTab() {
         </a>
       </div>
 
+      <div className="glass-card">
+        <div className="card-header">
+          <div className="card-icon">🧭</div>
+          <div className="card-title">抵達當天流程</div>
+        </div>
+        <ol className="step-list compact">
+          <li>抵達藏前站後，優先走有電梯或手扶梯的出口，拖行李會比較輕鬆。</li>
+          <li>步行到日神デュオステージ蔵前ＮＥＸＴ，確認地址為蔵前 4丁目23−7。</li>
+          <li>第一扇玻璃門可直接進入；第二扇玻璃門使用鑰匙上的磁扣感應右側黑色區域。</li>
+          <li>搭電梯到二樓，出電梯左轉，第一間即為 204 室。</li>
+          <li>使用電子鎖密碼或鑰匙開門，下方門鎖請保持開啟狀態。</li>
+        </ol>
+      </div>
+
       <Accordion icon="🚇" title="交通方式" defaultOpen>
         <div className="sub-label">附近車站</div>
         <ul className="bullet-list">
