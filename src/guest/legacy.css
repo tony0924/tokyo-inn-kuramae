@@ -1012,12 +1012,21 @@
       margin-top: 1px;
     }
 
+    .checklist li > * {
+      min-width: 0;
+    }
+
+    .checklist .inline-link {
+      display: inline;
+    }
+
     .instruction-card {
-      margin: 10px 0 8px;
+      margin: 0;
       padding: 14px 16px;
       border: 1px solid rgba(201,168,76,0.14);
       border-radius: var(--radius-sm);
       background: rgba(0,0,0,0.14);
+      width: 100%;
     }
 
     .instruction-card-title {
