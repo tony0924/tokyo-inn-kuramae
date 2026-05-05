@@ -1,12 +1,10 @@
 import { PlaceCard, PlaceMap } from '@/guest/shared/PlaceMap';
-import { mapPlaces } from '@/guest/data/mapPlaces';
-
-const places = mapPlaces.services;
+import { useGuestPlaces } from '@/guest/useGuestPlaces';
 
 export function ServicesTab() {
-  // First 3 are convenience stores, last 2 are supermarkets
-  const conv = places.slice(0, 3);
-  const sup = places.slice(3);
+  const { places, loading } = useGuestPlaces('services');
+  const conv = places.filter((place) => place.category === 'convenience');
+  const sup = places.filter((place) => place.category === 'supermarket');
 
   return (
     <div className="section active">
@@ -14,25 +12,26 @@ export function ServicesTab() {
         <div className="page-header-icon">🏪</div>
         <h2>附近超市 &amp; 便利商店</h2>
       </div>
+      {loading && <p className="photo-hint">正在同步後台新增的推薦地點…</p>}
       <PlaceMap
         places={places}
         sidebar={
           <>
             <div className="section-label">便利商店</div>
-            {conv.map((p, i) => (
+            {conv.map((p) => (
               <PlaceCard
-                key={p.name}
-                idx={i}
+                key={p.id ?? p.name}
+                idx={places.indexOf(p)}
                 place={p}
                 mapId="services"
                 tags={<span className="tag tag-green">便利商店</span>}
               />
             ))}
             <div className="section-label">超市</div>
-            {sup.map((p, i) => (
+            {sup.map((p) => (
               <PlaceCard
-                key={p.name}
-                idx={i + conv.length}
+                key={p.id ?? p.name}
+                idx={places.indexOf(p)}
                 place={p}
                 mapId="services"
                 tags={<span className="tag tag-red">超市</span>}

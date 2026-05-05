@@ -1,7 +1,5 @@
 import { PlaceCard, PlaceMap } from '@/guest/shared/PlaceMap';
-import { mapPlaces } from '@/guest/data/mapPlaces';
-
-const places = mapPlaces.cityguide;
+import { useGuestPlaces } from '@/guest/useGuestPlaces';
 
 const meta: Record<string, { extra: string }> = {
   '淺草寺 雷門': { extra: '免費' },
@@ -11,6 +9,8 @@ const meta: Record<string, { extra: string }> = {
 };
 
 export function CityguideTab() {
+  const { places, loading } = useGuestPlaces('cityguide');
+
   return (
     <div className="section active">
       <div className="page-header">
@@ -18,11 +18,12 @@ export function CityguideTab() {
         <h2>景點推薦</h2>
       </div>
 
+      {loading && <p className="photo-hint">正在同步後台新增的推薦地點…</p>}
       <PlaceMap
         places={places}
         sidebar={places.map((p, i) => (
           <PlaceCard
-            key={p.name}
+            key={p.id ?? p.name}
             idx={i}
             place={p}
             mapId="cityguide"

@@ -10,6 +10,7 @@ const navItems = [
   { to: '/admin/users', label: '使用者' },
   { to: '/admin/keys', label: '鑰匙管理' },
   { to: '/admin/guest-codes', label: '訪客碼' },
+  { to: '/admin/recommendations', label: '推薦地點' },
   { to: '/admin/notifications', label: '通知設定' },
 ];
 

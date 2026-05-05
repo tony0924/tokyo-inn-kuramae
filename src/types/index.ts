@@ -120,3 +120,29 @@ export interface KeyDoc {
 export interface KeyItem extends KeyDoc {
   id: string;
 }
+
+export type RecommendationSection = 'services' | 'restaurant' | 'cityguide';
+export type RecommendationCategory =
+  | 'convenience'
+  | 'supermarket'
+  | 'restaurant'
+  | 'cafe'
+  | 'sight';
+
+export interface RecommendationDoc {
+  section: RecommendationSection;
+  category: RecommendationCategory;
+  name: string;
+  lat: number;
+  lng: number;
+  url: string;
+  note: string;
+  active: boolean;
+  sortOrder: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Recommendation extends RecommendationDoc {
+  id: string;
+}

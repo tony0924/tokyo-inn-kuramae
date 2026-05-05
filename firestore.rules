@@ -69,6 +69,11 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    match /recommendations/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /keys/{code} {
       allow read, create, update, delete: if isAdmin();
     }

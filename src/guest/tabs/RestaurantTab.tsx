@@ -1,7 +1,5 @@
 import { PlaceCard, PlaceMap } from '@/guest/shared/PlaceMap';
-import { mapPlaces } from '@/guest/data/mapPlaces';
-
-const places = mapPlaces.restaurant;
+import { useGuestPlaces } from '@/guest/useGuestPlaces';
 
 // Map matching the legacy structure: first 6 are restaurants, rest are cafés / sweets.
 const RESTAURANT_TAGS: Record<string, string> = {
@@ -25,8 +23,9 @@ const moneyTagFor = (name: string): string => {
 };
 
 export function RestaurantTab() {
-  const food = places.slice(0, 6);
-  const cafe = places.slice(6);
+  const { places, loading } = useGuestPlaces('restaurant');
+  const food = places.filter((place) => place.category === 'restaurant');
+  const cafe = places.filter((place) => place.category === 'cafe');
 
   return (
     <div className="section active">
@@ -46,15 +45,16 @@ export function RestaurantTab() {
         </ul>
       </div>
 
+      {loading && <p className="photo-hint">正在同步後台新增的推薦地點…</p>}
       <PlaceMap
         places={places}
         sidebar={
           <>
             <div className="section-label">餐廳</div>
-            {food.map((p, i) => (
+            {food.map((p) => (
               <PlaceCard
-                key={p.name}
-                idx={i}
+                key={p.id ?? p.name}
+                idx={places.indexOf(p)}
                 place={p}
                 mapId="restaurant"
                 tags={
@@ -66,10 +66,10 @@ export function RestaurantTab() {
               />
             ))}
             <div className="section-label">咖啡廳 &amp; 甜點</div>
-            {cafe.map((p, i) => (
+            {cafe.map((p) => (
               <PlaceCard
-                key={p.name}
-                idx={i + food.length}
+                key={p.id ?? p.name}
+                idx={places.indexOf(p)}
                 place={p}
                 mapId="restaurant"
                 tags={

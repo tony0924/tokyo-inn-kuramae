@@ -7,6 +7,7 @@ import { NotificationSettingsPage } from '@/admin/NotificationSettingsPage';
 import { UserManagement } from '@/admin/UserManagement';
 import { GuestCodeManagement } from '@/admin/GuestCodeManagement';
 import { KeyManagement } from '@/admin/KeyManagement';
+import { RecommendationManagement } from '@/admin/RecommendationManagement';
 
 export default function AdminApp() {
   return (
@@ -19,6 +20,7 @@ export default function AdminApp() {
         <Route path="users" element={<UserManagement />} />
         <Route path="keys" element={<KeyManagement />} />
         <Route path="guest-codes" element={<GuestCodeManagement />} />
+        <Route path="recommendations" element={<RecommendationManagement />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
         <Route path="*" element={<Navigate to="revenue" replace />} />
       </Route>

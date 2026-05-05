@@ -171,6 +171,7 @@ export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps
         </span>
         <div style={{ display: 'inline-block' }}>
           <div className="place-name">{place.name}</div>
+          {place.note && <div className="place-note">{place.note}</div>}
           {tags && <div className="place-meta">{tags}</div>}
         </div>
       </div>
