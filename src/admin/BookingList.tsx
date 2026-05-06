@@ -13,6 +13,18 @@ const PAY_LABEL: Record<PaymentStatus, string> = {
   paid: '已付',
 };
 
+type SortKey =
+  | 'guestName'
+  | 'guestEmail'
+  | 'checkIn'
+  | 'checkOut'
+  | 'partySize'
+  | 'amount'
+  | 'paymentStatus'
+  | 'guestAccessCode'
+  | 'keyStatus';
+type SortDirection = 'asc' | 'desc';
+
 export function BookingList() {
   const { bookings, loading } = useBookings();
   const [editing, setEditing] = useState<Booking | null>(null);
@@ -20,6 +32,8 @@ export function BookingList() {
   const [filter, setFilter] = useState<'upcoming' | 'all' | 'past'>('upcoming');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('checkIn');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -28,6 +42,39 @@ export function BookingList() {
       return bookings.filter((b) => b.checkOut.toDate() >= now);
     return bookings.filter((b) => b.checkOut.toDate() < now);
   }, [bookings, filter]);
+
+  const sortedBookings = useMemo(() => {
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const primary = compareBookings(a, b, sortKey) * direction;
+      if (primary !== 0) return primary;
+      return a.checkIn.toDate().getTime() - b.checkIn.toDate().getTime();
+    });
+  }, [filtered, sortDirection, sortKey]);
+
+  function toggleSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection('asc');
+  }
+
+  function renderSortHeader(label: string, key: SortKey) {
+    const active = sortKey === key;
+    const arrow = active ? (sortDirection === 'asc' ? '↑' : '↓') : '';
+    return (
+      <button
+        type="button"
+        className={`table-sort-button${active ? ' active' : ''}`}
+        onClick={() => toggleSort(key)}
+      >
+        <span>{label}</span>
+        <span className="table-sort-indicator" aria-hidden="true">{arrow}</span>
+      </button>
+    );
+  }
 
   async function handleDelete(booking: Booking) {
     if (!confirm(`確定要移除「${booking.guestName}」的預約嗎？`)) return;
@@ -83,20 +130,20 @@ export function BookingList() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>姓名</th>
-              <th>Email</th>
-              <th>入住</th>
-              <th>退房</th>
-              <th>人</th>
-              <th>金額</th>
-              <th>付款</th>
-              <th>訪客碼</th>
-              <th>鑰匙</th>
+              <th>{renderSortHeader('姓名', 'guestName')}</th>
+              <th>{renderSortHeader('Email', 'guestEmail')}</th>
+              <th>{renderSortHeader('入住', 'checkIn')}</th>
+              <th>{renderSortHeader('退房', 'checkOut')}</th>
+              <th>{renderSortHeader('人', 'partySize')}</th>
+              <th>{renderSortHeader('金額', 'amount')}</th>
+              <th>{renderSortHeader('付款', 'paymentStatus')}</th>
+              <th>{renderSortHeader('訪客碼', 'guestAccessCode')}</th>
+              <th>{renderSortHeader('鑰匙', 'keyStatus')}</th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((b) => (
+            {sortedBookings.map((b) => (
               <tr key={b.id} onClick={() => setEditing(b)} style={{ cursor: 'pointer' }}>
                 <td style={{ color: 'var(--text)' }}>{b.guestName}</td>
                 <td style={{ color: 'var(--text-mid)' }}>{b.guestEmail}</td>
@@ -155,4 +202,41 @@ function keyStatus(b: Booking): string {
   if (b.keyReturnedAt) return '已回收';
   if (b.keyLentAt) return '使用中';
   return '未交付';
+}
+
+function getPaymentStatusRank(status: PaymentStatus): number {
+  if (status === 'paid') return 0;
+  if (status === 'partial') return 1;
+  return 2;
+}
+
+function getKeyStatusRank(booking: Booking): number {
+  if (booking.keyReturnedAt) return 2;
+  if (booking.keyLentAt) return 1;
+  return 0;
+}
+
+function compareBookings(a: Booking, b: Booking, sortKey: SortKey): number {
+  switch (sortKey) {
+    case 'guestName':
+      return a.guestName.localeCompare(b.guestName, 'zh-Hant');
+    case 'guestEmail':
+      return a.guestEmail.localeCompare(b.guestEmail, 'zh-Hant');
+    case 'checkIn':
+      return a.checkIn.toDate().getTime() - b.checkIn.toDate().getTime();
+    case 'checkOut':
+      return a.checkOut.toDate().getTime() - b.checkOut.toDate().getTime();
+    case 'partySize':
+      return a.partySize - b.partySize;
+    case 'amount':
+      return a.amount - b.amount;
+    case 'paymentStatus':
+      return getPaymentStatusRank(a.paymentStatus) - getPaymentStatusRank(b.paymentStatus);
+    case 'guestAccessCode':
+      return (a.guestAccessCode || '').localeCompare(b.guestAccessCode || '', 'zh-Hant');
+    case 'keyStatus':
+      return getKeyStatusRank(a) - getKeyStatusRank(b);
+    default:
+      return 0;
+  }
 }
