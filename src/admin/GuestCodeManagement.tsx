@@ -11,6 +11,13 @@ import {
 import { watchGuestPageViews } from '@/lib/guestAnalytics';
 import type { GuestAccessCode, GuestPageView } from '@/types';
 
+type SortKey =
+  | 'label'
+  | 'code'
+  | 'status'
+  | 'usage'
+  | 'validRange'
+  | 'lastLoginAt';
 type SortDirection = 'asc' | 'desc';
 
 function toDateTimeInput(date: Date): string {
@@ -57,7 +64,8 @@ export function GuestCodeManagement() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('status');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => watchGuestAccessCodes(setCodes), []);
   useEffect(() => watchGuestPageViews(setViews), []);
@@ -67,11 +75,27 @@ export function GuestCodeManagement() {
   }, [codes]);
 
   const codeStats = useMemo(() => {
-    const stats = new Map<string, { loginCount: number; viewCount: number }>();
+    const stats = new Map<
+      string,
+      { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null }
+    >();
     views.forEach((view) => {
       if (!view.guestAccessCode) return;
-      const current = stats.get(view.guestAccessCode) ?? { loginCount: 0, viewCount: 0 };
-      if (view.eventType === 'code_login') current.loginCount += 1;
+      const current = stats.get(view.guestAccessCode) ?? {
+        loginCount: 0,
+        viewCount: 0,
+        lastLoginAt: null,
+      };
+      if (view.eventType === 'code_login') {
+        current.loginCount += 1;
+        if (
+          view.createdAt &&
+          (!current.lastLoginAt ||
+            view.createdAt.toDate().getTime() > current.lastLoginAt.toDate().getTime())
+        ) {
+          current.lastLoginAt = view.createdAt;
+        }
+      }
       if (view.eventType === 'page_view') current.viewCount += 1;
       stats.set(view.guestAccessCode, current);
     });
@@ -80,12 +104,13 @@ export function GuestCodeManagement() {
 
   const sortedCodes = useMemo(() => {
     return [...codes].sort((a, b) => {
-      const direction = statusSortDirection === 'asc' ? 1 : -1;
-      const rankDiff = (getStatusRank(a) - getStatusRank(b)) * direction;
-      if (rankDiff !== 0) return rankDiff;
-      return (b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()) * direction;
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      const primary =
+        compareGuestCodes(a, b, sortKey, codeStats.get(a.code), codeStats.get(b.code)) * direction;
+      if (primary !== 0) return primary;
+      return a.code.localeCompare(b.code, 'zh-Hant') * direction;
     });
-  }, [codes, statusSortDirection]);
+  }, [codeStats, codes, sortDirection, sortKey]);
 
   const dashboard = useMemo(() => {
     const pageViews = views.filter((view) => view.eventType === 'page_view');
@@ -170,6 +195,30 @@ export function GuestCodeManagement() {
   async function copyCode(value: string) {
     await navigator.clipboard.writeText(formatGuestCode(value));
     setMessage(`已複製 ${formatGuestCode(value)}`);
+  }
+
+  function toggleSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection('asc');
+  }
+
+  function renderSortHeader(label: string, key: SortKey) {
+    const active = sortKey === key;
+    const arrow = active ? (sortDirection === 'asc' ? '↑' : '↓') : '';
+    return (
+      <button
+        type="button"
+        className={`table-sort-button${active ? ' active' : ''}`}
+        onClick={() => toggleSort(key)}
+      >
+        <span>{label}</span>
+        <span className="table-sort-indicator" aria-hidden="true">{arrow}</span>
+      </button>
+    );
   }
 
   return (
@@ -296,38 +345,30 @@ export function GuestCodeManagement() {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>用途</th>
-            <th>訪客碼</th>
-            <th>
-              <button
-                type="button"
-                className="table-sort-button active"
-                onClick={() =>
-                  setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
-                }
-              >
-                <span>狀態</span>
-                <span className="table-sort-indicator" aria-hidden="true">
-                  {statusSortDirection === 'asc' ? '↑' : '↓'}
-                </span>
-              </button>
-            </th>
-            <th>使用次數</th>
-            <th>有效區間</th>
+            <th>{renderSortHeader('用途', 'label')}</th>
+            <th>{renderSortHeader('訪客碼', 'code')}</th>
+            <th>{renderSortHeader('狀態', 'status')}</th>
+            <th>{renderSortHeader('使用次數', 'usage')}</th>
+            <th>{renderSortHeader('有效區間', 'validRange')}</th>
+            <th>{renderSortHeader('最後登入時間', 'lastLoginAt')}</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
           {codes.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ color: 'var(--text-mid)' }}>
+              <td colSpan={7} style={{ color: 'var(--text-mid)' }}>
                 尚未建立訪客碼。
               </td>
             </tr>
           ) : (
             sortedCodes.map((item) => {
               const status = getStatus(item);
-              const usage = codeStats.get(item.code) ?? { loginCount: 0, viewCount: 0 };
+              const usage = codeStats.get(item.code) ?? {
+                loginCount: 0,
+                viewCount: 0,
+                lastLoginAt: null,
+              };
               return (
                 <tr key={item.id}>
                   <td style={{ color: 'var(--text)' }}>{item.label}</td>
@@ -343,6 +384,9 @@ export function GuestCodeManagement() {
                   <td style={{ color: 'var(--text-mid)' }}>
                     {format(item.startsAt.toDate(), 'yyyy-MM-dd HH:mm')} ~{' '}
                     {format(item.expiresAt.toDate(), 'yyyy-MM-dd HH:mm')}
+                  </td>
+                  <td style={{ color: 'var(--text-mid)', whiteSpace: 'nowrap' }}>
+                    {usage.lastLoginAt ? format(usage.lastLoginAt.toDate(), 'yyyy-MM-dd HH:mm') : '—'}
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -379,4 +423,48 @@ export function GuestCodeManagement() {
       </table>
     </div>
   );
+}
+
+function compareText(a: string, b: string): number {
+  return (a || '').localeCompare(b || '', 'zh-Hant');
+}
+
+function compareTimestamp(
+  a?: { toDate: () => Date } | null,
+  b?: { toDate: () => Date } | null
+): number {
+  const aTime = a?.toDate ? a.toDate().getTime() : 0;
+  const bTime = b?.toDate ? b.toDate().getTime() : 0;
+  return aTime - bTime;
+}
+
+function compareGuestCodes(
+  a: GuestAccessCode,
+  b: GuestAccessCode,
+  sortKey: SortKey,
+  aStats?: { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null },
+  bStats?: { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null }
+): number {
+  switch (sortKey) {
+    case 'label':
+      return compareText(a.label, b.label);
+    case 'code':
+      return compareText(a.code, b.code);
+    case 'status':
+      return getStatusRank(a) - getStatusRank(b);
+    case 'usage':
+      return (
+        (aStats?.loginCount ?? 0) - (bStats?.loginCount ?? 0) ||
+        (aStats?.viewCount ?? 0) - (bStats?.viewCount ?? 0)
+      );
+    case 'validRange':
+      return (
+        compareTimestamp(a.startsAt, b.startsAt) ||
+        compareTimestamp(a.expiresAt, b.expiresAt)
+      );
+    case 'lastLoginAt':
+      return compareTimestamp(aStats?.lastLoginAt, bStats?.lastLoginAt);
+    default:
+      return 0;
+  }
 }
