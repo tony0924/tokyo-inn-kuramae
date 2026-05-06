@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   createRecommendation,
   deleteRecommendation,
@@ -13,6 +13,7 @@ import type { Recommendation, RecommendationCategory, RecommendationSection } fr
 type FormState = RecommendationInput & { active: boolean };
 type SortKey = 'section' | 'category' | 'name' | 'source' | 'note' | 'rating' | 'sortOrder' | 'status';
 type SortDirection = 'asc' | 'desc';
+type FilterKey = 'all' | RecommendationCategory;
 
 const SECTION_LABELS: Record<RecommendationSection, string> = {
   services: '超市 / 便利商店',
@@ -57,16 +58,35 @@ export function RecommendationManagement() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('status');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [filterKey, setFilterKey] = useState<FilterKey>('all');
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const filteredRecommendations = useMemo(
+    () =>
+      filterKey === 'all'
+        ? recommendations
+        : recommendations.filter((item) => item.category === filterKey),
+    [filterKey, recommendations]
+  );
   const sortedRecommendations = useMemo(
     () =>
-      [...recommendations].sort((a, b) => {
+      [...filteredRecommendations].sort((a, b) => {
         const direction = sortDirection === 'asc' ? 1 : -1;
         const primary = compareRecommendations(a, b, sortKey) * direction;
         if (primary !== 0) return primary;
         return a.name.localeCompare(b.name, 'zh-Hant') * direction;
       }),
-    [recommendations, sortDirection, sortKey]
+    [filteredRecommendations, sortDirection, sortKey]
   );
+
+  useEffect(() => {
+    if (!editingId) return;
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }, 220);
+  }, [editingId]);
 
   function toggleSort(nextKey: SortKey) {
     if (sortKey === nextKey) {
@@ -207,8 +227,18 @@ export function RecommendationManagement() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="admin-table"
+        style={{ padding: 18, marginBottom: 24, scrollMarginTop: 96 }}
+      >
         <h2 style={sectionTitleStyle}>{editingId ? '編輯推薦地點' : '新增推薦地點'}</h2>
+        {editingId && (
+          <p style={{ color: 'var(--gold-light)', fontSize: 13, marginBottom: 14 }}>
+            已帶入要編輯的資料，修改後直接按「儲存變更」即可。
+          </p>
+        )}
         <div className="form-grid">
           <div className="form-field">
             <label>分頁 *</label>
@@ -239,6 +269,7 @@ export function RecommendationManagement() {
           <div className="form-field">
             <label>名稱 *</label>
             <input
+              ref={nameInputRef}
               value={form.name}
               onChange={(e) => updateField('name', e.target.value)}
               placeholder="例如：淺草炸肉餅"
@@ -341,70 +372,101 @@ export function RecommendationManagement() {
       {loading ? (
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>{renderSortHeader('分頁', 'section')}</th>
-              <th>{renderSortHeader('分類', 'category')}</th>
-              <th>{renderSortHeader('名稱', 'name')}</th>
-              <th>{renderSortHeader('來源', 'source')}</th>
-              <th>{renderSortHeader('備註', 'note')}</th>
-              <th>{renderSortHeader('星等', 'rating')}</th>
-              <th>{renderSortHeader('排序', 'sortOrder')}</th>
-              <th>{renderSortHeader('狀態', 'status')}</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRecommendations.length === 0 ? (
+        <>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            <button
+              type="button"
+              className={filterKey === 'all' ? 'btn-gold' : 'btn-ghost'}
+              onClick={() => setFilterKey('all')}
+              style={{ padding: '6px 14px', fontSize: 13 }}
+            >
+              全部
+            </button>
+            {(Object.entries(CATEGORY_LABELS) as Array<[RecommendationCategory, string]>).map(
+              ([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={filterKey === value ? 'btn-gold' : 'btn-ghost'}
+                  onClick={() => setFilterKey(value)}
+                  style={{ padding: '6px 14px', fontSize: 13 }}
+                >
+                  {label}
+                </button>
+              )
+            )}
+          </div>
+
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={9} style={{ color: 'var(--text-mid)' }}>
-                  尚未匯入或新增推薦。按上方「匯入目前預設清單」後，就能看到現在房客頁面的現有地點。
-                </td>
+                <th>{renderSortHeader('分頁', 'section')}</th>
+                <th>{renderSortHeader('分類', 'category')}</th>
+                <th>{renderSortHeader('名稱', 'name')}</th>
+                <th>{renderSortHeader('來源', 'source')}</th>
+                <th>{renderSortHeader('備註', 'note')}</th>
+                <th>{renderSortHeader('星等', 'rating')}</th>
+                <th>{renderSortHeader('排序', 'sortOrder')}</th>
+                <th>{renderSortHeader('狀態', 'status')}</th>
+                <th>操作</th>
               </tr>
-            ) : (
-              sortedRecommendations.map((item) => (
-                <tr key={item.id}>
-                  <td>{SECTION_LABELS[item.section]}</td>
-                  <td>{CATEGORY_LABELS[item.category]}</td>
-                  <td style={{ color: 'var(--text)' }}>
-                    <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
-                      {item.name}
-                    </a>
-                  </td>
-                  <td style={{ color: 'var(--text-mid)' }}>
-                    {item.source === 'default' ? '預設清單' : '後台新增'}
-                  </td>
-                  <td style={{ color: 'var(--text-mid)', maxWidth: 320 }}>{item.note || '—'}</td>
-                  <td style={{ color: 'var(--gold-light)' }}>{renderStars(item.rating ?? 1)}</td>
-                  <td style={{ color: 'var(--text-mid)' }}>{item.sortOrder}</td>
-                  <td>
-                    <span className={`badge ${item.active ? 'paid' : 'role-pending'}`}>
-                      {item.active ? '顯示中' : '已停用'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button type="button" className="btn-ghost" onClick={() => startEdit(item)}>
-                        編輯
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-ghost"
-                        onClick={() => setRecommendationActive(item.id, !item.active)}
-                      >
-                        {item.active ? '停用' : '啟用'}
-                      </button>
-                      <button type="button" className="btn-danger" onClick={() => handleDelete(item)}>
-                        刪除
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {sortedRecommendations.length === 0 ? (
+                <tr>
+                  <td colSpan={9} style={{ color: 'var(--text-mid)' }}>
+                    {filterKey === 'all'
+                      ? '尚未匯入或新增推薦。按上方「匯入目前預設清單」後，就能看到現在房客頁面的現有地點。'
+                      : `目前沒有「${CATEGORY_LABELS[filterKey]}」分類的推薦地點。`}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                sortedRecommendations.map((item) => (
+                  <tr
+                    key={item.id}
+                    style={editingId === item.id ? { outline: '1px solid rgba(201,168,76,0.4)' } : undefined}
+                  >
+                    <td>{SECTION_LABELS[item.section]}</td>
+                    <td>{CATEGORY_LABELS[item.category]}</td>
+                    <td style={{ color: 'var(--text)' }}>
+                      <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
+                        {item.name}
+                      </a>
+                    </td>
+                    <td style={{ color: 'var(--text-mid)' }}>
+                      {item.source === 'default' ? '預設清單' : '後台新增'}
+                    </td>
+                    <td style={{ color: 'var(--text-mid)', maxWidth: 320 }}>{item.note || '—'}</td>
+                    <td style={{ color: 'var(--gold-light)' }}>{renderStars(item.rating ?? 1)}</td>
+                    <td style={{ color: 'var(--text-mid)' }}>{item.sortOrder}</td>
+                    <td>
+                      <span className={`badge ${item.active ? 'paid' : 'role-pending'}`}>
+                        {item.active ? '顯示中' : '已停用'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button type="button" className="btn-ghost" onClick={() => startEdit(item)}>
+                          編輯
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => setRecommendationActive(item.id, !item.active)}
+                        >
+                          {item.active ? '停用' : '啟用'}
+                        </button>
+                        <button type="button" className="btn-danger" onClick={() => handleDelete(item)}>
+                          刪除
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </>
       )}
     </div>
   );
