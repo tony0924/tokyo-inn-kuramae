@@ -1,13 +1,6 @@
 import { PlaceCard, PlaceMap } from '@/guest/shared/PlaceMap';
 import { useGuestPlaces } from '@/guest/useGuestPlaces';
 
-const meta: Record<string, { extra: string }> = {
-  '淺草寺 雷門': { extra: '免費' },
-  合羽橋道具街: { extra: '🤑' },
-  東京國立博物館: { extra: '🤑' },
-  上野之森美術館: { extra: '🤑🤑' },
-};
-
 export function CityguideTab() {
   const { places, loading } = useGuestPlaces('cityguide');
 
@@ -30,16 +23,26 @@ export function CityguideTab() {
             tags={
               <>
                 <span className="tag tag-red">景點</span>
-                <span
-                  className={`tag ${meta[p.name]?.extra === '免費' ? 'tag-yellow' : 'tag-gold'}`}
-                >
-                  {meta[p.name]?.extra ?? '🤑'}
-                </span>
+                <span className="tag tag-gold rating-tag">{renderRatingStars(p.rating ?? 1)}</span>
               </>
             }
           />
         ))}
       />
     </div>
+  );
+}
+
+function renderRatingStars(rating: number) {
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
+  return (
+    <>
+      <span className="rating-stars" aria-label={`推薦 ${safeRating} 顆星`}>
+        {'★'.repeat(safeRating)}
+      </span>
+      <span className="rating-stars rating-stars-muted" aria-hidden="true">
+        {'★'.repeat(5 - safeRating)}
+      </span>
+    </>
   );
 }

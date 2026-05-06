@@ -24,7 +24,12 @@ export function ServicesTab() {
                 idx={places.indexOf(p)}
                 place={p}
                 mapId="services"
-                tags={<span className="tag tag-green">便利商店</span>}
+                tags={
+                  <>
+                    <span className="tag tag-green">便利商店</span>
+                    <span className="tag tag-gold rating-tag">{renderRatingStars(p.rating ?? 1)}</span>
+                  </>
+                }
               />
             ))}
             <div className="section-label">超市</div>
@@ -34,12 +39,31 @@ export function ServicesTab() {
                 idx={places.indexOf(p)}
                 place={p}
                 mapId="services"
-                tags={<span className="tag tag-red">超市</span>}
+                tags={
+                  <>
+                    <span className="tag tag-red">超市</span>
+                    <span className="tag tag-gold rating-tag">{renderRatingStars(p.rating ?? 1)}</span>
+                  </>
+                }
               />
             ))}
           </>
         }
       />
     </div>
+  );
+}
+
+function renderRatingStars(rating: number) {
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
+  return (
+    <>
+      <span className="rating-stars" aria-label={`推薦 ${safeRating} 顆星`}>
+        {'★'.repeat(safeRating)}
+      </span>
+      <span className="rating-stars rating-stars-muted" aria-hidden="true">
+        {'★'.repeat(5 - safeRating)}
+      </span>
+    </>
   );
 }

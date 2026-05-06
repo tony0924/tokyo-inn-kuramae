@@ -22,11 +22,11 @@ export type PlaceCategory = 'convenience' | 'supermarket' | 'restaurant' | 'cafe
 
 export const mapPlaces: Record<MapKey, Place[]> = {
   services: [
-    { name: 'LAWSON',          lat: 35.7070, lng: 139.7897, color: '#4a9eff', url: 'https://maps.app.goo.gl/1qyxZVsHN8fjJJJb8', category: 'convenience', source: 'default' },
-    { name: '7-Eleven',        lat: 35.7067, lng: 139.7905, color: '#4a9eff', url: 'https://maps.app.goo.gl/rkChJxLzP3TXZwS37', category: 'convenience', source: 'default' },
-    { name: '全家 FamilyMart',  lat: 35.7079, lng: 139.7881, color: '#4a9eff', url: 'https://maps.app.goo.gl/CRD1vhzZ4pLTK4Ae6', category: 'convenience', source: 'default' },
-    { name: 'Life スーパー',    lat: 35.7084, lng: 139.7858, color: '#56d4b0', url: 'https://maps.app.goo.gl/hMA7DQ3HvzoVufwk7', category: 'supermarket', source: 'default' },
-    { name: '24H 生鮮超市',     lat: 35.7062, lng: 139.7913, color: '#56d4b0', url: 'https://maps.app.goo.gl/3yYTJEdMT1aM7gFAA', category: 'supermarket', source: 'default' },
+    { name: 'LAWSON',          lat: 35.7070, lng: 139.7897, color: '#4a9eff', url: 'https://maps.app.goo.gl/1qyxZVsHN8fjJJJb8', category: 'convenience', rating: 2, source: 'default' },
+    { name: '7-Eleven',        lat: 35.7067, lng: 139.7905, color: '#4a9eff', url: 'https://maps.app.goo.gl/rkChJxLzP3TXZwS37', category: 'convenience', rating: 2, source: 'default' },
+    { name: '全家 FamilyMart',  lat: 35.7079, lng: 139.7881, color: '#4a9eff', url: 'https://maps.app.goo.gl/CRD1vhzZ4pLTK4Ae6', category: 'convenience', rating: 1, source: 'default' },
+    { name: 'Life スーパー',    lat: 35.7084, lng: 139.7858, color: '#56d4b0', url: 'https://maps.app.goo.gl/hMA7DQ3HvzoVufwk7', category: 'supermarket', rating: 3, source: 'default' },
+    { name: '24H 生鮮超市',     lat: 35.7062, lng: 139.7913, color: '#56d4b0', url: 'https://maps.app.goo.gl/3yYTJEdMT1aM7gFAA', category: 'supermarket', rating: 2, source: 'default' },
   ],
   restaurant: [
     { name: '淺草炸肉餅',              lat: 35.7131, lng: 139.7964, color: '#e88ba0', url: 'https://maps.app.goo.gl/HZgQinzc4uosJ811A', category: 'restaurant', rating: 1, source: 'default' },
@@ -43,9 +43,9 @@ export const mapPlaces: Record<MapKey, Place[]> = {
     { name: 'Dandelion Chocolate',     lat: 35.7060, lng: 139.7879, color: '#b08fe8', url: 'https://maps.app.goo.gl/6W2HiebuinWijLPE9', category: 'cafe', rating: 2, source: 'default' },
   ],
   cityguide: [
-    { name: '淺草寺 雷門',    lat: 35.7147, lng: 139.7966, color: '#ff7b7b', url: 'https://maps.app.goo.gl/fyTC7p2m1Y5xuSiJ8', category: 'sight', source: 'default' },
-    { name: '合羽橋道具街',   lat: 35.7166, lng: 139.7927, color: '#ff7b7b', url: 'https://maps.app.goo.gl/m6hZEB2JAdfLJAPt6', category: 'sight', source: 'default' },
-    { name: '東京國立博物館', lat: 35.7188, lng: 139.7766, color: '#ff7b7b', url: 'https://maps.app.goo.gl/WJAeSJR8MFNKQx9g8', category: 'sight', source: 'default' },
-    { name: '上野之森美術館', lat: 35.7135, lng: 139.7744, color: '#ff7b7b', url: 'https://maps.app.goo.gl/K7pb2C99ocwrM4uEA', category: 'sight', source: 'default' },
+    { name: '淺草寺 雷門',    lat: 35.7147, lng: 139.7966, color: '#ff7b7b', url: 'https://maps.app.goo.gl/fyTC7p2m1Y5xuSiJ8', category: 'sight', rating: 2, source: 'default' },
+    { name: '合羽橋道具街',   lat: 35.7166, lng: 139.7927, color: '#ff7b7b', url: 'https://maps.app.goo.gl/m6hZEB2JAdfLJAPt6', category: 'sight', rating: 1, source: 'default' },
+    { name: '東京國立博物館', lat: 35.7188, lng: 139.7766, color: '#ff7b7b', url: 'https://maps.app.goo.gl/WJAeSJR8MFNKQx9g8', category: 'sight', rating: 1, source: 'default' },
+    { name: '上野之森美術館', lat: 35.7135, lng: 139.7744, color: '#ff7b7b', url: 'https://maps.app.goo.gl/K7pb2C99ocwrM4uEA', category: 'sight', rating: 2, source: 'default' },
   ],
 };
