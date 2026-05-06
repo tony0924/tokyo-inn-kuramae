@@ -11,6 +11,8 @@ import {
 import { watchGuestPageViews } from '@/lib/guestAnalytics';
 import type { GuestAccessCode, GuestPageView } from '@/types';
 
+type SortDirection = 'asc' | 'desc';
+
 function toDateTimeInput(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
@@ -55,6 +57,7 @@ export function GuestCodeManagement() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => watchGuestAccessCodes(setCodes), []);
   useEffect(() => watchGuestPageViews(setViews), []);
@@ -77,11 +80,12 @@ export function GuestCodeManagement() {
 
   const sortedCodes = useMemo(() => {
     return [...codes].sort((a, b) => {
-      const rankDiff = getStatusRank(a) - getStatusRank(b);
+      const direction = statusSortDirection === 'asc' ? 1 : -1;
+      const rankDiff = (getStatusRank(a) - getStatusRank(b)) * direction;
       if (rankDiff !== 0) return rankDiff;
-      return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+      return (b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()) * direction;
     });
-  }, [codes]);
+  }, [codes, statusSortDirection]);
 
   const dashboard = useMemo(() => {
     const pageViews = views.filter((view) => view.eventType === 'page_view');
@@ -294,7 +298,20 @@ export function GuestCodeManagement() {
           <tr>
             <th>用途</th>
             <th>訪客碼</th>
-            <th>狀態</th>
+            <th>
+              <button
+                type="button"
+                className="table-sort-button active"
+                onClick={() =>
+                  setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+                }
+              >
+                <span>狀態</span>
+                <span className="table-sort-indicator" aria-hidden="true">
+                  {statusSortDirection === 'asc' ? '↑' : '↓'}
+                </span>
+              </button>
+            </th>
             <th>使用次數</th>
             <th>有效區間</th>
             <th>操作</th>

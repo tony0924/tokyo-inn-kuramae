@@ -317,6 +317,30 @@
   font-size: 11px;
 }
 
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.table-sort-button.active {
+  color: var(--text);
+}
+
+.table-sort-indicator {
+  min-width: 10px;
+  color: var(--gold-light);
+}
+
 .admin-table tr:last-child td {
   border-bottom: none;
 }

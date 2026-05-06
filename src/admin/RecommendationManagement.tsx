@@ -11,6 +11,7 @@ import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
 import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
 
 type FormState = RecommendationInput & { active: boolean };
+type SortDirection = 'asc' | 'desc';
 
 const SECTION_LABELS: Record<RecommendationSection, string> = {
   services: '超市 / 便利商店',
@@ -52,15 +53,18 @@ export function RecommendationManagement() {
   const [importingDefaults, setImportingDefaults] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
   const sortedRecommendations = useMemo(
     () =>
       [...recommendations].sort(
         (a, b) =>
+          (getRecommendationStatusRank(a.active) - getRecommendationStatusRank(b.active)) *
+            (statusSortDirection === 'asc' ? 1 : -1) ||
           a.section.localeCompare(b.section) ||
           a.sortOrder - b.sortOrder ||
           a.name.localeCompare(b.name)
       ),
-    [recommendations]
+    [recommendations, statusSortDirection]
   );
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -310,7 +314,20 @@ export function RecommendationManagement() {
               <th>來源</th>
               <th>備註</th>
               <th>排序</th>
-              <th>狀態</th>
+              <th>
+                <button
+                  type="button"
+                  className="table-sort-button active"
+                  onClick={() =>
+                    setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+                  }
+                >
+                  <span>狀態</span>
+                  <span className="table-sort-indicator" aria-hidden="true">
+                    {statusSortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </th>
               <th>操作</th>
             </tr>
           </thead>
@@ -374,6 +391,10 @@ const sectionTitleStyle = {
   color: 'var(--gold-light)',
   marginBottom: 16,
 };
+
+function getRecommendationStatusRank(active: boolean): number {
+  return active ? 0 : 1;
+}
 
 function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
   return (Object.entries(mapPlaces) as Array<[MapKey, Place[]]>).flatMap(([section, places]) =>

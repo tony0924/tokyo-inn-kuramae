@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { createKey, deleteKey, normalizeKeyCode, setKeyActive, updateKey } from '@/lib/keys';
 import { useBookings } from './useBookings';
@@ -11,6 +11,9 @@ type EditingState = {
   notes: string;
 };
 
+type SortKey = 'code' | 'label' | 'status' | 'currentUsage' | 'notes' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 export function KeyManagement() {
   const { keys, loading } = useKeys();
   const { bookings } = useBookings();
@@ -21,12 +24,51 @@ export function KeyManagement() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('status');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const loanedByCode = new Map(
     bookings
       .filter((booking) => booking.keyCode && booking.keyLentAt && !booking.keyReturnedAt)
       .map((booking) => [normalizeKeyCode(booking.keyCode || ''), booking])
   );
+
+  const sortedKeys = useMemo(() => {
+    return [...keys].sort((a, b) => {
+      const aBooking = loanedByCode.get(normalizeKeyCode(a.code));
+      const bBooking = loanedByCode.get(normalizeKeyCode(b.code));
+      const direction = sortDirection === 'asc' ? 1 : -1;
+
+      const primary = compareKeys(a, b, aBooking, bBooking, sortKey) * direction;
+      if (primary !== 0) return primary;
+
+      return a.code.localeCompare(b.code, 'zh-Hant') * direction;
+    });
+  }, [keys, loanedByCode, sortDirection, sortKey]);
+
+  function toggleSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection('asc');
+  }
+
+  function renderSortHeader(label: string, key: SortKey) {
+    const active = sortKey === key;
+    const arrow = active ? (sortDirection === 'asc' ? '↑' : '↓') : '';
+    return (
+      <button
+        type="button"
+        className={`table-sort-button${active ? ' active' : ''}`}
+        onClick={() => toggleSort(key)}
+      >
+        <span>{label}</span>
+        <span className="table-sort-indicator" aria-hidden="true">{arrow}</span>
+      </button>
+    );
+  }
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -167,12 +209,12 @@ export function KeyManagement() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>鑰匙編號</th>
-              <th>名稱</th>
-              <th>狀態</th>
-              <th>目前使用</th>
-              <th>備註</th>
-              <th>建立時間</th>
+              <th>{renderSortHeader('鑰匙編號', 'code')}</th>
+              <th>{renderSortHeader('名稱', 'label')}</th>
+              <th>{renderSortHeader('狀態', 'status')}</th>
+              <th>{renderSortHeader('目前使用', 'currentUsage')}</th>
+              <th>{renderSortHeader('備註', 'notes')}</th>
+              <th>{renderSortHeader('建立時間', 'createdAt')}</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -184,7 +226,7 @@ export function KeyManagement() {
                 </td>
               </tr>
             ) : (
-              keys.map((key) => {
+              sortedKeys.map((key) => {
                 const loanedBooking = loanedByCode.get(normalizeKeyCode(key.code));
                 const status = getKeyStatus(key, Boolean(loanedBooking));
                 return (
@@ -254,6 +296,57 @@ function getKeyStatus(key: KeyItem, loaned: boolean): { label: string; className
   if (!key.active) return { label: '已停用', className: 'role-pending' };
   if (loaned) return { label: '出借中', className: 'partial' };
   return { label: '可出借', className: 'paid' };
+}
+
+function getKeyStatusOrder(key: KeyItem, loaned: boolean): number {
+  if (!key.active) return 2;
+  if (loaned) return 1;
+  return 0;
+}
+
+function compareText(a: string, b: string): number {
+  return (a || '').localeCompare(b || '', 'zh-Hant');
+}
+
+function compareDate(a?: { toDate?: () => Date } | null, b?: { toDate?: () => Date } | null): number {
+  const aTime = a?.toDate ? a.toDate().getTime() : 0;
+  const bTime = b?.toDate ? b.toDate().getTime() : 0;
+  return aTime - bTime;
+}
+
+function compareKeys(
+  a: KeyItem,
+  b: KeyItem,
+  aBooking: { guestName: string; checkIn: { toDate: () => Date } } | undefined,
+  bBooking: { guestName: string; checkIn: { toDate: () => Date } } | undefined,
+  sortKey: SortKey
+): number {
+  switch (sortKey) {
+    case 'code':
+      return compareText(a.code, b.code);
+    case 'label':
+      return compareText(a.label, b.label);
+    case 'status':
+      return (
+        getKeyStatusOrder(a, Boolean(aBooking)) - getKeyStatusOrder(b, Boolean(bBooking))
+      );
+    case 'currentUsage':
+      if (aBooking && bBooking) {
+        return (
+          compareDate(aBooking.checkIn, bBooking.checkIn) ||
+          compareText(aBooking.guestName, bBooking.guestName)
+        );
+      }
+      if (aBooking) return -1;
+      if (bBooking) return 1;
+      return 0;
+    case 'notes':
+      return compareText(a.notes, b.notes);
+    case 'createdAt':
+      return compareDate(a.createdAt, b.createdAt);
+    default:
+      return 0;
+  }
 }
 
 const sectionTitleStyle = {

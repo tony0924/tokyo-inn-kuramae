@@ -9,8 +9,10 @@ import {
   watchEmailAccess,
 } from '@/lib/users';
 import { useBookings } from './useBookings';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EmailAccess, User } from '@/types';
+
+type SortDirection = 'asc' | 'desc';
 
 export function UserManagement() {
   const { users, loading } = useUsers();
@@ -20,6 +22,7 @@ export function UserManagement() {
   const [emailAccess, setEmailAccess] = useState<EmailAccess[]>([]);
   const [inviting, setInviting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     return watchEmailAccess(setEmailAccess);
@@ -105,6 +108,23 @@ export function UserManagement() {
     (item) => !users.some((u) => u.email.toLowerCase() === item.email.toLowerCase())
   );
   const approvedCount = active.length + approvedEmailsWithoutLogin.length;
+  const sortedActiveUsers = useMemo(() => {
+    const direction = statusSortDirection === 'asc' ? 1 : -1;
+    return [...active].sort((a, b) => {
+      const statusDiff = (getUserStatusRank(a.active) - getUserStatusRank(b.active)) * direction;
+      if (statusDiff !== 0) return statusDiff;
+      return a.email.localeCompare(b.email, 'zh-Hant') * direction;
+    });
+  }, [active, statusSortDirection]);
+  const sortedApprovedEmailsWithoutLogin = useMemo(() => {
+    const direction = statusSortDirection === 'asc' ? 1 : -1;
+    return [...approvedEmailsWithoutLogin].sort((a, b) => {
+      const statusDiff =
+        (getPendingLoginStatusRank(a.active) - getPendingLoginStatusRank(b.active)) * direction;
+      if (statusDiff !== 0) return statusDiff;
+      return a.email.localeCompare(b.email, 'zh-Hant') * direction;
+    });
+  }, [approvedEmailsWithoutLogin, statusSortDirection]);
 
   return (
     <div>
@@ -231,12 +251,25 @@ export function UserManagement() {
               <th>姓名</th>
               <th>Email</th>
               <th>角色</th>
-              <th>狀態</th>
+              <th>
+                <button
+                  type="button"
+                  className="table-sort-button active"
+                  onClick={() =>
+                    setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+                  }
+                >
+                  <span>狀態</span>
+                  <span className="table-sort-indicator" aria-hidden="true">
+                    {statusSortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            {active.map((u) => (
+            {sortedActiveUsers.map((u) => (
               <tr key={u.uid}>
                 <td>{u.displayName || '—'}</td>
                 <td>{u.email}</td>
@@ -281,7 +314,7 @@ export function UserManagement() {
                 </td>
               </tr>
             ))}
-            {approvedEmailsWithoutLogin.map((item) => (
+            {sortedApprovedEmailsWithoutLogin.map((item) => (
               <tr key={item.id}>
                 <td>尚未登入</td>
                 <td>{item.email}</td>
@@ -310,4 +343,12 @@ export function UserManagement() {
       )}
     </div>
   );
+}
+
+function getUserStatusRank(active: boolean): number {
+  return active ? 0 : 1;
+}
+
+function getPendingLoginStatusRank(active: boolean): number {
+  return active ? 0 : 1;
 }
