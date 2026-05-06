@@ -1,27 +1,6 @@
 import { PlaceCard, PlaceMap } from '@/guest/shared/PlaceMap';
 import { useGuestPlaces } from '@/guest/useGuestPlaces';
 
-// Map matching the legacy structure: first 6 are restaurants, rest are cafés / sweets.
-const RESTAURANT_TAGS: Record<string, string> = {
-  淺草炸肉餅: '🤑',
-  'Tonkatsu Yutaka': '🤑🤑',
-  融化漢堡排福吉: '🤑🤑',
-  '拉麵 改': '🤑',
-  '拉麵元樂 總本店': '🤑',
-  'シンプル ラーメン': '🤑',
-  'HATCOFFEE': '🤑🤑',
-  KURAMAE_CANNELE: '🤑',
-  Confectionery_Lemon_Pie: '🤑🤑',
-  Shinonome_Seipansho: '🤑',
-  '淺草花月堂': '🤑',
-  'Dandelion Chocolate': '🤑🤑',
-};
-
-const moneyTagFor = (name: string): string => {
-  // Match by name; default to 🤑
-  return RESTAURANT_TAGS[name] ?? '🤑';
-};
-
 export function RestaurantTab() {
   const { places, loading } = useGuestPlaces('restaurant');
   const food = places.filter((place) => place.category === 'restaurant');
@@ -60,7 +39,7 @@ export function RestaurantTab() {
                 tags={
                   <>
                     <span className="tag tag-pink">餐廳</span>
-                    <span className="tag tag-gold">{moneyTagFor(p.name)}</span>
+                    <span className="tag tag-gold rating-tag">{renderRatingStars(p.rating ?? 1)}</span>
                   </>
                 }
               />
@@ -75,7 +54,7 @@ export function RestaurantTab() {
                 tags={
                   <>
                     <span className="tag tag-purple">咖啡廳</span>
-                    <span className="tag tag-gold">{moneyTagFor(p.name)}</span>
+                    <span className="tag tag-gold rating-tag">{renderRatingStars(p.rating ?? 1)}</span>
                   </>
                 }
               />
@@ -84,5 +63,19 @@ export function RestaurantTab() {
         }
       />
     </div>
+  );
+}
+
+function renderRatingStars(rating: number) {
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
+  return (
+    <>
+      <span className="rating-stars" aria-label={`推薦 ${safeRating} 顆星`}>
+        {'★'.repeat(safeRating)}
+      </span>
+      <span className="rating-stars rating-stars-muted" aria-hidden="true">
+        {'★'.repeat(5 - safeRating)}
+      </span>
+    </>
   );
 }

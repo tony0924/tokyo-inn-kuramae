@@ -139,6 +139,7 @@ export interface RecommendationDoc {
   lng: number;
   url: string;
   note: string;
+  rating?: number;
   active: boolean;
   sortOrder: number;
   createdAt: Timestamp;

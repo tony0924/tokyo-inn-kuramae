@@ -1272,6 +1272,20 @@
     .tag-yellow { background: rgba(201,168,76,0.12); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.25); }
     .tag-gold   { background: rgba(201,168,76,0.15); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.3); }
 
+    .rating-tag {
+      gap: 2px;
+      letter-spacing: 0;
+    }
+
+    .rating-stars {
+      color: var(--gold-light);
+      line-height: 1;
+    }
+
+    .rating-stars-muted {
+      color: rgba(201,168,76,0.26);
+    }
+
     /* ════════════════════════════════════════
        MAP BUTTON
     ════════════════════════════════════════ */

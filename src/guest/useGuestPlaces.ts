@@ -28,6 +28,7 @@ export function useGuestPlaces(section: MapKey): { places: Place[]; loading: boo
         url: item.url,
         category: item.category,
         note: item.note,
+        rating: item.rating,
         source: item.source ?? 'admin',
       }));
 

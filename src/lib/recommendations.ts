@@ -24,6 +24,7 @@ export type RecommendationInput = {
   lng: number;
   url: string;
   note: string;
+  rating: number;
   sortOrder: number;
   source?: RecommendationDoc['source'];
   defaultKey?: string | null;
@@ -53,6 +54,7 @@ export async function createRecommendation(input: RecommendationInput): Promise<
     lng: input.lng,
     url: input.url.trim(),
     note: input.note.trim(),
+    rating: input.rating,
     active: true,
     sortOrder: input.sortOrder,
     createdAt: serverTimestamp(),
@@ -80,6 +82,7 @@ export async function updateRecommendation(
     lng: input.lng,
     url: input.url.trim(),
     note: input.note.trim(),
+    rating: input.rating,
     active: input.active,
     sortOrder: input.sortOrder,
     updatedAt: serverTimestamp(),
@@ -103,4 +106,7 @@ function validateRecommendation(input: RecommendationInput): void {
     throw new Error('請填寫正確的經緯度');
   }
   if (!input.url.trim()) throw new Error('請填寫 Google Maps 連結');
+  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+    throw new Error('推薦星等請填 1 到 5');
+  }
 }

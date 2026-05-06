@@ -13,6 +13,7 @@ export interface Place {
   url: string;
   category?: PlaceCategory;
   note?: string;
+  rating?: number;
   source?: 'default' | 'admin';
 }
 
@@ -28,18 +29,18 @@ export const mapPlaces: Record<MapKey, Place[]> = {
     { name: '24H 生鮮超市',     lat: 35.7062, lng: 139.7913, color: '#56d4b0', url: 'https://maps.app.goo.gl/3yYTJEdMT1aM7gFAA', category: 'supermarket', source: 'default' },
   ],
   restaurant: [
-    { name: '淺草炸肉餅',              lat: 35.7131, lng: 139.7964, color: '#e88ba0', url: 'https://maps.app.goo.gl/HZgQinzc4uosJ811A', category: 'restaurant', source: 'default' },
-    { name: 'Tonkatsu Yutaka',         lat: 35.7101, lng: 139.7952, color: '#e88ba0', url: 'https://maps.app.goo.gl/x4rxxq62xu4hp8pE7', category: 'restaurant', source: 'default' },
-    { name: '融化漢堡排福吉',           lat: 35.7078, lng: 139.7933, color: '#e88ba0', url: 'https://maps.app.goo.gl/WZkreq6NqbJp1h5S8', category: 'restaurant', source: 'default' },
-    { name: '拉麵 改',                 lat: 35.7076, lng: 139.7920, color: '#e88ba0', url: 'https://maps.app.goo.gl/DrsdxorzpLxPoap56', category: 'restaurant', source: 'default' },
-    { name: '拉麵元樂 總本店',          lat: 35.7065, lng: 139.7910, color: '#e88ba0', url: 'https://maps.app.goo.gl/eSCs8YCrwFfX1qLA9', category: 'restaurant', source: 'default' },
-    { name: '麺 みつヰ',               lat: 35.7071, lng: 139.7896, color: '#e88ba0', url: 'https://maps.app.goo.gl/77MX6NtLyx6AYXKk9', category: 'restaurant', source: 'default' },
-    { name: 'HATCOFFEE',               lat: 35.7057, lng: 139.7882, color: '#b08fe8', url: 'https://maps.app.goo.gl/9a37J2WRaW7TPrDx8', category: 'cafe', source: 'default' },
-    { name: 'KURAMAE CANNELE',         lat: 35.7055, lng: 139.7876, color: '#b08fe8', url: 'https://maps.app.goo.gl/NREE8yXrPA25R9F58', category: 'cafe', source: 'default' },
-    { name: 'Confectionery Lemon Pie', lat: 35.7062, lng: 139.7868, color: '#b08fe8', url: 'https://maps.app.goo.gl/TYu9BfZPq8gGEywo9', category: 'cafe', source: 'default' },
-    { name: 'Shinonome Seipansho',     lat: 35.7048, lng: 139.7871, color: '#b08fe8', url: 'https://maps.app.goo.gl/qbCnfMA6DrvJQZ9C8', category: 'cafe', source: 'default' },
-    { name: '淺草花月堂',               lat: 35.7125, lng: 139.7966, color: '#b08fe8', url: 'https://maps.app.goo.gl/qVjSRJ1GNGNU5CpG8', category: 'cafe', source: 'default' },
-    { name: 'Dandelion Chocolate',     lat: 35.7060, lng: 139.7879, color: '#b08fe8', url: 'https://maps.app.goo.gl/6W2HiebuinWijLPE9', category: 'cafe', source: 'default' },
+    { name: '淺草炸肉餅',              lat: 35.7131, lng: 139.7964, color: '#e88ba0', url: 'https://maps.app.goo.gl/HZgQinzc4uosJ811A', category: 'restaurant', rating: 1, source: 'default' },
+    { name: 'Tonkatsu Yutaka',         lat: 35.7101, lng: 139.7952, color: '#e88ba0', url: 'https://maps.app.goo.gl/x4rxxq62xu4hp8pE7', category: 'restaurant', rating: 2, source: 'default' },
+    { name: '融化漢堡排福吉',           lat: 35.7078, lng: 139.7933, color: '#e88ba0', url: 'https://maps.app.goo.gl/WZkreq6NqbJp1h5S8', category: 'restaurant', rating: 2, source: 'default' },
+    { name: '拉麵 改',                 lat: 35.7076, lng: 139.7920, color: '#e88ba0', url: 'https://maps.app.goo.gl/DrsdxorzpLxPoap56', category: 'restaurant', rating: 1, source: 'default' },
+    { name: '拉麵元樂 總本店',          lat: 35.7065, lng: 139.7910, color: '#e88ba0', url: 'https://maps.app.goo.gl/eSCs8YCrwFfX1qLA9', category: 'restaurant', rating: 1, source: 'default' },
+    { name: '麺 みつヰ',               lat: 35.7071, lng: 139.7896, color: '#e88ba0', url: 'https://maps.app.goo.gl/77MX6NtLyx6AYXKk9', category: 'restaurant', rating: 1, source: 'default' },
+    { name: 'HATCOFFEE',               lat: 35.7057, lng: 139.7882, color: '#b08fe8', url: 'https://maps.app.goo.gl/9a37J2WRaW7TPrDx8', category: 'cafe', rating: 2, source: 'default' },
+    { name: 'KURAMAE CANNELE',         lat: 35.7055, lng: 139.7876, color: '#b08fe8', url: 'https://maps.app.goo.gl/NREE8yXrPA25R9F58', category: 'cafe', rating: 1, source: 'default' },
+    { name: 'Confectionery Lemon Pie', lat: 35.7062, lng: 139.7868, color: '#b08fe8', url: 'https://maps.app.goo.gl/TYu9BfZPq8gGEywo9', category: 'cafe', rating: 2, source: 'default' },
+    { name: 'Shinonome Seipansho',     lat: 35.7048, lng: 139.7871, color: '#b08fe8', url: 'https://maps.app.goo.gl/qbCnfMA6DrvJQZ9C8', category: 'cafe', rating: 1, source: 'default' },
+    { name: '淺草花月堂',               lat: 35.7125, lng: 139.7966, color: '#b08fe8', url: 'https://maps.app.goo.gl/qVjSRJ1GNGNU5CpG8', category: 'cafe', rating: 1, source: 'default' },
+    { name: 'Dandelion Chocolate',     lat: 35.7060, lng: 139.7879, color: '#b08fe8', url: 'https://maps.app.goo.gl/6W2HiebuinWijLPE9', category: 'cafe', rating: 2, source: 'default' },
   ],
   cityguide: [
     { name: '淺草寺 雷門',    lat: 35.7147, lng: 139.7966, color: '#ff7b7b', url: 'https://maps.app.goo.gl/fyTC7p2m1Y5xuSiJ8', category: 'sight', source: 'default' },

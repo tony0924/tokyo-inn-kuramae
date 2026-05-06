@@ -11,7 +11,7 @@ import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
 import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
 
 type FormState = RecommendationInput & { active: boolean };
-type SortKey = 'section' | 'category' | 'name' | 'source' | 'note' | 'sortOrder' | 'status';
+type SortKey = 'section' | 'category' | 'name' | 'source' | 'note' | 'rating' | 'sortOrder' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 const SECTION_LABELS: Record<RecommendationSection, string> = {
@@ -42,6 +42,7 @@ const EMPTY_FORM: FormState = {
   lng: 139.7876,
   url: '',
   note: '',
+  rating: 1,
   sortOrder: 100,
   active: true,
 };
@@ -136,6 +137,7 @@ export function RecommendationManagement() {
       lng: item.lng,
       url: item.url,
       note: item.note,
+      rating: item.rating ?? 1,
       sortOrder: item.sortOrder,
       active: item.active,
     });
@@ -244,6 +246,16 @@ export function RecommendationManagement() {
             />
           </div>
           <div className="form-field">
+            <label>推薦星等</label>
+            <input
+              type="number"
+              min={1}
+              max={5}
+              value={form.rating}
+              onChange={(e) => updateField('rating', Number(e.target.value))}
+            />
+          </div>
+          <div className="form-field">
             <label>排序</label>
             <input
               type="number"
@@ -337,6 +349,7 @@ export function RecommendationManagement() {
               <th>{renderSortHeader('名稱', 'name')}</th>
               <th>{renderSortHeader('來源', 'source')}</th>
               <th>{renderSortHeader('備註', 'note')}</th>
+              <th>{renderSortHeader('星等', 'rating')}</th>
               <th>{renderSortHeader('排序', 'sortOrder')}</th>
               <th>{renderSortHeader('狀態', 'status')}</th>
               <th>操作</th>
@@ -345,7 +358,7 @@ export function RecommendationManagement() {
           <tbody>
             {sortedRecommendations.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ color: 'var(--text-mid)' }}>
+                <td colSpan={9} style={{ color: 'var(--text-mid)' }}>
                   尚未匯入或新增推薦。按上方「匯入目前預設清單」後，就能看到現在房客頁面的現有地點。
                 </td>
               </tr>
@@ -363,6 +376,7 @@ export function RecommendationManagement() {
                     {item.source === 'default' ? '預設清單' : '後台新增'}
                   </td>
                   <td style={{ color: 'var(--text-mid)', maxWidth: 320 }}>{item.note || '—'}</td>
+                  <td style={{ color: 'var(--gold-light)' }}>{renderStars(item.rating ?? 1)}</td>
                   <td style={{ color: 'var(--text-mid)' }}>{item.sortOrder}</td>
                   <td>
                     <span className={`badge ${item.active ? 'paid' : 'role-pending'}`}>
@@ -423,6 +437,8 @@ function compareRecommendations(a: Recommendation, b: Recommendation, sortKey: S
       return compareText(a.source === 'default' ? '預設清單' : '後台新增', b.source === 'default' ? '預設清單' : '後台新增');
     case 'note':
       return compareText(a.note, b.note);
+    case 'rating':
+      return (a.rating ?? 1) - (b.rating ?? 1);
     case 'sortOrder':
       return a.sortOrder - b.sortOrder;
     case 'status':
@@ -430,6 +446,11 @@ function compareRecommendations(a: Recommendation, b: Recommendation, sortKey: S
     default:
       return 0;
   }
+}
+
+function renderStars(rating: number): string {
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
+  return '★'.repeat(safeRating);
 }
 
 function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
@@ -446,6 +467,7 @@ function getDefaultRecommendationInputs(): Array<RecommendationInput & { default
         lng: place.lng,
         url: place.url,
         note: place.note ?? '',
+        rating: place.rating ?? 1,
         sortOrder: index + 1,
       };
     })
