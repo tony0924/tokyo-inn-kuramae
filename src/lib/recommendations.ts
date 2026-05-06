@@ -7,6 +7,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -24,6 +25,8 @@ export type RecommendationInput = {
   url: string;
   note: string;
   sortOrder: number;
+  source?: RecommendationDoc['source'];
+  defaultKey?: string | null;
 };
 
 export function watchRecommendations(cb: (items: Recommendation[]) => void): Unsubscribe {
@@ -40,9 +43,11 @@ export function watchRecommendations(cb: (items: Recommendation[]) => void): Uns
 
 export async function createRecommendation(input: RecommendationInput): Promise<void> {
   validateRecommendation(input);
-  await addDoc(collection(db, COLLECTION), {
+  const payload = {
     section: input.section,
     category: input.category,
+    source: input.source ?? 'admin',
+    defaultKey: input.defaultKey ?? null,
     name: input.name.trim(),
     lat: input.lat,
     lng: input.lng,
@@ -52,7 +57,14 @@ export async function createRecommendation(input: RecommendationInput): Promise<
     sortOrder: input.sortOrder,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  if (input.defaultKey) {
+    await setDoc(doc(db, COLLECTION, input.defaultKey), payload);
+    return;
+  }
+
+  await addDoc(collection(db, COLLECTION), payload);
 }
 
 export async function updateRecommendation(

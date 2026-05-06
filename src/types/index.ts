@@ -132,6 +132,8 @@ export type RecommendationCategory =
 export interface RecommendationDoc {
   section: RecommendationSection;
   category: RecommendationCategory;
+  source?: 'default' | 'admin';
+  defaultKey?: string | null;
   name: string;
   lat: number;
   lng: number;

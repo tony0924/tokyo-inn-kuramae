@@ -7,6 +7,7 @@ import {
   type RecommendationInput,
 } from '@/lib/recommendations';
 import { useRecommendations } from './useRecommendations';
+import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
 import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
 
 type FormState = RecommendationInput & { active: boolean };
@@ -48,6 +49,7 @@ export function RecommendationManagement() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [importingDefaults, setImportingDefaults] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const sortedRecommendations = useMemo(
@@ -128,15 +130,51 @@ export function RecommendationManagement() {
     }
   }
 
+  async function handleImportDefaults() {
+    setImportingDefaults(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const existingDefaultKeys = new Set(
+        recommendations.map((item) => item.defaultKey).filter(Boolean)
+      );
+      const defaults = getDefaultRecommendationInputs().filter(
+        (item) => !existingDefaultKeys.has(item.defaultKey)
+      );
+
+      for (const item of defaults) {
+        await createRecommendation(item);
+      }
+
+      setMessage(
+        defaults.length > 0
+          ? `已匯入 ${defaults.length} 筆現有預設地點，現在可以編輯、停用或刪除。`
+          : '現有預設地點都已經在清單中。'
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '匯入預設地點失敗');
+    } finally {
+      setImportingDefaults(false);
+    }
+  }
+
   return (
     <div>
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">推薦地點</h1>
           <p style={{ color: 'var(--text-mid)', fontSize: 13, marginTop: 8 }}>
-            管理後台新增的餐廳、景點、超市會自動顯示在房客頁面；原本預設清單會保留。
+            可管理房客頁面的餐廳、景點、超市。若要編輯原本已有的地點，請先匯入目前預設清單。
           </p>
         </div>
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={handleImportDefaults}
+          disabled={importingDefaults}
+        >
+          {importingDefaults ? '匯入中…' : '匯入目前預設清單'}
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
@@ -269,6 +307,7 @@ export function RecommendationManagement() {
               <th>分頁</th>
               <th>分類</th>
               <th>名稱</th>
+              <th>來源</th>
               <th>備註</th>
               <th>排序</th>
               <th>狀態</th>
@@ -278,8 +317,8 @@ export function RecommendationManagement() {
           <tbody>
             {sortedRecommendations.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ color: 'var(--text-mid)' }}>
-                  尚未新增自訂推薦。新增後會出現在房客頁面的對應分頁。
+                <td colSpan={8} style={{ color: 'var(--text-mid)' }}>
+                  尚未匯入或新增推薦。按上方「匯入目前預設清單」後，就能看到現在房客頁面的現有地點。
                 </td>
               </tr>
             ) : (
@@ -291,6 +330,9 @@ export function RecommendationManagement() {
                     <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
                       {item.name}
                     </a>
+                  </td>
+                  <td style={{ color: 'var(--text-mid)' }}>
+                    {item.source === 'default' ? '預設清單' : '後台新增'}
                   </td>
                   <td style={{ color: 'var(--text-mid)', maxWidth: 320 }}>{item.note || '—'}</td>
                   <td style={{ color: 'var(--text-mid)' }}>{item.sortOrder}</td>
@@ -332,3 +374,32 @@ const sectionTitleStyle = {
   color: 'var(--gold-light)',
   marginBottom: 16,
 };
+
+function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
+  return (Object.entries(mapPlaces) as Array<[MapKey, Place[]]>).flatMap(([section, places]) =>
+    places.map((place, index) => {
+      const category = place.category ?? SECTION_CATEGORIES[section][0];
+      return {
+        section,
+        category,
+        source: 'default',
+        defaultKey: makeDefaultKey(section, index, place.name),
+        name: place.name,
+        lat: place.lat,
+        lng: place.lng,
+        url: place.url,
+        note: place.note ?? '',
+        sortOrder: index + 1,
+      };
+    })
+  );
+}
+
+function makeDefaultKey(section: MapKey, index: number, name: string): string {
+  const safeName = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+  return `default-${section}-${index + 1}-${safeName}`;
+}

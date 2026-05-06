@@ -14,7 +14,9 @@ export function useGuestPlaces(section: MapKey): { places: Place[]; loading: boo
   const { recommendations, loading } = useRecommendations();
 
   const places = useMemo(() => {
-    const customPlaces = recommendations
+    const sectionRecommendations = recommendations.filter((item) => item.section === section);
+    const hasImportedDefaults = sectionRecommendations.some((item) => item.source === 'default');
+    const managedPlaces = sectionRecommendations
       .filter((item) => item.active && item.section === section)
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
       .map<Place>((item) => ({
@@ -26,10 +28,10 @@ export function useGuestPlaces(section: MapKey): { places: Place[]; loading: boo
         url: item.url,
         category: item.category,
         note: item.note,
-        source: 'admin',
+        source: item.source ?? 'admin',
       }));
 
-    return [...mapPlaces[section], ...customPlaces];
+    return hasImportedDefaults ? managedPlaces : [...mapPlaces[section], ...managedPlaces];
   }, [recommendations, section]);
 
   return { places, loading };
