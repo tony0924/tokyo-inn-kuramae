@@ -119,14 +119,7 @@ export function GuestCodeManagement() {
     const uniqueVisitors = new Set<string>();
 
     pageViews.forEach((view) => {
-      const codeInfo = view.guestAccessCode ? codeByValue.get(view.guestAccessCode) : null;
-      const label =
-        view.userEmail ||
-        codeInfo?.guestEmail ||
-        view.guestEmail ||
-        codeInfo?.guestName ||
-        view.guestName ||
-        (view.guestAccessCode ? `訪客碼 ${formatGuestCode(view.guestAccessCode)}` : '未知訪客');
+      const label = getVisitorSummaryLabel(view, codeByValue);
       const key = view.userUid || view.userEmail || view.guestAccessCode || view.deviceId;
       uniqueVisitors.add(key);
 
@@ -427,6 +420,27 @@ export function GuestCodeManagement() {
 
 function compareText(a: string, b: string): number {
   return (a || '').localeCompare(b || '', 'zh-Hant');
+}
+
+function getVisitorSummaryLabel(
+  view: GuestPageView,
+  codeByValue: Map<string, GuestAccessCode>
+): string {
+  if (view.userEmail) {
+    return view.userName ? `${view.userName}（${view.userEmail}）` : view.userEmail;
+  }
+
+  if (view.guestAccessCode) {
+    const codeInfo = codeByValue.get(view.guestAccessCode);
+    const name = codeInfo?.guestName || view.guestName;
+    const email = codeInfo?.guestEmail || view.guestEmail;
+    if (name && email) return `${name}（${email}）`;
+    if (name) return name;
+    if (email) return email;
+    return `訪客碼 ${formatGuestCode(view.guestAccessCode)}`;
+  }
+
+  return '未知訪客';
 }
 
 function compareTimestamp(
