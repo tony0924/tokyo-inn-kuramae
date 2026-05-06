@@ -11,6 +11,7 @@ import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
 import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
 
 type FormState = RecommendationInput & { active: boolean };
+type SortKey = 'section' | 'category' | 'name' | 'source' | 'note' | 'sortOrder' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 const SECTION_LABELS: Record<RecommendationSection, string> = {
@@ -53,19 +54,42 @@ export function RecommendationManagement() {
   const [importingDefaults, setImportingDefaults] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('status');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const sortedRecommendations = useMemo(
     () =>
-      [...recommendations].sort(
-        (a, b) =>
-          (getRecommendationStatusRank(a.active) - getRecommendationStatusRank(b.active)) *
-            (statusSortDirection === 'asc' ? 1 : -1) ||
-          a.section.localeCompare(b.section) ||
-          a.sortOrder - b.sortOrder ||
-          a.name.localeCompare(b.name)
-      ),
-    [recommendations, statusSortDirection]
+      [...recommendations].sort((a, b) => {
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        const primary = compareRecommendations(a, b, sortKey) * direction;
+        if (primary !== 0) return primary;
+        return a.name.localeCompare(b.name, 'zh-Hant') * direction;
+      }),
+    [recommendations, sortDirection, sortKey]
   );
+
+  function toggleSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection('asc');
+  }
+
+  function renderSortHeader(label: string, key: SortKey) {
+    const active = sortKey === key;
+    const arrow = active ? (sortDirection === 'asc' ? '↑' : '↓') : '';
+    return (
+      <button
+        type="button"
+        className={`table-sort-button${active ? ' active' : ''}`}
+        onClick={() => toggleSort(key)}
+      >
+        <span>{label}</span>
+        <span className="table-sort-indicator" aria-hidden="true">{arrow}</span>
+      </button>
+    );
+  }
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     if (key === 'section') {
@@ -308,26 +332,13 @@ export function RecommendationManagement() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>分頁</th>
-              <th>分類</th>
-              <th>名稱</th>
-              <th>來源</th>
-              <th>備註</th>
-              <th>排序</th>
-              <th>
-                <button
-                  type="button"
-                  className="table-sort-button active"
-                  onClick={() =>
-                    setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
-                  }
-                >
-                  <span>狀態</span>
-                  <span className="table-sort-indicator" aria-hidden="true">
-                    {statusSortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
+              <th>{renderSortHeader('分頁', 'section')}</th>
+              <th>{renderSortHeader('分類', 'category')}</th>
+              <th>{renderSortHeader('名稱', 'name')}</th>
+              <th>{renderSortHeader('來源', 'source')}</th>
+              <th>{renderSortHeader('備註', 'note')}</th>
+              <th>{renderSortHeader('排序', 'sortOrder')}</th>
+              <th>{renderSortHeader('狀態', 'status')}</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -394,6 +405,31 @@ const sectionTitleStyle = {
 
 function getRecommendationStatusRank(active: boolean): number {
   return active ? 0 : 1;
+}
+
+function compareText(a: string, b: string): number {
+  return (a || '').localeCompare(b || '', 'zh-Hant');
+}
+
+function compareRecommendations(a: Recommendation, b: Recommendation, sortKey: SortKey): number {
+  switch (sortKey) {
+    case 'section':
+      return compareText(SECTION_LABELS[a.section], SECTION_LABELS[b.section]);
+    case 'category':
+      return compareText(CATEGORY_LABELS[a.category], CATEGORY_LABELS[b.category]);
+    case 'name':
+      return compareText(a.name, b.name);
+    case 'source':
+      return compareText(a.source === 'default' ? '預設清單' : '後台新增', b.source === 'default' ? '預設清單' : '後台新增');
+    case 'note':
+      return compareText(a.note, b.note);
+    case 'sortOrder':
+      return a.sortOrder - b.sortOrder;
+    case 'status':
+      return getRecommendationStatusRank(a.active) - getRecommendationStatusRank(b.active);
+    default:
+      return 0;
+  }
 }
 
 function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
