@@ -1068,34 +1068,82 @@
 
     .instruction-card {
       margin: 0;
-      padding: 14px 16px;
+      padding: 14px 16px 10px;
       border: 1px solid rgba(201,168,76,0.14);
       border-radius: var(--radius-sm);
       background: rgba(0,0,0,0.14);
       width: 100%;
     }
 
+    .instruction-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
     .instruction-card-title {
       color: var(--text);
       font-weight: 700;
-      margin-bottom: 10px;
       font-size: 0.9rem;
     }
 
-    .instruction-option {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 8px;
-      color: var(--text-mid);
-      font-size: 0.86rem;
-      line-height: 1.75;
-      padding: 8px 0;
+    .instruction-choice-badge {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(201,168,76,0.24);
+      background: rgba(201,168,76,0.08);
+      color: var(--gold-light);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .instruction-table {
       border-top: 1px solid rgba(201,168,76,0.08);
     }
 
-    .instruction-option strong {
+    .instruction-row {
+      display: grid;
+      grid-template-columns: 108px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.08);
+    }
+
+    .instruction-row:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .instruction-label {
       color: var(--gold-light);
+      font-weight: 700;
       white-space: nowrap;
+    }
+
+    .instruction-content {
+      color: var(--text-mid);
+      font-size: 0.86rem;
+      line-height: 1.75;
+    }
+
+    @media (max-width: 640px) {
+      .instruction-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .instruction-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
     }
 
     .step-list {

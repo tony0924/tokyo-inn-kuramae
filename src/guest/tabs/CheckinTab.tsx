@@ -27,17 +27,24 @@ export function CheckinTab() {
         <ul className="checklist">
           <li>
             <div className="instruction-card">
-              <div className="instruction-card-title">床單／枕頭套使用說明（二擇一）</div>
-              <div className="instruction-option">
-                <strong>不用洗：</strong>
-                <span>取出客廳壁櫃右側的拋棄式床單組，並套在床與枕頭上。</span>
+              <div className="instruction-card-header">
+                <div className="instruction-card-title">床單／枕頭套使用說明</div>
+                <span className="instruction-choice-badge">二擇一</span>
               </div>
-              <div className="instruction-option">
-                <strong>需要洗：</strong>
-                <span>
-                  將現有的床單和枕頭套放入洗衣機清洗，從櫃子中拿出乾淨的床單和枕頭套使用。
-                  洗完的床單與枕頭套晾乾後，請整理好放回櫃子。
-                </span>
+              <div className="instruction-table" role="table" aria-label="床單枕頭套使用說明">
+                <div className="instruction-row" role="row">
+                  <div className="instruction-label" role="cell">不用洗</div>
+                  <div className="instruction-content" role="cell">
+                    取出客廳壁櫃右側的拋棄式床單組，並套在床與枕頭上。
+                  </div>
+                </div>
+                <div className="instruction-row" role="row">
+                  <div className="instruction-label" role="cell">需要洗</div>
+                  <div className="instruction-content" role="cell">
+                    將現有的床單和枕頭套放入洗衣機清洗，從櫃子中拿出乾淨的床單和枕頭套使用。
+                    洗完的床單與枕頭套晾乾後，請整理好放回櫃子。
+                  </div>
+                </div>
               </div>
             </div>
           </li>
