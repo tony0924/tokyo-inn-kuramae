@@ -172,11 +172,37 @@ export const lookupGoogleMapPlace = onCall(
     const resolvedUrl = await resolveGoogleMapsUrl(url);
     const parsed = extractPlaceLookupHints(resolvedUrl);
 
-    let place =
-      (parsed.placeId && (await fetchPlaceDetails(parsed.placeId, apiKey).catch(() => null))) ||
-      (await searchPlaceByText(parsed, apiKey));
+    let place = null;
+    let searchError = null;
+
+    if (parsed.placeId) {
+      place = await fetchPlaceDetails(parsed.placeId, apiKey).catch(() => null);
+    }
 
     if (!place) {
+      try {
+        place = await searchPlaceByText(parsed, apiKey);
+      } catch (error) {
+        searchError = error;
+      }
+    }
+
+    if (!place && parsed.placeName && parsed.lat != null && parsed.lng != null) {
+      return {
+        placeId: parsed.placeId || "",
+        name: parsed.placeName,
+        address: "",
+        lat: parsed.lat,
+        lng: parsed.lng,
+        sourceUrl: resolvedUrl,
+        fallback: true,
+      };
+    }
+
+    if (!place) {
+      if (searchError instanceof HttpsError) {
+        throw searchError;
+      }
       throw new HttpsError("not-found", "找不到對應的 Google Maps 商家，請改用手動輸入。");
     }
 
@@ -187,6 +213,7 @@ export const lookupGoogleMapPlace = onCall(
       lat: place.location?.latitude ?? null,
       lng: place.location?.longitude ?? null,
       sourceUrl: resolvedUrl,
+      fallback: false,
     };
   }
 );
@@ -359,6 +386,7 @@ function extractPlaceLookupHints(inputUrl) {
   return {
     query: decodeURIComponent(query || placeName || "").replace(/\+/g, " ").trim(),
     placeId: queryPlaceId || "",
+    placeName,
     lat: coordinates?.lat ?? null,
     lng: coordinates?.lng ?? null,
   };
@@ -425,6 +453,10 @@ async function searchPlaceByText(parsed, apiKey) {
   if (!response.ok) {
     const details = await safeReadJson(response);
     logger.error("Google Text Search failed", { status: response.status, details, query: parsed.query });
+    const message = details?.error?.message || "";
+    if (response.status === 403 && /Places API \(New\).+disabled/i.test(message)) {
+      throw new HttpsError("failed-precondition", "這把 Google Maps API key 尚未開啟 Places API (New)，目前先只能從連結帶入名稱和座標。");
+    }
     throw new HttpsError("internal", "Google Maps 搜尋失敗。");
   }
 
