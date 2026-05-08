@@ -57,9 +57,10 @@ const PlaceMapContext = createContext<MapCtx | null>(null);
 interface PlaceMapProps {
   places: Place[];
   sidebar: ReactNode;
+  getMarkerNumber?: (place: Place, idx: number) => number;
 }
 
-export function PlaceMap({ places, sidebar }: PlaceMapProps) {
+export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const markerRefs = useRef<Record<number, L.Marker | null>>({});
 
@@ -103,7 +104,7 @@ export function PlaceMap({ places, sidebar }: PlaceMapProps) {
               <Marker
                 key={i}
                 position={[p.lat, p.lng]}
-                icon={makePinIcon(p.color, i + 1)}
+                icon={makePinIcon(p.color, getMarkerNumber ? getMarkerNumber(p, i) : i + 1)}
                 ref={(ref) => {
                   markerRefs.current[i] = ref;
                 }}
