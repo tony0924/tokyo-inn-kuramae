@@ -18,8 +18,8 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'airport', icon: '✈️', label: '機場' },
   { id: 'facilities', icon: '🔧', label: '設施' },
   { id: 'items', icon: '📦', label: '備品' },
-  { id: 'services', icon: '🏪', label: '超市' },
-  { id: 'restaurant', icon: '🍜', label: '餐廳' },
+  { id: 'services', icon: '🏪', label: '購物' },
+  { id: 'restaurant', icon: '🍜', label: '食物' },
   { id: 'cityguide', icon: '🗺️', label: '景點' },
   { id: 'faq', icon: '❓', label: 'FAQ' },
 ];

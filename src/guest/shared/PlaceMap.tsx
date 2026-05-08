@@ -17,7 +17,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { HOME, TILE_ATTR, TILE_URL, type Place } from '@/guest/data/mapPlaces';
 
-function makePinIcon(color: string, num: number) {
+function makePinIcon(color: string, num: number, name: string) {
   return L.divIcon({
     className: '',
     html: `<div style="
@@ -26,7 +26,7 @@ function makePinIcon(color: string, num: number) {
       display:flex;align-items:center;justify-content:center;
       font-size:0.65rem;font-weight:800;color:#fff;
       box-shadow:0 2px 8px rgba(0,0,0,0.5)
-    ">${num}</div>`,
+    " title="${escapeHtml(`${num}. ${name}`)}" aria-label="${escapeHtml(`${name}`)}">${num}</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
     popupAnchor: [0, -14],
@@ -104,7 +104,7 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
               <Marker
                 key={i}
                 position={[p.lat, p.lng]}
-                icon={makePinIcon(p.color, getMarkerNumber ? getMarkerNumber(p, i) : i + 1)}
+                icon={makePinIcon(p.color, getMarkerNumber ? getMarkerNumber(p, i) : i + 1, p.name)}
                 ref={(ref) => {
                   markerRefs.current[i] = ref;
                 }}
@@ -167,7 +167,12 @@ export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps
       }}
     >
       <div>
-        <span className="place-num" style={{ background: place.color }}>
+        <span
+          className="place-num"
+          style={{ background: place.color }}
+          title={`${pinNumber ?? idx + 1}. ${place.name}`}
+          aria-label={`${place.name} 編號 ${pinNumber ?? idx + 1}`}
+        >
           {pinNumber ?? idx + 1}
         </span>
         <div style={{ display: 'inline-block' }}>
@@ -188,4 +193,12 @@ export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps
       </a>
     </div>
   );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }
