@@ -96,7 +96,7 @@ export function RecommendationManagement() {
     if (editingId) return;
     setForm((current) => ({
       ...current,
-      sortOrder: getNextAvailableSortOrder(current.section, recommendations),
+      sortOrder: getNextAvailableSortOrder(current.category, recommendations),
     }));
   }, [editingId, form.category, form.section, recommendations]);
 
@@ -148,13 +148,13 @@ export function RecommendationManagement() {
         : null;
       const conflict = recommendations.find(
         (item) =>
-          item.section === form.section &&
+          item.category === form.category &&
           item.sortOrder === form.sortOrder &&
           item.id !== editingId
       );
       if (conflict && !editingId) {
         throw new Error(
-          `「${SECTION_LABELS[form.section]}」內的排序 ${form.sortOrder} 已被「${conflict.name}」使用，請改成其他數字。`
+          `「${CATEGORY_LABELS[form.category]}」分類內的排序 ${form.sortOrder} 已被「${conflict.name}」使用，請改成其他數字。`
         );
       }
 
@@ -384,7 +384,7 @@ export function RecommendationManagement() {
               value={form.sortOrder}
               onChange={(e) => updateField('sortOrder', Number(e.target.value))}
             />
-            <p className="helper-text">切換分頁或分類時會自動帶入該分頁目前可用的最小排序值。</p>
+            <p className="helper-text">切換分類時會自動帶入該分類目前可用的最小排序值。</p>
           </div>
           <div className="form-field">
             <label>緯度 lat *</label>
@@ -597,12 +597,12 @@ function getRecommendationStatusRank(active: boolean): number {
 }
 
 function getNextAvailableSortOrder(
-  section: RecommendationSection,
+  category: RecommendationCategory,
   recommendations: Recommendation[]
 ): number {
   const used = new Set(
     recommendations
-      .filter((item) => item.section === section)
+      .filter((item) => item.category === category)
       .map((item) => item.sortOrder)
       .filter((value) => Number.isInteger(value) && value > 0)
   );
@@ -647,9 +647,12 @@ function renderStars(rating: number): string {
 }
 
 function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
-  return (Object.entries(mapPlaces) as Array<[MapKey, Place[]]>).flatMap(([section, places]) =>
-    places.map((place, index) => {
+  return (Object.entries(mapPlaces) as Array<[MapKey, Place[]]>).flatMap(([section, places]) => {
+    const categoryCounts = new Map<RecommendationCategory, number>();
+    return places.map((place, index) => {
       const category = place.category ?? SECTION_CATEGORIES[section][0];
+      const nextSortOrder = (categoryCounts.get(category) ?? 0) + 1;
+      categoryCounts.set(category, nextSortOrder);
       return {
         section,
         category,
@@ -661,10 +664,10 @@ function getDefaultRecommendationInputs(): Array<RecommendationInput & { default
         url: place.url,
         note: place.note ?? '',
         rating: place.rating ?? 1,
-        sortOrder: index + 1,
+        sortOrder: nextSortOrder,
       };
-    })
-  );
+    });
+  });
 }
 
 function makeDefaultKey(section: MapKey, index: number, name: string): string {
