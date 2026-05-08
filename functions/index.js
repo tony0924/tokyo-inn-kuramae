@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
@@ -10,6 +11,7 @@ initializeApp();
 
 const db = getFirestore("default");
 const gmailAppPassword = defineSecret("GMAIL_APP_PASSWORD");
+const googleMapsApiKey = defineSecret("GOOGLE_MAPS_API_KEY");
 const REGION = "asia-east1";
 const TIME_ZONE = "Asia/Taipei";
 const WEBSITE_URL = "https://tokyo-inn-kuramae.web.app";
@@ -138,6 +140,54 @@ export const sendCheckoutAdminReminders = onSchedule(
         senderEmail: settings.senderEmail,
       });
     }
+  }
+);
+
+export const lookupGoogleMapPlace = onCall(
+  {
+    region: REGION,
+    secrets: [googleMapsApiKey],
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "請先登入管理者帳號。");
+    }
+
+    const userSnap = await db.collection("users").doc(request.auth.uid).get();
+    const userData = userSnap.data();
+    if (!userSnap.exists || userData?.role !== "admin") {
+      throw new HttpsError("permission-denied", "只有管理者可以使用這個功能。");
+    }
+
+    const url = typeof request.data?.url === "string" ? request.data.url.trim() : "";
+    if (!url) {
+      throw new HttpsError("invalid-argument", "請提供 Google Maps 連結。");
+    }
+
+    const apiKey = googleMapsApiKey.value();
+    if (!apiKey) {
+      throw new HttpsError("failed-precondition", "GOOGLE_MAPS_API_KEY 尚未設定。");
+    }
+
+    const resolvedUrl = await resolveGoogleMapsUrl(url);
+    const parsed = extractPlaceLookupHints(resolvedUrl);
+
+    let place =
+      (parsed.placeId && (await fetchPlaceDetails(parsed.placeId, apiKey).catch(() => null))) ||
+      (await searchPlaceByText(parsed, apiKey));
+
+    if (!place) {
+      throw new HttpsError("not-found", "找不到對應的 Google Maps 商家，請改用手動輸入。");
+    }
+
+    return {
+      placeId: place.id || parsed.placeId || "",
+      name: place.displayName?.text || "",
+      address: place.formattedAddress || "",
+      lat: place.location?.latitude ?? null,
+      lng: place.location?.longitude ?? null,
+      sourceUrl: resolvedUrl,
+    };
   }
 );
 
@@ -270,5 +320,141 @@ async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }
       cc,
       subject,
     });
+  }
+}
+
+async function resolveGoogleMapsUrl(inputUrl) {
+  try {
+    const response = await fetch(inputUrl, {
+      method: "HEAD",
+      redirect: "follow",
+    });
+    return response.url || inputUrl;
+  } catch {
+    try {
+      const response = await fetch(inputUrl, {
+        method: "GET",
+        redirect: "follow",
+      });
+      return response.url || inputUrl;
+    } catch {
+      return inputUrl;
+    }
+  }
+}
+
+function extractPlaceLookupHints(inputUrl) {
+  let url;
+  try {
+    url = new URL(inputUrl);
+  } catch {
+    throw new HttpsError("invalid-argument", "Google Maps 連結格式不正確。");
+  }
+
+  const queryPlaceId = url.searchParams.get("query_place_id");
+  const query = url.searchParams.get("q") || url.searchParams.get("query") || "";
+  const coordinates = extractCoordinates(url.pathname) || extractCoordinates(url.href);
+  const placeName = extractPlaceName(url.pathname);
+
+  return {
+    query: decodeURIComponent(query || placeName || "").replace(/\+/g, " ").trim(),
+    placeId: queryPlaceId || "",
+    lat: coordinates?.lat ?? null,
+    lng: coordinates?.lng ?? null,
+  };
+}
+
+function extractCoordinates(text) {
+  const atMatch = text.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (atMatch) {
+    return {
+      lat: Number(atMatch[1]),
+      lng: Number(atMatch[2]),
+    };
+  }
+
+  const bangMatch = text.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (bangMatch) {
+    return {
+      lat: Number(bangMatch[1]),
+      lng: Number(bangMatch[2]),
+    };
+  }
+
+  return null;
+}
+
+function extractPlaceName(pathname) {
+  const placeMatch = pathname.match(/\/place\/([^/]+)/);
+  if (!placeMatch) return "";
+  return decodeURIComponent(placeMatch[1]).replace(/\+/g, " ").trim();
+}
+
+async function searchPlaceByText(parsed, apiKey) {
+  if (!parsed.query) {
+    return null;
+  }
+
+  const body = {
+    textQuery: parsed.query,
+    ...(parsed.lat != null && parsed.lng != null
+      ? {
+          locationBias: {
+            circle: {
+              center: {
+                latitude: parsed.lat,
+                longitude: parsed.lng,
+              },
+              radius: 500,
+            },
+          },
+        }
+      : {}),
+  };
+
+  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const details = await safeReadJson(response);
+    logger.error("Google Text Search failed", { status: response.status, details, query: parsed.query });
+    throw new HttpsError("internal", "Google Maps 搜尋失敗。");
+  }
+
+  const payload = await response.json();
+  return payload.places?.[0] ?? null;
+}
+
+async function fetchPlaceDetails(placeId, apiKey) {
+  const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+    },
+  });
+
+  if (!response.ok) {
+    const details = await safeReadJson(response);
+    logger.warn("Google Place Details failed", { status: response.status, details, placeId });
+    throw new Error("place details failed");
+  }
+
+  return response.json();
+}
+
+async function safeReadJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
   }
 }

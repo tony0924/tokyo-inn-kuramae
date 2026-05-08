@@ -19,6 +19,8 @@ const COLLECTION = 'recommendations';
 export type RecommendationInput = {
   section: RecommendationSection;
   category: RecommendationDoc['category'];
+  placeId?: string | null;
+  address?: string;
   name: string;
   lat: number;
   lng: number;
@@ -49,6 +51,8 @@ export async function createRecommendation(input: RecommendationInput): Promise<
     category: input.category,
     source: input.source ?? 'admin',
     defaultKey: input.defaultKey ?? null,
+    placeId: input.placeId ?? null,
+    address: input.address?.trim() ?? '',
     name: input.name.trim(),
     lat: input.lat,
     lng: input.lng,
@@ -77,6 +81,8 @@ export async function updateRecommendation(
   await updateDoc(doc(db, COLLECTION, id), {
     section: input.section,
     category: input.category,
+    placeId: input.placeId ?? null,
+    address: input.address?.trim() ?? '',
     name: input.name.trim(),
     lat: input.lat,
     lng: input.lng,

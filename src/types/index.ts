@@ -134,6 +134,8 @@ export interface RecommendationDoc {
   category: RecommendationCategory;
   source?: 'default' | 'admin';
   defaultKey?: string | null;
+  placeId?: string | null;
+  address?: string;
   name: string;
   lat: number;
   lng: number;

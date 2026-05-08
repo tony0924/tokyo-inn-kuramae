@@ -6,6 +6,7 @@ import {
   updateRecommendation,
   type RecommendationInput,
 } from '@/lib/recommendations';
+import { lookupGoogleMapPlace } from '@/lib/googleMaps';
 import { useRecommendations } from './useRecommendations';
 import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
 import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
@@ -38,6 +39,8 @@ const SECTION_CATEGORIES: Record<RecommendationSection, RecommendationCategory[]
 const EMPTY_FORM: FormState = {
   section: 'restaurant',
   category: 'restaurant',
+  placeId: '',
+  address: '',
   name: '',
   lat: 35.7073,
   lng: 139.7876,
@@ -54,6 +57,7 @@ export function RecommendationManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [importingDefaults, setImportingDefaults] = useState(false);
+  const [lookingUpPlace, setLookingUpPlace] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('status');
@@ -159,11 +163,48 @@ export function RecommendationManagement() {
     }
   }
 
+  async function handleLookupPlace() {
+    if (!form.url.trim()) {
+      setError('請先貼上 Google Maps 商家連結');
+      return;
+    }
+
+    setLookingUpPlace(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const place = await lookupGoogleMapPlace(form.url);
+      if (place.lat == null || place.lng == null || !place.name) {
+        throw new Error('Google Maps 回傳的資料不完整，請改用手動輸入。');
+      }
+      const lat = place.lat;
+      const lng = place.lng;
+
+      setForm((current) => ({
+        ...current,
+        placeId: place.placeId || current.placeId,
+        address: place.address || current.address,
+        name: place.name || current.name,
+        lat,
+        lng,
+        url: current.url.trim(),
+      }));
+      setMessage(`已自動帶入「${place.name}」的基本資料`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google Maps 自動帶入失敗');
+    } finally {
+      setLookingUpPlace(false);
+    }
+  }
+
   function startEdit(item: Recommendation) {
     setEditingId(item.id);
     setForm({
       section: item.section,
       category: item.category,
+      placeId: item.placeId ?? '',
+      address: item.address ?? '',
       name: item.name,
       lat: item.lat,
       lng: item.lng,
@@ -289,6 +330,14 @@ export function RecommendationManagement() {
             />
           </div>
           <div className="form-field">
+            <label>Google Place ID</label>
+            <input
+              value={form.placeId ?? ''}
+              onChange={(e) => updateField('placeId', e.target.value)}
+              placeholder="自動帶入後會填入"
+            />
+          </div>
+          <div className="form-field">
             <label>推薦星等</label>
             <input
               type="number"
@@ -329,11 +378,32 @@ export function RecommendationManagement() {
           </div>
           <div className="form-field full">
             <label>Google Maps 連結 *</label>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <input
+                value={form.url}
+                onChange={(e) => updateField('url', e.target.value)}
+                placeholder="https://maps.app.goo.gl/..."
+                required
+                style={{ flex: '1 1 380px' }}
+              />
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={handleLookupPlace}
+                disabled={lookingUpPlace}
+                style={{ minWidth: 120 }}
+              >
+                {lookingUpPlace ? '查詢中…' : '自動帶入'}
+              </button>
+            </div>
+            <p className="helper-text">最省錢版本目前只支援「貼 Google Maps 連結後手動按自動帶入」。</p>
+          </div>
+          <div className="form-field full">
+            <label>地址</label>
             <input
-              value={form.url}
-              onChange={(e) => updateField('url', e.target.value)}
-              placeholder="https://maps.app.goo.gl/..."
-              required
+              value={form.address ?? ''}
+              onChange={(e) => updateField('address', e.target.value)}
+              placeholder="自動帶入後會填入，可手動修改"
             />
           </div>
           <div className="form-field full">
