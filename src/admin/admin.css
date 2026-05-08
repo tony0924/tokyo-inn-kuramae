@@ -412,7 +412,7 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   padding: 28px;
-  width: min(920px, calc(100vw - 48px));
+  width: min(1120px, calc(100vw - 48px));
   max-height: min(90vh, 900px);
   overflow-y: auto;
   overflow-x: hidden;
