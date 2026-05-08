@@ -2,7 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
@@ -12,6 +12,7 @@ initializeApp();
 const db = getFirestore("default");
 const gmailAppPassword = defineSecret("GMAIL_APP_PASSWORD");
 const googleMapsApiKey = defineSecret("GOOGLE_MAPS_API_KEY");
+const maintenanceToken = defineSecret("MAINTENANCE_TOKEN");
 const REGION = "asia-east1";
 const TIME_ZONE = "Asia/Taipei";
 const WEBSITE_URL = "https://tokyo-inn-kuramae.web.app";
@@ -215,6 +216,77 @@ export const lookupGoogleMapPlace = onCall(
       sourceUrl: resolvedUrl,
       fallback: false,
     };
+  }
+);
+
+export const normalizeRecommendationCategorySortOrders = onRequest(
+  {
+    region: REGION,
+    secrets: [maintenanceToken],
+  },
+  async (request, response) => {
+    if (request.method !== "POST") {
+      response.status(405).json({ error: "method-not-allowed" });
+      return;
+    }
+
+    const token = (request.get("x-maintenance-token") || "").trim();
+    if (!token || token !== maintenanceToken.value()) {
+      response.status(401).json({ error: "unauthorized" });
+      return;
+    }
+
+    const section = typeof request.body?.section === "string" ? request.body.section.trim() : "";
+    const category = typeof request.body?.category === "string" ? request.body.category.trim() : "";
+
+    if (!section || !category) {
+      response.status(400).json({ error: "section-and-category-required" });
+      return;
+    }
+
+    const snap = await db
+      .collection("recommendations")
+      .where("section", "==", section)
+      .where("category", "==", category)
+      .orderBy("sortOrder", "asc")
+      .get();
+
+    const docs = snap.docs
+      .map((item) => ({
+        id: item.id,
+        ref: item.ref,
+        name: item.data().name || "",
+        sortOrder: item.data().sortOrder || 0,
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "zh-Hant"));
+
+    const batch = db.batch();
+    const before = docs.map((item) => ({
+      id: item.id,
+      name: item.name,
+      sortOrder: item.sortOrder,
+    }));
+
+    docs.forEach((item, index) => {
+      batch.update(item.ref, {
+        sortOrder: index + 1,
+        updatedAt: Timestamp.now(),
+      });
+    });
+
+    await batch.commit();
+
+    response.json({
+      section,
+      category,
+      updated: docs.length,
+      before,
+      after: docs.map((item, index) => ({
+        id: item.id,
+        name: item.name,
+        sortOrder: index + 1,
+      })),
+    });
   }
 );
 
