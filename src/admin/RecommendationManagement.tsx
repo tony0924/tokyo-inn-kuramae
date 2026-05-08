@@ -143,19 +143,41 @@ export function RecommendationManagement() {
     setMessage(null);
     setError(null);
     try {
+      const editingItem = editingId
+        ? recommendations.find((item) => item.id === editingId) ?? null
+        : null;
       const conflict = recommendations.find(
         (item) =>
           item.section === form.section &&
           item.sortOrder === form.sortOrder &&
           item.id !== editingId
       );
-      if (conflict) {
+      if (conflict && !editingId) {
         throw new Error(
           `「${SECTION_LABELS[form.section]}」內的排序 ${form.sortOrder} 已被「${conflict.name}」使用，請改成其他數字。`
         );
       }
 
       if (editingId) {
+        if (!editingItem) {
+          throw new Error('找不到要編輯的推薦地點，請重新整理後再試一次');
+        }
+        if (conflict && conflict.sortOrder !== editingItem.sortOrder) {
+          await updateRecommendation(conflict.id, {
+            section: conflict.section,
+            category: conflict.category,
+            placeId: conflict.placeId ?? '',
+            address: conflict.address ?? '',
+            name: conflict.name,
+            lat: conflict.lat,
+            lng: conflict.lng,
+            url: conflict.url,
+            note: conflict.note,
+            rating: conflict.rating ?? 3,
+            sortOrder: editingItem.sortOrder,
+            active: conflict.active,
+          });
+        }
         await updateRecommendation(editingId, form);
         setMessage(`已更新「${form.name}」`);
       } else {
