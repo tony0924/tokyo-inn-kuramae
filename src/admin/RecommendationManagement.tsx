@@ -46,8 +46,8 @@ const EMPTY_FORM: FormState = {
   lng: 139.7876,
   url: '',
   note: '',
-  rating: 1,
-  sortOrder: 100,
+  rating: 3,
+  sortOrder: 1,
   active: true,
 };
 
@@ -91,6 +91,14 @@ export function RecommendationManagement() {
       nameInputRef.current?.select();
     }, 220);
   }, [editingId]);
+
+  useEffect(() => {
+    if (editingId) return;
+    setForm((current) => ({
+      ...current,
+      sortOrder: getNextAvailableSortOrder(current.section, recommendations),
+    }));
+  }, [editingId, form.category, form.section, recommendations]);
 
   function toggleSort(nextKey: SortKey) {
     if (sortKey === nextKey) {
@@ -354,7 +362,7 @@ export function RecommendationManagement() {
               value={form.sortOrder}
               onChange={(e) => updateField('sortOrder', Number(e.target.value))}
             />
-            <p className="helper-text">同一個分頁內排序值不可重複。</p>
+            <p className="helper-text">切換分頁或分類時會自動帶入該分頁目前可用的最小排序值。</p>
           </div>
           <div className="form-field">
             <label>緯度 lat *</label>
@@ -564,6 +572,24 @@ const sectionTitleStyle = {
 
 function getRecommendationStatusRank(active: boolean): number {
   return active ? 0 : 1;
+}
+
+function getNextAvailableSortOrder(
+  section: RecommendationSection,
+  recommendations: Recommendation[]
+): number {
+  const used = new Set(
+    recommendations
+      .filter((item) => item.section === section)
+      .map((item) => item.sortOrder)
+      .filter((value) => Number.isInteger(value) && value > 0)
+  );
+
+  let next = 1;
+  while (used.has(next)) {
+    next += 1;
+  }
+  return next;
 }
 
 function compareText(a: string, b: string): number {
