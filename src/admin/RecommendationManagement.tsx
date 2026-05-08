@@ -131,6 +131,18 @@ export function RecommendationManagement() {
     setMessage(null);
     setError(null);
     try {
+      const conflict = recommendations.find(
+        (item) =>
+          item.section === form.section &&
+          item.sortOrder === form.sortOrder &&
+          item.id !== editingId
+      );
+      if (conflict) {
+        throw new Error(
+          `「${SECTION_LABELS[form.section]}」內的排序 ${form.sortOrder} 已被「${conflict.name}」使用，請改成其他數字。`
+        );
+      }
+
       if (editingId) {
         await updateRecommendation(editingId, form);
         setMessage(`已更新「${form.name}」`);
@@ -293,6 +305,7 @@ export function RecommendationManagement() {
               value={form.sortOrder}
               onChange={(e) => updateField('sortOrder', Number(e.target.value))}
             />
+            <p className="helper-text">同一個分頁內排序值不可重複。</p>
           </div>
           <div className="form-field">
             <label>緯度 lat *</label>
