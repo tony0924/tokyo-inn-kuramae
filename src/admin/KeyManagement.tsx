@@ -1,14 +1,26 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
 import { createKey, deleteKey, normalizeKeyCode, setKeyActive, updateKey } from '@/lib/keys';
+import { markKeyLent, markKeyReturned, updateBooking } from '@/lib/bookings';
 import { useBookings } from './useBookings';
 import { useKeys } from './useKeys';
-import type { KeyItem } from '@/types';
+import { Modal } from './Modal';
+import { BookingForm } from './BookingForm';
+import type { Booking, KeyItem } from '@/types';
 
 type EditingState = {
   code: string;
   label: string;
   notes: string;
+};
+
+type LoanEditingState = {
+  bookingId: string;
+  guestName: string;
+  keyCode: string;
+  keyLentAt: string;
+  keyReturnedAt: string;
 };
 
 type SortKey = 'code' | 'label' | 'status' | 'currentUsage' | 'notes' | 'createdAt';
@@ -21,17 +33,39 @@ export function KeyManagement() {
   const [label, setLabel] = useState('');
   const [notes, setNotes] = useState('');
   const [editing, setEditing] = useState<EditingState | null>(null);
+  const [loanEditing, setLoanEditing] = useState<LoanEditingState | null>(null);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('status');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const loanedByCode = new Map(
-    bookings
-      .filter((booking) => booking.keyCode && booking.keyLentAt && !booking.keyReturnedAt)
-      .map((booking) => [normalizeKeyCode(booking.keyCode || ''), booking])
+  const loanedByCode = useMemo(
+    () =>
+      new Map(
+        bookings
+          .filter((booking) => booking.keyCode && booking.keyLentAt && !booking.keyReturnedAt)
+          .map((booking) => [normalizeKeyCode(booking.keyCode || ''), booking])
+      ),
+    [bookings]
   );
+
+  // Most relevant booking per key: prefer one that is currently out, otherwise
+  // the most recent booking (by check-in) that used this key. Keeps the booking
+  // link visible even after the key has been returned.
+  const latestBookingByCode = useMemo(() => {
+    const map = new Map<string, Booking>();
+    for (const booking of bookings) {
+      const bookingCode = normalizeKeyCode(booking.keyCode || '');
+      if (!bookingCode) continue;
+      const existing = map.get(bookingCode);
+      if (!existing || isMoreRelevant(booking, existing)) {
+        map.set(bookingCode, booking);
+      }
+    }
+    return map;
+  }, [bookings]);
 
   const sortedKeys = useMemo(() => {
     return [...keys].sort((a, b) => {
@@ -105,10 +139,76 @@ export function KeyManagement() {
     }
   }
 
+  function startLoanEditing(booking: Booking) {
+    setMessage(null);
+    setError(null);
+    setLoanEditing({
+      bookingId: booking.id,
+      guestName: booking.guestName,
+      keyCode: normalizeKeyCode(booking.keyCode || ''),
+      keyLentAt: tsToDateInput(booking.keyLentAt),
+      keyReturnedAt: tsToDateInput(booking.keyReturnedAt),
+    });
+  }
+
+  async function handleLoanSave(e: FormEvent) {
+    e.preventDefault();
+    if (!loanEditing) return;
+    if (loanEditing.keyReturnedAt && !loanEditing.keyLentAt) {
+      setError('請先填出借日，才能登記歸還日。');
+      return;
+    }
+    if (
+      loanEditing.keyLentAt &&
+      loanEditing.keyReturnedAt &&
+      loanEditing.keyReturnedAt < loanEditing.keyLentAt
+    ) {
+      setError('歸還日不能早於出借日。');
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await updateBooking(loanEditing.bookingId, {
+        keyLentAt: dateInputToTs(loanEditing.keyLentAt),
+        keyReturnedAt: dateInputToTs(loanEditing.keyReturnedAt),
+      });
+      setMessage(`已更新 ${loanEditing.guestName} 的鑰匙借還紀錄`);
+      setLoanEditing(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '更新借還紀錄失敗');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleQuickLent(booking: Booking) {
+    setMessage(null);
+    setError(null);
+    try {
+      await markKeyLent(booking.id);
+      setMessage(`已登記 ${booking.guestName} 領取鑰匙`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登記出借失敗');
+    }
+  }
+
+  async function handleQuickReturned(booking: Booking) {
+    setMessage(null);
+    setError(null);
+    try {
+      await markKeyReturned(booking.id);
+      setMessage(`已登記 ${booking.guestName} 歸還鑰匙`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登記歸還失敗');
+    }
+  }
+
   async function handleDelete(key: KeyItem) {
     const loanedBooking = loanedByCode.get(normalizeKeyCode(key.code));
     if (loanedBooking) {
-      setError(`「${key.code}」目前出借給 ${loanedBooking.guestName}，請先在預約中登記歸還後再刪除。`);
+      setError(`「${key.code}」目前出借給 ${loanedBooking.guestName}，請先登記歸還後再刪除。`);
       return;
     }
     if (!confirm(`確定刪除鑰匙「${key.code}」嗎？`)) return;
@@ -127,7 +227,7 @@ export function KeyManagement() {
         <div>
           <h1 className="admin-page-title">鑰匙管理</h1>
           <p style={{ color: 'var(--text-mid)', fontSize: 13, marginTop: 8 }}>
-            新增可出借的鑰匙。預約表單只能選擇啟用且未出借中的鑰匙。
+            新增可出借的鑰匙。預約表單只能選擇啟用且未出借中的鑰匙。鑰匙的出借與歸還可直接在下方登記，歸還後仍會保留最近一筆預約，方便補登或修正日期。
           </p>
         </div>
       </div>
@@ -203,6 +303,63 @@ export function KeyManagement() {
         </form>
       )}
 
+      {loanEditing && (
+        <form onSubmit={handleLoanSave} className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
+          <h2 style={sectionTitleStyle}>
+            鑰匙 {loanEditing.keyCode} 借還登記 — {loanEditing.guestName}
+          </h2>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>出借日</label>
+              <input
+                type="date"
+                value={loanEditing.keyLentAt}
+                onChange={(e) => setLoanEditing({ ...loanEditing, keyLentAt: e.target.value })}
+              />
+            </div>
+            <div className="form-field">
+              <label>歸還日</label>
+              <input
+                type="date"
+                value={loanEditing.keyReturnedAt}
+                onChange={(e) => setLoanEditing({ ...loanEditing, keyReturnedAt: e.target.value })}
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setLoanEditing({ ...loanEditing, keyLentAt: todayInput() })}
+            >
+              出借日填今天
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setLoanEditing({ ...loanEditing, keyReturnedAt: todayInput() })}
+            >
+              歸還日填今天
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setLoanEditing({ ...loanEditing, keyReturnedAt: '' })}
+            >
+              清除歸還日
+            </button>
+          </div>
+          <div className="form-actions" style={{ marginTop: 18 }}>
+            <button type="button" className="btn-ghost" onClick={() => setLoanEditing(null)}>
+              取消
+            </button>
+            <button type="submit" className="btn-gold" disabled={saving}>
+              {saving ? '儲存中…' : '儲存借還紀錄'}
+            </button>
+          </div>
+        </form>
+      )}
+
       {loading ? (
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
@@ -227,7 +384,9 @@ export function KeyManagement() {
               </tr>
             ) : (
               sortedKeys.map((key) => {
-                const loanedBooking = loanedByCode.get(normalizeKeyCode(key.code));
+                const normalizedCode = normalizeKeyCode(key.code);
+                const loanedBooking = loanedByCode.get(normalizedCode);
+                const latestBooking = latestBookingByCode.get(normalizedCode);
                 const status = getKeyStatus(key, Boolean(loanedBooking));
                 return (
                   <tr key={key.id}>
@@ -239,12 +398,18 @@ export function KeyManagement() {
                       <span className={`badge ${status.className}`}>{status.label}</span>
                     </td>
                     <td style={{ color: 'var(--text-mid)' }}>
-                      {loanedBooking
-                        ? `${loanedBooking.guestName}（${format(
-                            loanedBooking.checkIn.toDate(),
-                            'yyyy-MM-dd'
-                          )} ~ ${format(loanedBooking.checkOut.toDate(), 'yyyy-MM-dd')}）`
-                        : '—'}
+                      {latestBooking ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ color: 'var(--text)' }}>{latestBooking.guestName}</span>
+                          <span style={{ fontSize: 12 }}>
+                            {format(latestBooking.checkIn.toDate(), 'yyyy-MM-dd')} ~{' '}
+                            {format(latestBooking.checkOut.toDate(), 'yyyy-MM-dd')} ·{' '}
+                            {loanStatusLabel(latestBooking)}
+                          </span>
+                        </div>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td style={{ color: 'var(--text-mid)' }}>{key.notes || '—'}</td>
                     <td style={{ color: 'var(--text-mid)' }}>
@@ -252,6 +417,42 @@ export function KeyManagement() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {latestBooking && !latestBooking.keyLentAt && (
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => handleQuickLent(latestBooking)}
+                          >
+                            登記出借
+                          </button>
+                        )}
+                        {latestBooking && latestBooking.keyLentAt && !latestBooking.keyReturnedAt && (
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => handleQuickReturned(latestBooking)}
+                          >
+                            登記歸還
+                          </button>
+                        )}
+                        {latestBooking && (
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => startLoanEditing(latestBooking)}
+                          >
+                            借還登記
+                          </button>
+                        )}
+                        {latestBooking && (
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => setViewingBooking(latestBooking)}
+                          >
+                            查看預約
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn-ghost"
@@ -288,8 +489,50 @@ export function KeyManagement() {
           </tbody>
         </table>
       )}
+
+      <Modal open={viewingBooking !== null} onClose={() => setViewingBooking(null)}>
+        <BookingForm booking={viewingBooking} onClose={() => setViewingBooking(null)} />
+      </Modal>
     </div>
   );
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function tsToDateInput(ts: { toDate?: () => Date } | null | undefined): string {
+  if (!ts?.toDate) return '';
+  const d = ts.toDate();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function dateInputToTs(value: string): Timestamp | null {
+  if (!value) return null;
+  return Timestamp.fromDate(new Date(`${value}T00:00`));
+}
+
+function todayInput(): string {
+  return tsToDateInput({ toDate: () => new Date() });
+}
+
+function isCurrentlyOut(booking: Booking): boolean {
+  return Boolean(booking.keyLentAt && !booking.keyReturnedAt);
+}
+
+// A booking that still has the key out beats any other; otherwise the later
+// check-in wins so the newest booking for that key stays on top.
+function isMoreRelevant(candidate: Booking, current: Booking): boolean {
+  const candidateOut = isCurrentlyOut(candidate);
+  const currentOut = isCurrentlyOut(current);
+  if (candidateOut !== currentOut) return candidateOut;
+  return candidate.checkIn.toDate().getTime() > current.checkIn.toDate().getTime();
+}
+
+function loanStatusLabel(booking: Booking): string {
+  if (booking.keyReturnedAt) return '已回收';
+  if (booking.keyLentAt) return '使用中';
+  return '未交付';
 }
 
 function getKeyStatus(key: KeyItem, loaned: boolean): { label: string; className: string } {
