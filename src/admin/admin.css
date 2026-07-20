@@ -584,6 +584,8 @@
   .admin-shell {
     grid-template-columns: 1fr;
     width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
   .admin-sidebar {
     position: static;
@@ -602,17 +604,18 @@
   .admin-nav {
     order: 3;
     flex: 1 0 100%;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-  .admin-nav::-webkit-scrollbar {
-    display: none;
+    width: 100%;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
   .admin-nav-link {
-    flex: 0 0 auto;
+    min-width: 0;
+    padding: 8px 6px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
   }
   .admin-preview-link {
     margin-top: 0;
@@ -651,6 +654,101 @@
   .admin-table-scroll .booking-table {
     min-width: 0;
   }
+  .admin-table-scroll .mobile-card-table {
+    min-width: 0;
+  }
+  .mobile-card-table thead {
+    display: none;
+  }
+  .mobile-card-table,
+  .mobile-card-table tbody,
+  .mobile-card-table tr,
+  .mobile-card-table td {
+    display: block;
+    width: 100%;
+  }
+  .mobile-card-table {
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .mobile-card-table tr {
+    margin-bottom: 12px;
+    padding: 6px 14px;
+    background: var(--bg-high);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+  }
+  .mobile-card-table td {
+    display: grid !important;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    min-height: 42px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-card);
+    text-align: right !important;
+  }
+  .mobile-card-table td:last-child {
+    border-bottom: 0;
+  }
+  .mobile-card-table td:last-child {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .mobile-card-table td:last-child::before {
+    flex: 0 0 96px;
+    margin-right: auto;
+  }
+  .mobile-card-table td:last-child > div {
+    flex: 1 1 160px;
+  }
+  .mobile-card-table td::before {
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  .mobile-card-table td > div {
+    justify-self: end;
+  }
+  .key-table td:nth-child(1)::before { content: '鑰匙編號'; }
+  .key-table td:nth-child(2)::before { content: '名稱'; }
+  .key-table td:nth-child(3)::before { content: '狀態'; }
+  .key-table td:nth-child(4)::before { content: '目前使用'; }
+  .key-table td:nth-child(5)::before { content: '最近借還'; }
+  .key-table td:nth-child(6)::before { content: '備註'; }
+  .key-table td:nth-child(7)::before { content: '建立時間'; }
+  .key-table td:nth-child(8)::before { content: '操作'; }
+  .guest-code-table td:nth-child(1)::before { content: '用途'; }
+  .guest-code-table td:nth-child(2)::before { content: '訪客碼'; }
+  .guest-code-table td:nth-child(3)::before { content: '狀態'; }
+  .guest-code-table td:nth-child(4)::before { content: '使用次數'; }
+  .guest-code-table td:nth-child(5)::before { content: '有效區間'; }
+  .guest-code-table td:nth-child(6)::before { content: '最後登入'; }
+  .guest-code-table td:nth-child(7)::before { content: '操作'; }
+  .recommendation-table td:nth-child(1)::before { content: '分頁'; }
+  .recommendation-table td:nth-child(2)::before { content: '分類'; }
+  .recommendation-table td:nth-child(3)::before { content: '名稱'; }
+  .recommendation-table td:nth-child(4)::before { content: '來源'; }
+  .recommendation-table td:nth-child(5)::before { content: '備註'; }
+  .recommendation-table td:nth-child(6)::before { content: '星等'; }
+  .recommendation-table td:nth-child(7)::before { content: '排序'; }
+  .recommendation-table td:nth-child(8)::before { content: '狀態'; }
+  .recommendation-table td:nth-child(9)::before { content: '操作'; }
+  .user-pending-table td:nth-child(1)::before,
+  .user-approved-table td:nth-child(1)::before { content: '姓名'; }
+  .user-pending-table td:nth-child(2)::before,
+  .user-approved-table td:nth-child(2)::before { content: 'Email'; }
+  .user-pending-table td:nth-child(3)::before { content: '對應預約'; }
+  .user-pending-table td:nth-child(4)::before { content: '註冊時間'; }
+  .user-pending-table td:nth-child(5)::before,
+  .user-approved-table td:nth-child(5)::before { content: '操作'; }
+  .user-approved-table td:nth-child(3)::before { content: '角色'; }
+  .user-approved-table td:nth-child(4)::before { content: '狀態'; }
   .booking-table thead {
     display: none;
   }
@@ -803,8 +901,8 @@
 
 @media (max-width: 600px) {
   .admin-nav-link {
-    padding: 8px 10px;
-    font-size: 13px;
+    padding: 8px 6px;
+    font-size: 12px;
   }
   .admin-filter-bar > button {
     flex: 1 1 auto;

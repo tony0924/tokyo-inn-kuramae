@@ -511,7 +511,7 @@ export function RecommendationManagement() {
           </div>
 
           <div className="admin-table-scroll">
-            <table className="admin-table">
+            <table className="admin-table mobile-card-table recommendation-table">
             <thead>
               <tr>
                 <th>{renderSortHeader('分頁', 'section')}</th>

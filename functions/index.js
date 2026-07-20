@@ -4,7 +4,7 @@ import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
 
 initializeApp();
@@ -74,6 +74,93 @@ export const sendBookingCreatedReminder = onDocumentCreated(
       cc: adminEmails,
       subject: renderTemplate(settings.bookingCreatedReminder.subject, variables),
       text: renderTemplate(settings.bookingCreatedReminder.body, variables),
+      senderName: settings.senderName,
+      senderEmail: settings.senderEmail,
+    });
+  }
+);
+
+export const sendPendingUserApprovalReminder = onDocumentCreated(
+  {
+    document: "users/{userId}",
+    database: "default",
+    region: REGION,
+    secrets: [gmailAppPassword],
+  },
+  async (event) => {
+    const user = event.data?.data();
+    if (user?.role !== "pending" || !user.email) return;
+
+    const settings = await getNotificationSettings();
+    const adminEmails = await getAdminEmails();
+    if (!adminEmails.length) return;
+
+    await sendEmail({
+      to: adminEmails,
+      subject: `帳號待審核｜${user.displayName || user.email}`,
+      text:
+        `有新的帳號正在等待審核。\n\n` +
+        `姓名：${user.displayName || "—"}\n` +
+        `Email：${user.email}\n\n` +
+        `請至管理後台的「使用者」頁面完成審核。`,
+      senderName: settings.senderName,
+      senderEmail: settings.senderEmail,
+    });
+  }
+);
+
+export const sendUserApprovalCompletedNotice = onDocumentUpdated(
+  {
+    document: "users/{userId}",
+    database: "default",
+    region: REGION,
+    secrets: [gmailAppPassword],
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after || before.role !== "pending" || after.role === "pending" || !after.email) return;
+
+    const settings = await getNotificationSettings();
+    const adminEmails = await getAdminEmails();
+    await sendEmail({
+      to: [after.email],
+      cc: adminEmails,
+      subject: "帳號審核完成｜藏前 NEXT",
+      text:
+        `您好 ${after.displayName || ""}，\n\n` +
+        `您的帳號已完成審核，現在可以使用 Gmail 登入入住資訊網站。\n\n` +
+        `網站：${WEBSITE_URL}\n\n` +
+        `如有任何問題，歡迎直接回信詢問。\n\n${settings.senderName}`,
+      senderName: settings.senderName,
+      senderEmail: settings.senderEmail,
+    });
+  }
+);
+
+export const sendUserReturnedToPendingReminder = onDocumentUpdated(
+  {
+    document: "users/{userId}",
+    database: "default",
+    region: REGION,
+    secrets: [gmailAppPassword],
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after || before.role === "pending" || after.role !== "pending" || !after.email) return;
+
+    const settings = await getNotificationSettings();
+    const adminEmails = await getAdminEmails();
+    if (!adminEmails.length) return;
+    await sendEmail({
+      to: adminEmails,
+      subject: `帳號待重新審核｜${after.displayName || after.email}`,
+      text:
+        `帳號已被退回待審核。\n\n` +
+        `姓名：${after.displayName || "—"}\n` +
+        `Email：${after.email}\n\n` +
+        `請至管理後台的「使用者」頁面重新審核。`,
       senderName: settings.senderName,
       senderEmail: settings.senderEmail,
     });

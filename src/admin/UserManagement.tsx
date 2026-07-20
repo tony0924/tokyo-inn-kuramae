@@ -193,7 +193,7 @@ export function UserManagement() {
         </p>
       ) : (
         <div className="admin-table-scroll" style={{ marginBottom: 32 }}>
-          <table className="admin-table">
+          <table className="admin-table mobile-card-table user-pending-table">
           <thead>
             <tr>
               <th>姓名</th>
@@ -248,7 +248,7 @@ export function UserManagement() {
         </p>
       ) : (
         <div className="admin-table-scroll">
-          <table className="admin-table">
+          <table className="admin-table mobile-card-table user-approved-table">
           <thead>
             <tr>
               <th>姓名</th>
