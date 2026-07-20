@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import { createKey, deleteKey, normalizeKeyCode, setKeyActive, updateKey } from '@/lib/keys';
-import { markKeyLent, markKeyReturned, updateBooking } from '@/lib/bookings';
+import { markKeyLent, markKeyReturned, recordKeyLoan, updateBooking } from '@/lib/bookings';
 import { useBookings } from './useBookings';
 import { useKeys } from './useKeys';
 import { Modal } from './Modal';
@@ -21,6 +21,7 @@ type LoanEditingState = {
   keyCode: string;
   keyLentAt: string;
   keyReturnedAt: string;
+  keyHistory: Booking['keyHistory'];
 };
 
 type SortKey = 'code' | 'label' | 'status' | 'currentUsage' | 'notes' | 'createdAt';
@@ -148,6 +149,7 @@ export function KeyManagement() {
       keyCode: normalizeKeyCode(booking.keyCode || ''),
       keyLentAt: tsToDateInput(booking.keyLentAt),
       keyReturnedAt: tsToDateInput(booking.keyReturnedAt),
+      keyHistory: booking.keyHistory,
     });
   }
 
@@ -170,9 +172,12 @@ export function KeyManagement() {
     setMessage(null);
     setError(null);
     try {
+      const keyLentAt = dateInputToTs(loanEditing.keyLentAt);
+      const keyReturnedAt = dateInputToTs(loanEditing.keyReturnedAt);
       await updateBooking(loanEditing.bookingId, {
-        keyLentAt: dateInputToTs(loanEditing.keyLentAt),
-        keyReturnedAt: dateInputToTs(loanEditing.keyReturnedAt),
+        keyLentAt,
+        keyReturnedAt,
+        keyHistory: recordKeyLoan(loanEditing.keyHistory, loanEditing.keyCode, keyLentAt, keyReturnedAt),
       });
       setMessage(`已更新 ${loanEditing.guestName} 的鑰匙借還紀錄`);
       setLoanEditing(null);
@@ -187,8 +192,8 @@ export function KeyManagement() {
     setMessage(null);
     setError(null);
     try {
-      await markKeyLent(booking.id);
-      setMessage(`已登記 ${booking.guestName} 領取鑰匙`);
+      await markKeyLent(booking);
+      setMessage(`已登記 ${booking.guestName} 領取 ${booking.keyCode || '鑰匙'}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登記出借失敗');
     }
@@ -198,8 +203,8 @@ export function KeyManagement() {
     setMessage(null);
     setError(null);
     try {
-      await markKeyReturned(booking.id);
-      setMessage(`已登記 ${booking.guestName} 歸還鑰匙`);
+      await markKeyReturned(booking);
+      setMessage(`已登記 ${booking.guestName} 歸還 ${booking.keyCode || '鑰匙'}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登記歸還失敗');
     }
@@ -363,7 +368,8 @@ export function KeyManagement() {
       {loading ? (
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
-        <table className="admin-table">
+        <div className="admin-table-scroll">
+          <table className="admin-table">
           <thead>
             <tr>
               <th>{renderSortHeader('鑰匙編號', 'code')}</th>
@@ -487,7 +493,8 @@ export function KeyManagement() {
               })
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <Modal open={viewingBooking !== null} onClose={() => setViewingBooking(null)}>
@@ -530,7 +537,7 @@ function isMoreRelevant(candidate: Booking, current: Booking): boolean {
 }
 
 function loanStatusLabel(booking: Booking): string {
-  if (booking.keyReturnedAt) return '已回收';
+  if (booking.keyReturnedAt) return `已歸還 ${booking.keyCode || '鑰匙'}`;
   if (booking.keyLentAt) return '使用中';
   return '未交付';
 }

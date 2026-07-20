@@ -192,7 +192,8 @@ export function UserManagement() {
           目前沒有待審核的帳號。
         </p>
       ) : (
-        <table className="admin-table" style={{ marginBottom: 32 }}>
+        <div className="admin-table-scroll" style={{ marginBottom: 32 }}>
+          <table className="admin-table">
           <thead>
             <tr>
               <th>姓名</th>
@@ -234,7 +235,8 @@ export function UserManagement() {
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <h2 style={{ fontFamily: "'Noto Serif TC', serif", fontSize: 16, color: 'var(--text)', marginBottom: 12 }}>
@@ -245,7 +247,8 @@ export function UserManagement() {
           沒有任何已核准帳號。
         </p>
       ) : (
-        <table className="admin-table">
+        <div className="admin-table-scroll">
+          <table className="admin-table">
           <thead>
             <tr>
               <th>姓名</th>
@@ -339,7 +342,8 @@ export function UserManagement() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );

@@ -510,7 +510,8 @@ export function RecommendationManagement() {
             )}
           </div>
 
-          <table className="admin-table">
+          <div className="admin-table-scroll">
+            <table className="admin-table">
             <thead>
               <tr>
                 <th>{renderSortHeader('分頁', 'section')}</th>
@@ -578,7 +579,8 @@ export function RecommendationManagement() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </>
       )}
     </div>

@@ -4,6 +4,12 @@ export type UserRole = 'admin' | 'guest' | 'pending';
 
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
 
+export interface KeyLoanRecord {
+  keyCode: string;
+  lentAt: Timestamp;
+  returnedAt: Timestamp | null;
+}
+
 export interface UserDoc {
   email: string;
   displayName: string;
@@ -29,6 +35,7 @@ export interface BookingDoc {
   keyCode: string | null;
   keyLentAt: Timestamp | null;
   keyReturnedAt: Timestamp | null;
+  keyHistory?: KeyLoanRecord[];
   notes: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

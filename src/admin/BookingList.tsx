@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { useBookings } from './useBookings';
+import { useKeys } from './useKeys';
 import { Modal } from './Modal';
 import { BookingForm } from './BookingForm';
-import { deleteBookingWithGuestAccessCode } from '@/lib/bookings';
+import { deleteBookingWithGuestAccessCode, markKeyLent, markKeyReturned } from '@/lib/bookings';
 import { formatGuestCode } from '@/lib/guestAccessCodes';
-import type { Booking, PaymentStatus } from '@/types';
+import type { Booking, KeyItem, PaymentStatus } from '@/types';
 
 const PAY_LABEL: Record<PaymentStatus, string> = {
   unpaid: '未付',
@@ -27,6 +28,7 @@ type SortDirection = 'asc' | 'desc';
 
 export function BookingList() {
   const { bookings, loading } = useBookings();
+  const { keys } = useKeys();
   const [editing, setEditing] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<'upcoming' | 'all' | 'past'>('upcoming');
@@ -34,6 +36,17 @@ export function BookingList() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('checkIn');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [keyUpdatingId, setKeyUpdatingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const updateLayout = () => setIsCompactLayout(mediaQuery.matches);
+    updateLayout();
+    mediaQuery.addEventListener('change', updateLayout);
+    return () => mediaQuery.removeEventListener('change', updateLayout);
+  }, []);
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -44,13 +57,13 @@ export function BookingList() {
   }, [bookings, filter]);
 
   const sortedBookings = useMemo(() => {
-    const direction = sortDirection === 'asc' ? 1 : -1;
+    const direction = (filter === 'upcoming' ? sortDirection : sortKey === 'checkIn' ? 'desc' : sortDirection) === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
       const primary = compareBookings(a, b, sortKey) * direction;
       if (primary !== 0) return primary;
       return a.checkIn.toDate().getTime() - b.checkIn.toDate().getTime();
     });
-  }, [filtered, sortDirection, sortKey]);
+  }, [filter, filtered, sortDirection, sortKey]);
 
   function toggleSort(nextKey: SortKey) {
     if (sortKey === nextKey) {
@@ -89,6 +102,22 @@ export function BookingList() {
     }
   }
 
+  async function handleKeyAction(booking: Booking, action: 'lend' | 'return') {
+    setKeyUpdatingId(booking.id);
+    setError(null);
+    try {
+      if (action === 'lend') {
+        await markKeyLent(booking);
+      } else {
+        await markKeyReturned(booking);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '更新鑰匙狀態失敗');
+    } finally {
+      setKeyUpdatingId(null);
+    }
+  }
+
   return (
     <div>
       <div className="admin-page-header">
@@ -98,7 +127,7 @@ export function BookingList() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+      <div className="admin-filter-bar">
         {(['upcoming', 'all', 'past'] as const).map((f) => (
           <button
             key={f}
@@ -127,7 +156,8 @@ export function BookingList() {
       ) : filtered.length === 0 ? (
         <p style={{ color: 'var(--text-mid)' }}>沒有符合的預約。</p>
       ) : (
-        <table className="admin-table">
+        <div className="admin-table-scroll">
+          <table className="admin-table booking-table">
           <thead>
             <tr>
               <th>{renderSortHeader('姓名', 'guestName')}</th>
@@ -143,26 +173,91 @@ export function BookingList() {
             </tr>
           </thead>
           <tbody>
-            {sortedBookings.map((b) => (
-              <tr key={b.id} onClick={() => setEditing(b)} style={{ cursor: 'pointer' }}>
-                <td style={{ color: 'var(--text)' }}>{b.guestName}</td>
-                <td style={{ color: 'var(--text-mid)' }}>{b.guestEmail}</td>
-                <td>{format(b.checkIn.toDate(), 'yyyy-MM-dd')}</td>
-                <td>{format(b.checkOut.toDate(), 'yyyy-MM-dd')}</td>
-                <td style={{ textAlign: 'center' }}>{b.partySize}</td>
-                <td>TWD {b.amount.toLocaleString()}</td>
-                <td>
+            {sortedBookings.map((b) => {
+              const isExpanded = expandedBookingId === b.id;
+              return (
+              <tr
+                key={b.id}
+                className={isExpanded ? 'booking-card-expanded' : undefined}
+                onClick={() => {
+                  if (isCompactLayout) {
+                    setExpandedBookingId(isExpanded ? null : b.id);
+                  } else {
+                    setEditing(b);
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <td data-label="姓名" style={{ color: 'var(--text)' }}>
+                  <span>{b.guestName}</span>
+                  <span className="booking-card-toggle" aria-hidden="true">
+                    {isExpanded ? '收合' : '展開'}
+                  </span>
+                </td>
+                <td data-label="Email" style={{ color: 'var(--text-mid)' }}>{b.guestEmail}</td>
+                <td data-label="入住">{format(b.checkIn.toDate(), 'yyyy-MM-dd')}</td>
+                <td data-label="退房">{format(b.checkOut.toDate(), 'yyyy-MM-dd')}</td>
+                <td data-label="人數" style={{ textAlign: 'center' }}>{b.partySize}</td>
+                <td data-label="金額">TWD {b.amount.toLocaleString()}</td>
+                <td data-label="付款">
                   <span className={`badge ${b.paymentStatus}`}>
                     {PAY_LABEL[b.paymentStatus]}
                   </span>
                 </td>
-                <td style={{ color: 'var(--gold-light)', letterSpacing: '0.06em' }}>
+                <td data-label="訪客碼" style={{ color: 'var(--gold-light)', letterSpacing: '0.06em' }}>
                   {b.guestAccessCode ? formatGuestCode(b.guestAccessCode) : '—'}
                 </td>
-                <td style={{ color: 'var(--text-mid)', fontSize: 12 }}>
-                  {b.keyCode ? `${b.keyCode} / ${keyStatus(b)}` : keyStatus(b)}
+                <td data-label="鑰匙" style={{ color: 'var(--text-mid)', fontSize: 12 }}>
+                  {isCompactLayout && isExpanded ? (
+                    <>
+                      <KeyLoanHistory booking={b} keys={keys} />
+                      {b.keyCode && !b.keyLentAt && (
+                        <div className="booking-key-actions">
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            disabled={keyUpdatingId === b.id}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleKeyAction(b, 'lend');
+                            }}
+                          >
+                            {keyUpdatingId === b.id ? '處理中…' : `登記出借 ${getKeyName(b.keyCode, keys)}`}
+                          </button>
+                        </div>
+                      )}
+                      {b.keyCode && b.keyLentAt && !b.keyReturnedAt && (
+                        <div className="booking-key-actions">
+                          <button
+                            type="button"
+                            className="btn-gold"
+                            disabled={keyUpdatingId === b.id}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleKeyAction(b, 'return');
+                            }}
+                          >
+                            {keyUpdatingId === b.id ? '處理中…' : `登記歸還 ${getKeyName(b.keyCode, keys)}`}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    keyStatus(b, keys)
+                  )}
                 </td>
-                <td>
+                <td data-label="操作">
+                  <button
+                    type="button"
+                    className="btn-ghost booking-card-edit"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditing(b);
+                    }}
+                    style={{ padding: '5px 10px', fontSize: 12 }}
+                  >
+                    編輯
+                  </button>
                   <button
                     type="button"
                     className="btn-danger"
@@ -177,9 +272,11 @@ export function BookingList() {
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <Modal open={creating || editing !== null} onClose={() => {
@@ -198,10 +295,44 @@ export function BookingList() {
   );
 }
 
-function keyStatus(b: Booking): string {
-  if (b.keyReturnedAt) return '已回收';
-  if (b.keyLentAt) return '使用中';
-  return '未交付';
+function keyStatus(booking: Booking, keys: KeyItem[]): string {
+  const keyName = getKeyName(booking.keyCode, keys);
+  if (!booking.keyCode) return '未指定鑰匙';
+  if (booking.keyReturnedAt) return `已歸還 ${keyName}`;
+  if (booking.keyLentAt) return `使用中 ${keyName}`;
+  return `未交付 ${keyName}`;
+}
+
+function getKeyName(keyCode: string | null, keys: KeyItem[]): string {
+  if (!keyCode) return '鑰匙';
+  return keys.find((key) => key.code.trim().toUpperCase() === keyCode.trim().toUpperCase())?.label || keyCode;
+}
+
+function getKeyLoanHistory(booking: Booking) {
+  if (booking.keyHistory?.length) return booking.keyHistory;
+  if (booking.keyCode && booking.keyLentAt) {
+    return [{ keyCode: booking.keyCode, lentAt: booking.keyLentAt, returnedAt: booking.keyReturnedAt }];
+  }
+  return [];
+}
+
+function KeyLoanHistory({ booking, keys }: { booking: Booking; keys: KeyItem[] }) {
+  const history = getKeyLoanHistory(booking);
+  if (history.length === 0) return <>未交付 {getKeyName(booking.keyCode, keys)}</>;
+
+  return (
+    <div className="key-loan-history">
+      {history.map((item, index) => {
+        const keyName = getKeyName(item.keyCode, keys);
+        return (
+          <div key={`${item.keyCode}-${item.lentAt.toMillis()}-${index}`}>
+            <span>出借 {keyName}</span>
+            <span>{item.returnedAt ? `歸還 ${keyName}` : '尚未歸還'}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function getPaymentStatusRank(status: PaymentStatus): number {

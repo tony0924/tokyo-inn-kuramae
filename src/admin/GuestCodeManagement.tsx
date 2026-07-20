@@ -335,7 +335,8 @@ export function GuestCodeManagement() {
         </div>
       </form>
 
-      <table className="admin-table">
+      <div className="admin-table-scroll">
+        <table className="admin-table">
         <thead>
           <tr>
             <th>{renderSortHeader('用途', 'label')}</th>
@@ -413,7 +414,8 @@ export function GuestCodeManagement() {
             })
           )}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

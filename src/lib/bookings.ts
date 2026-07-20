@@ -13,7 +13,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Booking, BookingDoc } from '@/types';
+import type { Booking, BookingDoc, KeyLoanRecord } from '@/types';
 import { generateGuestCode, normalizeGuestCode } from './guestAccessCodes';
 
 const BOOKINGS = 'bookings';
@@ -59,6 +59,7 @@ export async function createBooking(input: NewBookingInput): Promise<string> {
     keyCode: input.keyCode,
     keyLentAt: null,
     keyReturnedAt: null,
+    keyHistory: [],
     notes: input.notes,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -101,6 +102,7 @@ export async function createBookingWithGuestAccessCode(
     keyCode: input.keyCode,
     keyLentAt: null,
     keyReturnedAt: null,
+    keyHistory: [],
     notes: input.notes,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -149,10 +151,46 @@ export async function deleteBookingWithGuestAccessCode(
   await batch.commit();
 }
 
-export async function markKeyLent(id: string, at: Date = new Date()): Promise<void> {
-  await updateBooking(id, { keyLentAt: Timestamp.fromDate(at) });
+export function recordKeyLoan(
+  history: KeyLoanRecord[] | undefined,
+  keyCode: string | null,
+  lentAt: Timestamp | null,
+  returnedAt: Timestamp | null
+): KeyLoanRecord[] {
+  const existing = history ?? [];
+  if (!keyCode || !lentAt) return existing;
+
+  const normalizedCode = keyCode.trim().toUpperCase();
+  let matchingIndex = -1;
+  for (let index = existing.length - 1; index >= 0; index -= 1) {
+    const item = existing[index];
+    if (
+      item.keyCode.trim().toUpperCase() === normalizedCode &&
+      item.lentAt.toMillis() === lentAt.toMillis()
+    ) {
+      matchingIndex = index;
+      break;
+    }
+  }
+  const record: KeyLoanRecord = { keyCode: normalizedCode, lentAt, returnedAt };
+
+  if (matchingIndex < 0) return [...existing, record];
+  return existing.map((item, index) => (index === matchingIndex ? record : item));
 }
 
-export async function markKeyReturned(id: string, at: Date = new Date()): Promise<void> {
-  await updateBooking(id, { keyReturnedAt: Timestamp.fromDate(at) });
+export async function markKeyLent(booking: Booking, at: Date = new Date()): Promise<void> {
+  const lentAt = Timestamp.fromDate(at);
+  await updateBooking(booking.id, {
+    keyLentAt: lentAt,
+    keyReturnedAt: null,
+    keyHistory: recordKeyLoan(booking.keyHistory, booking.keyCode, lentAt, null),
+  });
+}
+
+export async function markKeyReturned(booking: Booking, at: Date = new Date()): Promise<void> {
+  const returnedAt = Timestamp.fromDate(at);
+  await updateBooking(booking.id, {
+    keyReturnedAt: returnedAt,
+    keyHistory: recordKeyLoan(booking.keyHistory, booking.keyCode, booking.keyLentAt, returnedAt),
+  });
 }

@@ -3,6 +3,7 @@ import {
   createBookingWithGuestAccessCode,
   deleteBookingWithGuestAccessCode,
   getGuestCodeWindow,
+  recordKeyLoan,
   updateBooking,
 } from '@/lib/bookings';
 import { Timestamp } from 'firebase/firestore';
@@ -258,6 +259,12 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
       if (isEdit && booking) {
         const checkIn = new Date(`${state.checkIn}T15:00`);
         const checkOut = new Date(`${state.checkOut}T11:00`);
+        const keyLentAt = state.keyLentAt
+          ? Timestamp.fromDate(new Date(`${state.keyLentAt}T00:00`))
+          : null;
+        const keyReturnedAt = state.keyReturnedAt
+          ? Timestamp.fromDate(new Date(`${state.keyReturnedAt}T00:00`))
+          : null;
         await updateBooking(booking.id, {
           guestName: state.guestName,
           guestEmail: state.guestEmail.trim().toLowerCase(),
@@ -268,12 +275,14 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           paymentStatus: state.paymentStatus,
           paymentNotes: state.paymentNotes,
           keyCode: selectedKeyCode || null,
-          keyLentAt: state.keyLentAt
-            ? Timestamp.fromDate(new Date(`${state.keyLentAt}T00:00`))
-            : null,
-          keyReturnedAt: state.keyReturnedAt
-            ? Timestamp.fromDate(new Date(`${state.keyReturnedAt}T00:00`))
-            : null,
+          keyLentAt,
+          keyReturnedAt,
+          keyHistory: recordKeyLoan(
+            booking.keyHistory,
+            selectedKeyCode || null,
+            keyLentAt,
+            keyReturnedAt
+          ),
           notes: state.notes,
         });
         if (booking.guestAccessCode) {
