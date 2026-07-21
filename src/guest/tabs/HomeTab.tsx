@@ -188,10 +188,10 @@ export function HomeTab() {
             ['cityguide', '🗺️', '景點'],
             ['faq', '❓', 'FAQ'],
           ].map(([id, icon, label]) => (
-            <div key={id} className="nav-card" onClick={() => navTo(id)}>
+            <button key={id} type="button" className="nav-card" onClick={() => navTo(id)}>
               <span className="nc-icon">{icon}</span>
               <div className="nc-label">{label}</div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

@@ -1,17 +1,19 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { GuestLayout } from '@/guest/GuestLayout';
-import { HomeTab } from '@/guest/tabs/HomeTab';
-import { CheckinTab } from '@/guest/tabs/CheckinTab';
-import { ArrivalTab } from '@/guest/tabs/ArrivalTab';
-import { TransitTab } from '@/guest/tabs/TransitTab';
-import { MessageBoardTab } from '@/guest/tabs/MessageBoardTab';
-import { AirportTransitTab } from '@/guest/tabs/AirportTransitTab';
-import { FacilitiesTab } from '@/guest/tabs/FacilitiesTab';
-import { ItemsTab } from '@/guest/tabs/ItemsTab';
-import { ServicesTab } from '@/guest/tabs/ServicesTab';
-import { RestaurantTab } from '@/guest/tabs/RestaurantTab';
-import { CityguideTab } from '@/guest/tabs/CityguideTab';
-import { FaqTab } from '@/guest/tabs/FaqTab';
+
+const HomeTab = lazy(() => import('@/guest/tabs/HomeTab').then((module) => ({ default: module.HomeTab })));
+const CheckinTab = lazy(() => import('@/guest/tabs/CheckinTab').then((module) => ({ default: module.CheckinTab })));
+const ArrivalTab = lazy(() => import('@/guest/tabs/ArrivalTab').then((module) => ({ default: module.ArrivalTab })));
+const TransitTab = lazy(() => import('@/guest/tabs/TransitTab').then((module) => ({ default: module.TransitTab })));
+const MessageBoardTab = lazy(() => import('@/guest/tabs/MessageBoardTab').then((module) => ({ default: module.MessageBoardTab })));
+const AirportTransitTab = lazy(() => import('@/guest/tabs/AirportTransitTab').then((module) => ({ default: module.AirportTransitTab })));
+const FacilitiesTab = lazy(() => import('@/guest/tabs/FacilitiesTab').then((module) => ({ default: module.FacilitiesTab })));
+const ItemsTab = lazy(() => import('@/guest/tabs/ItemsTab').then((module) => ({ default: module.ItemsTab })));
+const ServicesTab = lazy(() => import('@/guest/tabs/ServicesTab').then((module) => ({ default: module.ServicesTab })));
+const RestaurantTab = lazy(() => import('@/guest/tabs/RestaurantTab').then((module) => ({ default: module.RestaurantTab })));
+const CityguideTab = lazy(() => import('@/guest/tabs/CityguideTab').then((module) => ({ default: module.CityguideTab })));
+const FaqTab = lazy(() => import('@/guest/tabs/FaqTab').then((module) => ({ default: module.FaqTab })));
 
 export default function GuestApp() {
   return (

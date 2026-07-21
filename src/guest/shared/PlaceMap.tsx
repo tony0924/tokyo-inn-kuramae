@@ -163,8 +163,12 @@ export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') ctx?.select(idx);
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          ctx?.select(idx);
+        }
       }}
+      aria-pressed={selected}
     >
       <div>
         <span

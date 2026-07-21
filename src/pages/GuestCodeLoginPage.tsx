@@ -66,19 +66,25 @@ export default function GuestCodeLoginPage() {
           請輸入管理者提供的隨機碼，即可查看房客指南。
         </p>
 
+        <label htmlFor="guest-access-code" className="sr-only">訪客碼</label>
         <input
+          id="guest-access-code"
           value={code}
           onChange={(e) => setCode(formatGuestCode(e.target.value))}
           placeholder="例如：ABCD-2345"
           autoComplete="one-time-code"
+          aria-describedby="guest-code-help"
           style={{
             width: '100%',
             textAlign: 'center',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            marginBottom: 14,
+            marginBottom: 8,
           }}
         />
+        <p id="guest-code-help" style={{ color: 'var(--text-mid)', fontSize: 12, marginBottom: 14 }}>
+          可直接輸入 8 碼，系統會自動加入連字號。
+        </p>
 
         <button
           type="submit"
@@ -90,7 +96,7 @@ export default function GuestCodeLoginPage() {
         </button>
 
         {error && (
-          <p style={{ color: 'var(--vermilion)', fontSize: 13, marginTop: 16 }}>{error}</p>
+          <p role="alert" style={{ color: 'var(--vermilion)', fontSize: 13, marginTop: 16 }}>{error}</p>
         )}
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 18 }}>

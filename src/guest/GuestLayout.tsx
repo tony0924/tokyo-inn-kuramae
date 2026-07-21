@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LightboxProvider } from './shared/Lightbox';
 import { useAuth } from '@/auth/AuthProvider';
@@ -26,10 +26,13 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'faq', icon: '❓', label: 'FAQ' },
 ];
 
-function highlight(text: string, q: string): string {
-  if (!q) return text;
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(escaped, 'gi'), (m) => `<mark>${m}</mark>`);
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return parts.map((part, index): ReactNode =>
+    part.toLowerCase() === query.toLowerCase() ? <mark key={index}>{part}</mark> : part
+  );
 }
 
 export function GuestLayout() {
@@ -165,7 +168,8 @@ export function GuestLayout() {
             ) : (
               <div>
                 {matches.map((r, idx) => (
-                  <div
+                  <button
+                    type="button"
                     key={`${r.tab}-${r.title}-${idx}`}
                     className="search-result-item"
                     onClick={() => {
@@ -174,22 +178,11 @@ export function GuestLayout() {
                     }}
                   >
                     <div className="sri-section">{r.section}</div>
-                    <div
-                      className="sri-title"
-                      dangerouslySetInnerHTML={{
-                        __html: highlight(r.title, query),
-                      }}
-                    />
-                    <div
-                      className="sri-preview"
-                      dangerouslySetInnerHTML={{
-                        __html: highlight(
-                          r.content.split(' ').slice(0, 10).join(' '),
-                          query
-                        ),
-                      }}
-                    />
-                  </div>
+                    <div className="sri-title"><Highlight text={r.title} query={query} /></div>
+                    <div className="sri-preview">
+                      <Highlight text={r.content.split(' ').slice(0, 10).join(' ')} query={query} />
+                    </div>
+                  </button>
                 ))}
               </div>
             )}

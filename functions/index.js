@@ -6,6 +6,7 @@ import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
+import { InvalidGoogleMapsUrlError, resolveGoogleMapsUrl } from "./googleMapsUrl.js";
 
 initializeApp();
 
@@ -252,12 +253,24 @@ export const lookupGoogleMapPlace = onCall(
       throw new HttpsError("invalid-argument", "請提供 Google Maps 連結。");
     }
 
+    if (url.length > 2048) {
+      throw new HttpsError("invalid-argument", "Google Maps 連結過長。");
+    }
+
     const apiKey = googleMapsApiKey.value();
     if (!apiKey) {
       throw new HttpsError("failed-precondition", "GOOGLE_MAPS_API_KEY 尚未設定。");
     }
 
-    const resolvedUrl = await resolveGoogleMapsUrl(url);
+    let resolvedUrl;
+    try {
+      resolvedUrl = await resolveGoogleMapsUrl(url);
+    } catch (error) {
+      if (error instanceof InvalidGoogleMapsUrlError) {
+        throw new HttpsError("invalid-argument", error.message);
+      }
+      throw error;
+    }
     const parsed = extractPlaceLookupHints(resolvedUrl);
 
     let place = null;
@@ -509,25 +522,6 @@ async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }
   }
 }
 
-async function resolveGoogleMapsUrl(inputUrl) {
-  try {
-    const response = await fetch(inputUrl, {
-      method: "HEAD",
-      redirect: "follow",
-    });
-    return response.url || inputUrl;
-  } catch {
-    try {
-      const response = await fetch(inputUrl, {
-        method: "GET",
-        redirect: "follow",
-      });
-      return response.url || inputUrl;
-    } catch {
-      return inputUrl;
-    }
-  }
-}
 
 function extractPlaceLookupHints(inputUrl) {
   let url;

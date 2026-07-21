@@ -1,8 +1,10 @@
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { signOut } from '@/lib/auth';
-import { PreviewMap } from '@/preview/PreviewMap';
 import '@/preview/preview.css';
+
+const PreviewMap = lazy(() => import('@/preview/PreviewMap').then((module) => ({ default: module.PreviewMap })));
 
 const stations = [
   { name: '都營淺草線・大江戶線　蔵前站', minutes: '5 分' },
@@ -11,10 +13,10 @@ const stations = [
 ];
 
 const stats = [
-  { label: 'Type', value: '一房一廳・整層' },
-  { label: 'Capacity', value: '最多 4 人' },
-  { label: 'District', value: '東京・台東區藏前' },
-  { label: 'Floor', value: '高層・電梯直達' },
+  { label: '房型', value: '一房一廳・整層' },
+  { label: '可住人數', value: '最多 4 人' },
+  { label: '區域', value: '東京・台東區藏前' },
+  { label: '樓層', value: '高層・電梯直達' },
 ];
 
 const features = [
@@ -64,7 +66,7 @@ export default function PreviewPage() {
           <h1 className="preview-title">
             藏前 <span className="accent">NEXT</span>
           </h1>
-          <p className="preview-subtitle">東京下町の靜謐な住所</p>
+          <p className="preview-subtitle">東京下町的靜謐住處</p>
 
           <div className="preview-cta-row">
             {fbUser ? (
@@ -112,7 +114,9 @@ export default function PreviewPage() {
             位於東京都台東區藏前一帶 — 介於淺草與秋葉原之間的傳統下町，
             既近主要景點也保有低調生活感。確切地址將於入住前提供給已預訂的房客。
           </p>
-          <PreviewMap />
+          <Suspense fallback={<div className="preview-map-loading" role="status">載入地圖中…</div>}>
+            <PreviewMap />
+          </Suspense>
         </section>
 
         <section className="preview-section">

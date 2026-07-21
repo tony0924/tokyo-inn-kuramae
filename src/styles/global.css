@@ -50,6 +50,32 @@
   box-shadow: var(--shadow-md);
 }
 
+.btn-gold:disabled,
+.btn-ghost:disabled,
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
+:where(a, button, input, textarea, select, [role='button']):focus-visible {
+  outline: 3px solid var(--gold-light);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;

@@ -817,6 +817,8 @@
       position: relative;
       overflow: hidden;
       user-select: none;
+      width: 100%;
+      color: inherit;
     }
 
     .nav-card::before {
@@ -1021,6 +1023,49 @@
       border-radius: 50%;
       flex-shrink: 0;
       margin-top: 8px;
+    }
+
+    .station-directions {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--text);
+      font-size: 0.8rem;
+      line-height: 1.65;
+    }
+
+    .station-directions li {
+      display: list-item;
+      padding: 0;
+      border: 0;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    .station-directions li + li { margin-top: 4px; }
+    .station-directions li::before { content: none; }
+    .station-directions strong { color: var(--gold-light); }
+
+    .station-walking-link {
+      display: inline-flex;
+      margin-top: 10px;
+      font-size: 0.78rem;
+    }
+
+    .bus-stop-heading {
+      display: block;
+      margin-top: 18px;
+    }
+
+    .bus-route-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .bus-route-links .map-btn {
+      font-size: 0.75rem;
+      padding: 7px 10px;
     }
 
     .checklist {
@@ -1618,6 +1663,9 @@
       margin-bottom: 8px;
       cursor: pointer;
       transition: var(--transition);
+      width: 100%;
+      color: inherit;
+      text-align: left;
     }
 
     .search-result-item:hover {
@@ -1679,6 +1727,8 @@
       cursor: pointer;
       line-height: 1;
       transition: color 0.2s;
+      background: transparent;
+      border: 0;
     }
     .lightbox-close:hover { color: white; }
     .lightbox-caption {

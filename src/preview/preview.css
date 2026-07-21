@@ -68,6 +68,15 @@
   font-weight: 600;
 }
 
+.preview-map-loading {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  color: var(--text-mid);
+  background: var(--bg-mid);
+  border-radius: var(--radius-sm);
+}
+
 .preview-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

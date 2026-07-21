@@ -13,4 +13,18 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('/firebase/')) return 'firebase';
+          if (id.includes('/react-dom/') || id.includes('/react-router-dom/') || id.includes('/react/')) {
+            return 'react';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 });

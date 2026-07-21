@@ -6,12 +6,15 @@ import '@/styles/reset.css';
 import '@/styles/global.css';
 
 import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('#root element not found in index.html');
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 );

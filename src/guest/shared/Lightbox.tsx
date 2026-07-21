@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 interface LightboxContextValue {
@@ -21,8 +21,13 @@ interface State {
 
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const open = (src: string, alt = '') => setState({ src, alt });
+  const open = (src: string, alt = '') => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setState({ src, alt });
+  };
   const close = () => setState(null);
 
   useEffect(() => {
@@ -31,11 +36,13 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       if (e.key === 'Escape') close();
     };
     document.addEventListener('keydown', onKey);
+    closeRef.current?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      returnFocusRef.current?.focus();
     };
   }, [state]);
 
@@ -44,10 +51,10 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       {children}
       {state &&
         createPortal(
-          <div className="lightbox open" onClick={close}>
-            <span className="lightbox-close" onClick={close}>
+          <div className="lightbox open" onClick={close} role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+            <button ref={closeRef} type="button" className="lightbox-close" onClick={close} aria-label="關閉圖片檢視">
               ✕
-            </span>
+            </button>
             <img
               src={state.src}
               alt={state.alt}
@@ -75,6 +82,15 @@ export function ZoomableImg({ src, alt = '', ...rest }: ZoomableImgProps) {
       loading="lazy"
       onLoad={(e) => e.currentTarget.classList.add('loaded')}
       onClick={() => open(src, alt)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open(src, alt);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={alt ? `放大查看：${alt}` : '放大查看圖片'}
       style={{ cursor: 'zoom-in' }}
       {...rest}
     />

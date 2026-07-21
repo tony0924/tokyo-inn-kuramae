@@ -1,9 +1,6 @@
 export const arrivalPhotos = {
   building: new URL('./arrival/IMG_3357.jpg', import.meta.url).href,
-  doorLock: new URL(
-    '../../../pic/arrival/6af73800-f13b-496b-97c8-78db94253032.png',
-    import.meta.url,
-  ).href,
+  doorLock: new URL('./arrival/door-lock.jpg', import.meta.url).href,
   floorPlan: new URL('../../../pic/arrival/image.png', import.meta.url).href,
   kitchen: [new URL('./arrival/IMG_3354.jpg', import.meta.url).href],
   livingRoom: [
@@ -30,31 +27,16 @@ export const arrivalPhotos = {
 };
 
 export const facilityPhotos = {
-  doorOpen: new URL(
-    '../../../pic/facilities/1f164cc3-3760-4954-b86c-d88c7751e33d.png',
-    import.meta.url,
-  ).href,
-  doorLock: new URL(
-    '../../../pic/facilities/28ef3eae-cc20-437c-94a4-9a2124e150e0.png',
-    import.meta.url,
-  ).href,
-  lightRemote: new URL(
-    '../../../pic/facilities/79f66e50-5737-4573-b396-0a88ce5e5fd8.png',
-    import.meta.url,
-  ).href,
-  sofaOpen: new URL('../../../pic/facilities/image.png', import.meta.url).href,
-  sofaClosed: new URL('../../../pic/facilities/image 1.png', import.meta.url).href,
-  table: new URL('../../../pic/facilities/image 2.png', import.meta.url).href,
-  ihStove: new URL('../../../pic/facilities/image 3.png', import.meta.url).href,
-  rangeHoodLatch: new URL(
-    '../../../pic/facilities/16c9176d-d607-4195-8162-e09c642a8c02.png',
-    import.meta.url,
-  ).href,
-  rangeHoodOpen: new URL('../../../pic/facilities/image 4.png', import.meta.url).href,
-  rangeHoodUsage: new URL('../../../pic/facilities/image 5.png', import.meta.url).href,
-  waterHeater: new URL('../../../pic/facilities/image 6.png', import.meta.url).href,
-  bathroomFan: new URL(
-    '../../../pic/facilities/d50a4b1a-e367-48e9-ba65-f01f6db89dcf.png',
-    import.meta.url,
-  ).href,
+  doorOpen: new URL('./facilities/1f164cc3-3760-4954-b86c-d88c7751e33d.jpg', import.meta.url).href,
+  doorLock: new URL('./facilities/28ef3eae-cc20-437c-94a4-9a2124e150e0.jpg', import.meta.url).href,
+  lightRemote: new URL('./facilities/79f66e50-5737-4573-b396-0a88ce5e5fd8.jpg', import.meta.url).href,
+  sofaOpen: new URL('./facilities/image.jpg', import.meta.url).href,
+  sofaClosed: new URL('./facilities/image 1.jpg', import.meta.url).href,
+  table: new URL('./facilities/image 2.jpg', import.meta.url).href,
+  ihStove: new URL('./facilities/image 3.jpg', import.meta.url).href,
+  rangeHoodLatch: new URL('./facilities/16c9176d-d607-4195-8162-e09c642a8c02.jpg', import.meta.url).href,
+  rangeHoodOpen: new URL('./facilities/image 4.jpg', import.meta.url).href,
+  rangeHoodUsage: new URL('./facilities/image 5.jpg', import.meta.url).href,
+  waterHeater: new URL('./facilities/image 6.jpg', import.meta.url).href,
+  bathroomFan: new URL('./facilities/d50a4b1a-e367-48e9-ba65-f01f6db89dcf.jpg', import.meta.url).href,
 };
