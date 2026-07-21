@@ -54,46 +54,6 @@ export function ArrivalTab() {
         </ol>
       </div>
 
-      <Accordion icon="🚇" title="交通方式" defaultOpen>
-        <div className="sub-label">附近車站</div>
-        <ul className="bullet-list">
-          <li>
-            <strong>都營大江戶線：藏前站</strong>
-            <br />
-            <span style={{ color: 'var(--text-soft)', fontSize: '0.82rem' }}>
-              往羽田機場 → A2（手扶梯）/ A1b（電梯）　往成田機場 → A0（電梯）
-            </span>
-          </li>
-          <li>
-            <strong>都營淺草線：藏前站</strong>
-            <br />
-            <span style={{ color: 'var(--text-soft)', fontSize: '0.82rem' }}>
-              不分方向 → A5（電梯）
-            </span>
-          </li>
-          <li>
-            <strong>東京 Metro 銀座線：田原町站</strong>
-          </li>
-        </ul>
-
-        <div className="divider"></div>
-        <div className="sub-label">🚇 交通便利地點</div>
-        <ul className="bullet-list">
-          <li>
-            <strong>淺草線</strong>：東京車站、銀座、築地、晴空塔、橫濱、成田／羽田機場
-          </li>
-          <li>
-            <strong>大江戶線</strong>：新宿、市政廳、東京巨蛋、清澄白河
-          </li>
-          <li>
-            <strong>銀座線</strong>：澀谷
-          </li>
-          <li>
-            <strong>公車「都 02」</strong>：上野、Skyliner 接駁
-          </li>
-        </ul>
-      </Accordion>
-
       <Accordion id="anchor-building" icon="🏢" title="建築進入方式" defaultOpen>
         <ul className="bullet-list">
           <li>第一扇玻璃門 — 直接進入</li>

@@ -15,12 +15,14 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: '首頁' },
   { id: 'checkin', icon: '📋', label: '入退房' },
   { id: 'arrival', icon: '🚃', label: '抵達' },
+  { id: 'transit', icon: '🚇', label: '地鐵／公車' },
   { id: 'airport', icon: '✈️', label: '機場' },
   { id: 'facilities', icon: '🔧', label: '設施' },
   { id: 'items', icon: '📦', label: '備品' },
   { id: 'services', icon: '🏪', label: '購物' },
   { id: 'restaurant', icon: '🍜', label: '食物' },
   { id: 'cityguide', icon: '🗺️', label: '景點' },
+  { id: 'messages', icon: '💬', label: '留言板' },
   { id: 'faq', icon: '❓', label: 'FAQ' },
 ];
 

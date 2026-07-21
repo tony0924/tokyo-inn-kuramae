@@ -65,6 +65,33 @@ export function AirportTransitTab() {
         </div>
       </div>
 
+      <div className="glass-card">
+        <div className="card-header">
+          <div className="card-icon">🚇</div>
+          <div className="card-title">淺草線・藏前站出口（行李旅客）</div>
+        </div>
+        <ul className="bullet-list">
+          <li>
+            <strong>羽田機場方向抵達／前往成田機場方向</strong>
+            <br />
+            請使用 <strong>A0 電梯出口</strong>。
+          </li>
+          <li>
+            <strong>成田機場方向抵達／前往羽田機場方向</strong>
+            <br />
+            請使用 <strong>A5 電梯出口</strong>。
+          </li>
+        </ul>
+        <a
+          href="https://www.google.com/maps/search/?api=1&query=%E9%83%BD%E5%96%B6%E6%B5%85%E8%8D%89%E7%B7%9A%20%E8%94%B5%E5%89%8D%E9%A7%85"
+          target="_blank"
+          rel="noreferrer"
+          className="map-btn"
+        >
+          📍 在 Google Maps 開啟淺草線・藏前站
+        </a>
+      </div>
+
       <div className="airport-summary-grid">
         <div className="airport-summary-card">
           <div className="airport-summary-title">成田機場</div>

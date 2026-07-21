@@ -12,6 +12,7 @@ const navItems = [
   { to: '/admin/guest-codes', label: '訪客碼' },
   { to: '/admin/recommendations', label: '推薦地點' },
   { to: '/admin/notifications', label: '通知設定' },
+  { to: '/admin/messages', label: '留言板' },
 ];
 
 export function AdminLayout() {

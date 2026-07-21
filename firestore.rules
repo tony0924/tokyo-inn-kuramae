@@ -97,6 +97,17 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/guestAccessCodes/$(code)).data.expiresAt > request.time;
     }
 
+    function isGuestMessageBoardMember(code) {
+      return isValidGuestAccessCode(code)
+        || (
+          isSignedIn()
+          && getUserDoc(request.auth.uid).role == 'guest'
+          && getUserDoc(request.auth.uid).active == true
+          && getUserDoc(request.auth.uid).bookingId != null
+          && get(/databases/$(database)/documents/bookings/$(getUserDoc(request.auth.uid).bookingId)).data.guestAccessCode == code
+        );
+    }
+
     match /guestPageViews/{id} {
       allow read, list, delete: if isAdmin();
       allow create: if request.resource.data.createdAt == request.time
@@ -117,6 +128,23 @@ service cloud.firestore {
           )
         );
       allow update: if false;
+    }
+
+    match /guestMessageBoards/{code}/messages/{id} {
+      allow read: if isAdmin() || isGuestMessageBoardMember(code);
+      allow create: if isAdmin()
+        || (
+          isGuestMessageBoardMember(code)
+          && request.resource.data.guestAccessCode == code
+          && request.resource.data.authorType == 'guest'
+          && request.resource.data.authorName is string
+          && request.resource.data.guestName is string
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 1000
+          && request.resource.data.createdAt == request.time
+        );
+      allow update, delete: if isAdmin();
     }
 
     match /bookings/{id} {

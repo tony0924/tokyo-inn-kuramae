@@ -117,6 +117,18 @@
   min-width: 0;
 }
 
+.admin-page-subtitle { margin: 6px 0 0; color: var(--text-soft); font-size: 13px; }
+.admin-empty-state { padding: 28px; color: var(--text-soft); text-align: center; border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--bg-high); }
+.admin-message-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; }
+.admin-message-boards { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 150px); overflow-y: auto; }
+.admin-message-board { padding: 13px; text-align: left; border: 1px solid var(--border-card); border-radius: var(--radius-sm); background: var(--bg-high); color: var(--text); display: grid; gap: 5px; }
+.admin-message-board.active { border-color: var(--gold); background: var(--gold-pale); }
+.admin-message-board span, .admin-message-board small { color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-message-thread { min-height: 580px; padding: 18px; border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--bg-mid); display: flex; flex-direction: column; }
+.admin-message-thread .message-thread { flex: 1; }
+.admin-message-thread-head { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid var(--border-card); color: var(--text-soft); font-size: 13px; }
+.admin-message-thread-head strong { color: var(--text); }
+
 .admin-page-header {
   display: flex;
   justify-content: space-between;
@@ -869,6 +881,17 @@
   .guest-dashboard-grid {
     grid-template-columns: 1fr;
   }
+  .admin-message-layout {
+    grid-template-columns: 1fr;
+  }
+  .admin-message-boards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 260px;
+  }
+  .admin-message-thread {
+    min-height: 460px;
+  }
   .modal-backdrop {
     align-items: stretch;
     padding: 8px;
@@ -907,5 +930,11 @@
   .admin-filter-bar > button {
     flex: 1 1 auto;
     justify-content: center;
+  }
+  .admin-message-boards {
+    grid-template-columns: 1fr;
+  }
+  .admin-message-thread {
+    padding: 14px;
   }
 }
