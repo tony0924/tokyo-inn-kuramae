@@ -30,9 +30,16 @@ export function watchGuestMessages(
   return onSnapshot(q, (snap) => cb(snap.docs.map((item) => toMessage(item.id, item.data() as GuestMessageDoc))));
 }
 
-export function watchAllGuestMessages(cb: (messages: GuestMessage[]) => void): Unsubscribe {
+export function watchAllGuestMessages(
+  cb: (messages: GuestMessage[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   const q = query(collectionGroup(db, 'messages'), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((item) => toMessage(item.id, item.data() as GuestMessageDoc))));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((item) => toMessage(item.id, item.data() as GuestMessageDoc))),
+    (error) => onError?.(error)
+  );
 }
 
 export async function createGuestMessage(input: {

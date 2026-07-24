@@ -19,12 +19,22 @@ export function MessageManagement() {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     void clearAppBadge();
   }, []);
 
-  useEffect(() => watchAllGuestMessages(setMessages), []);
+  useEffect(
+    () => watchAllGuestMessages(
+      (next) => {
+        setMessages(next);
+        setLoadError(null);
+      },
+      () => setLoadError('無法載入訪客留言，請重新整理後再試。')
+    ),
+    []
+  );
 
   const boards = useMemo<MessageBoard[]>(() => {
     const grouped = new Map<string, MessageBoard>();
@@ -79,7 +89,7 @@ export function MessageManagement() {
         <div><h1 className="admin-page-title">留言板</h1><p className="admin-page-subtitle">查看訪客留言並直接回覆。</p></div>
       </div>
 
-      {boards.length === 0 ? <div className="admin-empty-state">目前還沒有訪客留言。</div> : (
+      {loadError ? <div className="admin-empty-state">{loadError}</div> : boards.length === 0 ? <div className="admin-empty-state">目前還沒有訪客留言。</div> : (
         <div className="admin-message-layout">
           <div className="admin-message-boards">
             {boards.map((board) => (

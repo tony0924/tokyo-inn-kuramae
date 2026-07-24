@@ -70,7 +70,13 @@ service cloud.firestore {
     }
 
     match /adminPushDevices/{deviceId} {
-      allow read: if isAdmin()
+      // A first-time registration checks whether its device document exists
+      // before creating it. `get` must not depend on resource.data because the
+      // resource is absent on that initial lookup.
+      allow get: if isAdmin();
+
+      // Collection queries remain scoped to the signed-in admin's devices.
+      allow list: if isAdmin()
         && resource.data.ownerUid == request.auth.uid;
 
       allow create: if isAdmin()
@@ -196,6 +202,12 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time
         );
       allow update, delete: if isAdmin();
+    }
+
+    // Admin uses a collection-group query to load messages from every guest
+    // board. Collection-group queries require an explicit recursive match.
+    match /{path=**}/messages/{id} {
+      allow read: if isAdmin();
     }
 
     match /bookings/{id} {
