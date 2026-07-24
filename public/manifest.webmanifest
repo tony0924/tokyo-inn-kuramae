@@ -1,0 +1,50 @@
+{
+  "id": "/admin/",
+  "name": "藏前管理",
+  "short_name": "藏前管理",
+  "description": "藏前 NEXT 民宿預約與營運管理",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "start_url": "/admin/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/admin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/admin-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/admin-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "預約清單",
+      "short_name": "預約",
+      "url": "/admin/bookings"
+    },
+    {
+      "name": "行事曆",
+      "short_name": "行事曆",
+      "url": "/admin/calendar"
+    },
+    {
+      "name": "房客留言",
+      "short_name": "留言",
+      "url": "/admin/messages"
+    }
+  ]
+}

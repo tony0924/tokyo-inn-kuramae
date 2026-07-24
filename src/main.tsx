@@ -7,6 +7,7 @@ import '@/styles/global.css';
 
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { registerServiceWorker } from './pwa/registerServiceWorker';
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('#root element not found in index.html');
@@ -18,3 +19,5 @@ createRoot(rootEl).render(
     </ErrorBoundary>
   </StrictMode>
 );
+
+registerServiceWorker();
