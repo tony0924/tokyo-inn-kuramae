@@ -110,8 +110,8 @@ tokyo_inn/
 | `/pending` | PendingApprovalPage | 已登入但未核准 |
 | `/guest` → `/guest/home` | — | role=guest+active、admin、或有效訪客碼 |
 | `/guest/{home,checkin,arrival,airport,facilities,items,services,restaurant,cityguide,faq}` | 對應 Tab | 同上 |
-| `/admin` → `/admin/revenue` | — | role=admin（`requireActive={false}`） |
-| `/admin/{revenue,calendar,bookings,users,keys,guest-codes,recommendations,notifications}` | 對應管理頁 | role=admin |
+| `/admin` → `/admin/today` | — | role=admin（`requireActive={false}`） |
+| `/admin/{today,revenue,calendar,bookings,messages,users,keys,guest-codes,recommendations,notifications}` | 對應管理頁 | role=admin |
 | `*` | → `/` | — |
 
 `ProtectedRoute` 邏輯（`src/auth/ProtectedRoute.tsx`）：

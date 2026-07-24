@@ -47,7 +47,7 @@ Known deploy note: `firebase deploy --only functions` may end with exit code `1`
 - `/code-login`: guest access code login page.
 - `/pending`: user is signed in but waiting for admin approval.
 - `/guest/*`: guest-facing pages. Allowed roles: `guest`, `admin`.
-- `/admin/*`: admin backend. Allowed role: `admin`.
+- `/admin/*`: admin backend. Allowed role: `admin`; `/admin` defaults to `/admin/today`.
 
 Routing entry point: `src/App.tsx`.
 
@@ -68,6 +68,7 @@ Routing entry point: `src/App.tsx`.
 
 Admin backend currently includes:
 
+- Mobile-first today operations dashboard.
 - Booking list and booking form.
 - Calendar-style booking view.
 - Revenue overview.
@@ -75,6 +76,8 @@ Admin backend currently includes:
 - Key management.
 - Guest access code management.
 - Notification settings.
+- Guest message management.
+- Mobile bottom navigation and installable PWA shell.
 - Button/link flow to preview guest-facing page as admin.
 
 Admin app entry: `src/pages/AdminApp.tsx`.
