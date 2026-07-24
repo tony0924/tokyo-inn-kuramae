@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
@@ -107,6 +108,92 @@ export const sendPendingUserApprovalReminder = onDocumentCreated(
       senderName: settings.senderName,
       senderEmail: settings.senderEmail,
     });
+  }
+);
+
+export const sendGuestMessagePush = onDocumentCreated(
+  {
+    document: "guestMessageBoards/{code}/messages/{messageId}",
+    database: "default",
+    region: REGION,
+  },
+  async (event) => {
+    const message = event.data?.data();
+    if (!message || message.authorType !== "guest") return;
+
+    const devicesSnapshot = await db
+      .collection("adminPushDevices")
+      .where("enabled", "==", true)
+      .get();
+    if (devicesSnapshot.empty) {
+      logger.info("No admin push devices registered. Skipping guest message push.", {
+        messageId: event.params.messageId,
+      });
+      return;
+    }
+
+    const devicesByToken = new Map();
+    for (const deviceDocument of devicesSnapshot.docs) {
+      const token = deviceDocument.data().token;
+      if (typeof token === "string" && token.length > 20 && !devicesByToken.has(token)) {
+        devicesByToken.set(token, deviceDocument.ref);
+      }
+    }
+
+    const devices = [...devicesByToken.entries()].map(([token, reference]) => ({
+      token,
+      reference,
+    }));
+    const invalidReferences = [];
+    const title = `${message.guestName || "房客"} 有新留言`;
+    const body = truncatePushText(message.body || "請開啟管理後台查看留言。", 160);
+    const url = `${WEBSITE_URL}/admin/messages`;
+
+    for (let offset = 0; offset < devices.length; offset += 500) {
+      const batch = devices.slice(offset, offset + 500);
+      const response = await getMessaging().sendEachForMulticast({
+        tokens: batch.map((device) => device.token),
+        data: {
+          title,
+          body,
+          url,
+          badge: "1",
+          tag: `guest-message-${event.params.code}`,
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          fcmOptions: {
+            link: url,
+          },
+        },
+      });
+
+      response.responses.forEach((result, index) => {
+        if (result.success) return;
+        const code = result.error?.code || "";
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token"
+        ) {
+          invalidReferences.push(batch[index].reference);
+          return;
+        }
+        logger.warn("Failed to send admin guest message push.", {
+          code,
+          messageId: event.params.messageId,
+        });
+      });
+    }
+
+    for (let offset = 0; offset < invalidReferences.length; offset += 500) {
+      const deleteBatch = db.batch();
+      invalidReferences
+        .slice(offset, offset + 500)
+        .forEach((reference) => deleteBatch.delete(reference));
+      await deleteBatch.commit();
+    }
   }
 );
 
@@ -481,6 +568,12 @@ function renderTemplate(template, variables) {
     (text, [key, value]) => text.replaceAll(`{{${key}}}`, value),
     template
   );
+}
+
+function truncatePushText(value, maxLength) {
+  const normalized = String(value).replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1)}…`;
 }
 
 async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }) {

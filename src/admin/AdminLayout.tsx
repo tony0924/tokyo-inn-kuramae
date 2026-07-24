@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { signOut } from '@/lib/auth';
 import { PwaStatus } from '@/pwa/PwaStatus';
+import { PushForegroundBridge } from '@/pwa/PushForegroundBridge';
 import './admin.css';
 
 const navItems = [
@@ -49,6 +50,7 @@ export function AdminLayout() {
     <div className="admin-shell">
       <div className="top-bar" />
       <PwaStatus />
+      <PushForegroundBridge />
       <header className="admin-mobile-header">
         <Link to="/admin/today" className="admin-mobile-brand" aria-label="回到今日營運">
           <span className="admin-brand-mark">藏前</span>

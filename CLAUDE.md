@@ -197,6 +197,13 @@ tokyo_inn/
 ```
 `guestAnalytics.ts` 用 sessionStorage 做 5 秒去重、localStorage 存 `deviceId`。
 
+### `adminPushDevices/{uid_deviceId}` — Admin 推播裝置
+```ts
+{ ownerUid, token, label, userAgent, enabled,
+  createdAt, updatedAt, lastSeenAt }
+```
+每位 admin 只能管理自己的裝置。Web Push 需要 `.env.local` 的 `VITE_FIREBASE_VAPID_KEY`；此值來自 Firebase Console 的 Cloud Messaging → Web Push certificates。
+
 ### Security rules 重點（`firestore.rules`）
 - `users`：自己讀自己 / admin 全讀；create 僅限「自建 pending」或「符合 emailAccess 白名單」；self update 不得改 role/active/bookingId/email。
 - `emailAccess`/`settings`/`keys`：admin 全權；`emailAccess` 本人可讀自己那筆。
@@ -216,6 +223,7 @@ Secrets（用 `defineSecret`，勿寫進 code）：`GMAIL_APP_PASSWORD`、`GOOGL
 | `sendBookingCreatedReminder` | Firestore `bookings/{id}` onCreate | 寄「預約完成」給房客、CC admin（`suppressBookingCreatedEmail=true` 可跳過） |
 | `sendUpcomingCheckInReminders` | 排程 `0 9 * * *` | 入住前一天 09:00 寄提醒給房客、CC admin |
 | `sendCheckoutAdminReminders` | 排程 `0 12 * * *` | 退房當天 12:00 寄提醒給 admin |
+| `sendGuestMessagePush` | `guestMessageBoards/{code}/messages/{messageId}` onCreate | 房客新增留言時推播到已註冊的 admin 裝置 |
 | `lookupGoogleMapPlace` | onCall（限 admin） | 貼 Google Maps 連結，解析出名稱/地址/座標（Places API New，含 fallback） |
 | `normalizeRecommendationCategorySortOrders` | onRequest（需 `x-maintenance-token`） | 一次性重排某 section/category 的 sortOrder |
 

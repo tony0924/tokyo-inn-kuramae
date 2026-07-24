@@ -144,6 +144,21 @@ export interface KeyItem extends KeyDoc {
   id: string;
 }
 
+export interface AdminPushDeviceDoc {
+  ownerUid: string;
+  token: string;
+  label: string;
+  userAgent: string;
+  enabled: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  lastSeenAt: Timestamp;
+}
+
+export interface AdminPushDevice extends AdminPushDeviceDoc {
+  id: string;
+}
+
 export type RecommendationSection = 'services' | 'restaurant' | 'cityguide';
 export type RecommendationCategory =
   | 'convenience'

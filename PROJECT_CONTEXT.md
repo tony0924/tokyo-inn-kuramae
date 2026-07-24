@@ -78,6 +78,7 @@ Admin backend currently includes:
 - Notification settings.
 - Guest message management.
 - Mobile bottom navigation and installable PWA shell.
+- Per-admin-device Web Push registration and App icon badge support.
 - Button/link flow to preview guest-facing page as admin.
 
 Admin app entry: `src/pages/AdminApp.tsx`.
@@ -217,6 +218,19 @@ Shared types: `src/types/index.ts`.
 - `checkoutAdminReminder.body`
 - `updatedAt`
 
+`adminPushDevices/{uid_deviceId}`:
+
+- `ownerUid`
+- `token`
+- `label`
+- `userAgent`
+- `enabled`
+- `createdAt`
+- `updatedAt`
+- `lastSeenAt`
+
+Each admin can read and manage only their own device documents. Cloud Functions use enabled device tokens for management push notifications and delete invalid registrations automatically.
+
 ## Firestore Rules
 
 Rules file: `firestore.rules`.
@@ -261,6 +275,7 @@ Functions:
   - Email intentionally does not show room price.
 
 - `sendCheckoutAdminReminders`
+- `sendGuestMessagePush`
   - Schedule: `0 12 * * *`
   - Timezone: `Asia/Taipei`
   - Finds bookings where `checkOut` is today.

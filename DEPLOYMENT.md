@@ -16,6 +16,14 @@ npm run build
 
 如果成功，會產生 `dist/`。Firebase Hosting 會部署這個資料夾。
 
+若要啟用 Admin PWA 推播，`.env.local` 必須包含 Firebase Console「Cloud Messaging → Web Push certificates」產生的公開金鑰：
+
+```text
+VITE_FIREBASE_VAPID_KEY=...
+```
+
+這是前端公開設定，不是 Firebase Secret，但仍由 `.env.local` 管理並在 build 時帶入。
+
 如果只改 Cloud Functions，也建議檢查語法：
 
 ```bash

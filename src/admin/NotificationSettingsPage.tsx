@@ -1,12 +1,22 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useAuth } from '@/auth/AuthProvider';
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   saveNotificationSettings,
   watchNotificationSettings,
 } from '@/lib/notificationSettings';
-import type { NotificationSettings } from '@/types';
+import {
+  disableCurrentPushDevice,
+  getCurrentPushDeviceDocumentId,
+  getPushCapability,
+  registerAdminPushDevice,
+  watchAdminPushDevices,
+  type PushCapability,
+} from '@/lib/pushNotifications';
+import type { AdminPushDevice, NotificationSettings } from '@/types';
 
 export function NotificationSettingsPage() {
+  const { fbUser } = useAuth();
   const [settings, setSettings] = useState<NotificationSettings>(
     DEFAULT_NOTIFICATION_SETTINGS
   );
@@ -14,6 +24,12 @@ export function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pushCapability, setPushCapability] = useState<PushCapability | null>(null);
+  const [pushDevices, setPushDevices] = useState<AdminPushDevice[]>([]);
+  const [pushLoading, setPushLoading] = useState(true);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMessage, setPushMessage] = useState<string | null>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   useEffect(() => {
     return watchNotificationSettings((next) => {
@@ -21,6 +37,22 @@ export function NotificationSettingsPage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    void getPushCapability().then(setPushCapability);
+  }, []);
+
+  useEffect(() => {
+    if (!fbUser) {
+      setPushDevices([]);
+      setPushLoading(false);
+      return;
+    }
+    return watchAdminPushDevices(fbUser.uid, (devices) => {
+      setPushDevices(devices);
+      setPushLoading(false);
+    });
+  }, [fbUser]);
 
   function update<K extends keyof NotificationSettings>(
     key: K,
@@ -44,6 +76,29 @@ export function NotificationSettingsPage() {
     }
   }
 
+  async function handlePushToggle() {
+    if (!fbUser || pushBusy) return;
+    setPushBusy(true);
+    setPushMessage(null);
+    setPushError(null);
+    try {
+      const currentId = getCurrentPushDeviceDocumentId(fbUser.uid);
+      const currentEnabled = pushDevices.some((device) => device.id === currentId);
+      if (currentEnabled) {
+        await disableCurrentPushDevice(fbUser.uid);
+        setPushMessage('這台裝置的推播通知已關閉。');
+      } else {
+        await registerAdminPushDevice(fbUser.uid);
+        setPushMessage('這台裝置已開啟管理推播。');
+      }
+      setPushCapability(await getPushCapability());
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : '推播設定失敗');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   if (loading) {
     return <p style={{ color: 'var(--text-mid)' }}>載入中…</p>;
   }
@@ -53,6 +108,17 @@ export function NotificationSettingsPage() {
       <div className="admin-page-header">
         <h1 className="admin-page-title">通知設定</h1>
       </div>
+
+      <PushSettingsCard
+        uid={fbUser?.uid ?? null}
+        capability={pushCapability}
+        devices={pushDevices}
+        loading={pushLoading}
+        busy={pushBusy}
+        message={pushMessage}
+        error={pushError}
+        onToggle={() => void handlePushToggle()}
+      />
 
       <div className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
         <div className="form-grid">
@@ -186,6 +252,81 @@ export function NotificationSettingsPage() {
         </button>
       </div>
     </form>
+  );
+}
+
+function PushSettingsCard({
+  uid,
+  capability,
+  devices,
+  loading,
+  busy,
+  message,
+  error,
+  onToggle,
+}: {
+  uid: string | null;
+  capability: PushCapability | null;
+  devices: AdminPushDevice[];
+  loading: boolean;
+  busy: boolean;
+  message: string | null;
+  error: string | null;
+  onToggle: () => void;
+}) {
+  const currentId = uid ? getCurrentPushDeviceDocumentId(uid) : null;
+  const currentEnabled = Boolean(currentId && devices.some((device) => device.id === currentId));
+  const disabled =
+    busy ||
+    loading ||
+    !uid ||
+    !capability?.supported ||
+    !capability.configured ||
+    capability.requiresHomeScreen;
+
+  let status = '正在檢查這台裝置…';
+  if (capability && !capability.supported) status = '此裝置或瀏覽器不支援 Web Push。';
+  else if (capability?.requiresHomeScreen) status = '請從 iPhone 主畫面的「藏前管理」開啟後再設定。';
+  else if (capability && !capability.configured) status = 'Firebase Web Push 公鑰尚未設定。';
+  else if (currentEnabled) status = '這台裝置已開啟管理推播。';
+  else if (capability) status = '這台裝置尚未開啟管理推播。';
+
+  return (
+    <section className="push-settings-card">
+      <div className="push-settings-heading">
+        <div>
+          <p className="today-eyebrow">App 通知</p>
+          <h2>管理推播</h2>
+          <p>{status}</p>
+        </div>
+        <span className={`push-status-dot${currentEnabled ? ' enabled' : ''}`} aria-hidden="true" />
+      </div>
+
+      <div className="push-settings-actions">
+        <button type="button" className={currentEnabled ? 'btn-ghost' : 'btn-gold'} disabled={disabled} onClick={onToggle}>
+          {busy ? '處理中…' : currentEnabled ? '關閉這台裝置通知' : '開啟這台裝置通知'}
+        </button>
+        <p>開啟後，新房客留言會顯示在鎖定畫面，並在 App 圖示標記提醒。</p>
+      </div>
+
+      {message && <p className="push-settings-message">{message}</p>}
+      {error && <p className="field-error">{error}</p>}
+
+      {devices.length > 0 && (
+        <div className="push-device-list">
+          <h3>我的通知裝置</h3>
+          {devices.map((device) => (
+            <div className="push-device-row" key={device.id}>
+              <span>
+                <strong>{device.label}</strong>
+                <small>{device.id === currentId ? '目前裝置' : '其他已登入裝置'}</small>
+              </span>
+              <span className="badge paid">已開啟</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

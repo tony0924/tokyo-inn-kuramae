@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 export function PwaStatus() {
   const [offline, setOffline] = useState(() => !navigator.onLine);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [pushMessage, setPushMessage] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
     const markOnline = () => setOffline(false);
@@ -67,7 +68,22 @@ export function PwaStatus() {
     };
   }, []);
 
-  if (!offline && !waitingWorker) return null;
+  useEffect(() => {
+    let timer: number | undefined;
+    const showPushMessage = (event: Event) => {
+      const detail = (event as CustomEvent<{ title: string; body: string }>).detail;
+      setPushMessage(detail);
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => setPushMessage(null), 8000);
+    };
+    window.addEventListener('admin-push-received', showPushMessage);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener('admin-push-received', showPushMessage);
+    };
+  }, []);
+
+  if (!offline && !waitingWorker && !pushMessage) return null;
 
   const applyUpdate = () => {
     waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
@@ -85,6 +101,17 @@ export function PwaStatus() {
           <span>藏前管理有新版本。</span>
           <button type="button" onClick={applyUpdate}>
             立即更新
+          </button>
+        </div>
+      )}
+      {pushMessage && (
+        <div className="pwa-status pwa-status-push" role="status">
+          <span>
+            <strong>{pushMessage.title}</strong>
+            <small>{pushMessage.body}</small>
+          </span>
+          <button type="button" onClick={() => { window.location.href = '/admin/messages'; }}>
+            查看
           </button>
         </div>
       )}

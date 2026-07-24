@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'tokyo-admin-v2';
+const CACHE_VERSION = 'tokyo-admin-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const STATIC_ASSETS = [
   '/offline.html',
@@ -31,6 +31,52 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data?.json?.() || {};
+  } catch {
+    payload = {};
+  }
+
+  const data = payload.data || {};
+  const title = data.title || payload.notification?.title || '藏前管理';
+  const body = data.body || payload.notification?.body || '有新的管理通知';
+  const targetUrl = safeNotificationUrl(data.url);
+
+  const tasks = [
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icons/admin-icon-192.png',
+      badge: '/icons/admin-icon-192.png',
+      tag: data.tag || 'tokyo-admin-notification',
+      renotify: true,
+      data: { url: targetUrl },
+    }),
+  ];
+
+  if (data.badge && self.navigator?.setAppBadge) {
+    tasks.push(self.navigator.setAppBadge(Number(data.badge) || 1));
+  }
+
+  event.waitUntil(Promise.all(tasks));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = safeNotificationUrl(event.notification.data?.url);
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+      for (const client of clients) {
+        if ('navigate' in client) await client.navigate(targetUrl);
+        if ('focus' in client) return client.focus();
+      }
+      return self.clients.openWindow(targetUrl);
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -67,3 +113,13 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+function safeNotificationUrl(value) {
+  try {
+    const url = new URL(value || '/admin/messages', self.location.origin);
+    if (url.origin !== self.location.origin) return '/admin/messages';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/admin/messages';
+  }
+}

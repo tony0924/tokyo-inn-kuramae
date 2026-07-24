@@ -69,6 +69,57 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    match /adminPushDevices/{deviceId} {
+      allow read: if isAdmin()
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'ownerUid',
+          'token',
+          'label',
+          'userAgent',
+          'enabled',
+          'createdAt',
+          'updatedAt',
+          'lastSeenAt'
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.label is string
+        && request.resource.data.userAgent is string
+        && request.resource.data.enabled == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastSeenAt == request.time;
+
+      allow update: if isAdmin()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'ownerUid',
+          'token',
+          'label',
+          'userAgent',
+          'enabled',
+          'createdAt',
+          'updatedAt',
+          'lastSeenAt'
+        ])
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.label is string
+        && request.resource.data.userAgent is string
+        && request.resource.data.enabled == true
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastSeenAt == request.time;
+
+      allow delete: if isAdmin()
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
     match /recommendations/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();

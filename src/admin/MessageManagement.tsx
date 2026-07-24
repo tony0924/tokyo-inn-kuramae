@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
 import { createAdminReply, watchAllGuestMessages } from '@/lib/guestMessages';
+import { clearAppBadge } from '@/lib/pushNotifications';
 import type { GuestMessage } from '@/types';
 
 type MessageBoard = {
@@ -18,6 +19,10 @@ export function MessageManagement() {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void clearAppBadge();
+  }, []);
 
   useEffect(() => watchAllGuestMessages(setMessages), []);
 
