@@ -1,5 +1,6 @@
 export type GuestTabId =
   | 'home'
+  | 'guide'
   | 'checkin'
   | 'arrival'
   | 'transit'
@@ -21,6 +22,7 @@ export interface SearchEntry {
 }
 
 export const searchIndex: SearchEntry[] = [
+  { section: '使用指南', tab: 'guide', title: '網站使用指南', content: '如何使用網站 新手教學 搜尋 功能 導覽 使用說明 help guide' },
   { section: '首頁', tab: 'home', title: 'Wi-Fi 密碼', content: 'wifi chen204 12345678 網路 密碼 wireless' },
   { section: '首頁', tab: 'home', title: '住宿地址', content: '台東区 蔵前 4丁目23 Room 204 地址 address 房間號碼' },
   { section: '入退房', tab: 'checkin', title: 'Check-In 注意事項', content: '入住 冰箱 床單 枕頭套 禁菸 熱水機 checkin 入房', anchor: 'anchor-checkin' },

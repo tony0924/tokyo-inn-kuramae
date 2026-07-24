@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { GuestLayout } from '@/guest/GuestLayout';
 
 const HomeTab = lazy(() => import('@/guest/tabs/HomeTab').then((module) => ({ default: module.HomeTab })));
+const UserGuideTab = lazy(() => import('@/guest/tabs/UserGuideTab').then((module) => ({ default: module.UserGuideTab })));
 const CheckinTab = lazy(() => import('@/guest/tabs/CheckinTab').then((module) => ({ default: module.CheckinTab })));
 const ArrivalTab = lazy(() => import('@/guest/tabs/ArrivalTab').then((module) => ({ default: module.ArrivalTab })));
 const TransitTab = lazy(() => import('@/guest/tabs/TransitTab').then((module) => ({ default: module.TransitTab })));
@@ -21,6 +22,7 @@ export default function GuestApp() {
       <Route element={<GuestLayout />}>
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomeTab />} />
+        <Route path="guide" element={<UserGuideTab />} />
         <Route path="checkin" element={<CheckinTab />} />
         <Route path="arrival" element={<ArrivalTab />} />
         <Route path="transit" element={<TransitTab />} />

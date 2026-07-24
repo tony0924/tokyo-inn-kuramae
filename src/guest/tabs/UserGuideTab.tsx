@@ -1,0 +1,152 @@
+import { useNavigate } from 'react-router-dom';
+
+const GUIDE_SECTIONS = [
+  {
+    id: 'checkin',
+    icon: '📋',
+    title: '入退房',
+    description: '入住前先確認注意事項，退房時照著清單逐項完成。',
+    action: '查看入退房須知',
+  },
+  {
+    id: 'arrival',
+    icon: '🚃',
+    title: '抵達與進房',
+    description: '查看大樓入口、磁扣、電梯、房號與電子鎖的使用方式。',
+    action: '查看抵達流程',
+  },
+  {
+    id: 'facilities',
+    icon: '🔧',
+    title: '房內設施',
+    description: '熱水機、門鎖、IH 爐、浴室乾燥等設備都有圖文說明。',
+    action: '查看設施說明',
+  },
+  {
+    id: 'transit',
+    icon: '🚇',
+    title: '交通資訊',
+    description: '快速找到附近車站、公車，以及適合你的機場往返方式。',
+    action: '查看附近交通',
+  },
+  {
+    id: 'restaurant',
+    icon: '🍜',
+    title: '附近推薦',
+    description: '從餐廳、咖啡、超市到景點，點開地點即可使用地圖導航。',
+    action: '查看餐廳推薦',
+  },
+  {
+    id: 'messages',
+    icon: '💬',
+    title: '需要協助',
+    description: '指南找不到答案時，可在留言板聯絡管理員並查看回覆。',
+    action: '前往留言板',
+  },
+];
+
+export function UserGuideTab() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="section active user-guide">
+      <div className="guide-hero">
+        <div className="guide-eyebrow">START HERE · 第一次使用</div>
+        <div className="guide-hero-row">
+          <div>
+            <h1>這份網站指南，<br />陪你住得更輕鬆。</h1>
+            <p>住宿需要的資訊都整理在這裡。依照旅程階段查看，或直接搜尋關鍵字。</p>
+          </div>
+          <div className="guide-hero-mark" aria-hidden="true">?</div>
+        </div>
+      </div>
+
+      <section className="guide-start-card" aria-labelledby="guide-start-title">
+        <div className="guide-section-heading">
+          <span>01</span>
+          <div>
+            <p>QUICK START</p>
+            <h2 id="guide-start-title">三步快速開始</h2>
+          </div>
+        </div>
+        <ol className="guide-steps">
+          <li>
+            <span className="guide-step-number">1</span>
+            <div>
+              <strong>先看入退房須知</strong>
+              <p>入住前確認床單、熱水機與房內規則；退房前依清單整理。</p>
+            </div>
+          </li>
+          <li>
+            <span className="guide-step-number">2</span>
+            <div>
+              <strong>抵達時開啟進房流程</strong>
+              <p>跟著照片找到入口、感應磁扣，並前往二樓 204 室。</p>
+            </div>
+          </li>
+          <li>
+            <span className="guide-step-number">3</span>
+            <div>
+              <strong>遇到問題先搜尋</strong>
+              <p>在頁面上方輸入「熱水」、「垃圾」或「Wi-Fi」等關鍵字。</p>
+            </div>
+          </li>
+        </ol>
+        <button type="button" className="guide-primary-action" onClick={() => navigate('/guest/checkin')}>
+          從入退房須知開始 <span aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section aria-labelledby="guide-map-title">
+        <div className="guide-section-heading">
+          <span>02</span>
+          <div>
+            <p>WEBSITE MAP</p>
+            <h2 id="guide-map-title">你可以在這裡找到</h2>
+          </div>
+        </div>
+        <div className="guide-feature-grid">
+          {GUIDE_SECTIONS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="guide-feature-card"
+              onClick={() => navigate(`/guest/${item.id}`)}
+            >
+              <span className="guide-feature-icon" aria-hidden="true">{item.icon}</span>
+              <span className="guide-feature-copy">
+                <strong>{item.title}</strong>
+                <small>{item.description}</small>
+                <span className="guide-feature-link">{item.action} →</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="guide-tips" aria-labelledby="guide-tips-title">
+        <div className="guide-section-heading">
+          <span>03</span>
+          <div>
+            <p>GOOD TO KNOW</p>
+            <h2 id="guide-tips-title">使用小提醒</h2>
+          </div>
+        </div>
+        <div className="guide-tip-list">
+          <div><span>⌕</span><p><strong>善用搜尋</strong>搜尋結果會直接帶你到相關分頁與說明。</p></div>
+          <div><span>↗</span><p><strong>地圖會另開頁面</strong>餐廳、超市與景點可直接開啟 Google Maps 導航。</p></div>
+          <div><span>🔒</span><p><strong>請勿分享訪客碼</strong>網站包含住宿與進房資訊，僅限同行房客使用。</p></div>
+        </div>
+      </section>
+
+      <div className="guide-help-card">
+        <div>
+          <span>還是找不到答案？</span>
+          <strong>在留言板告訴我們</strong>
+          <p>留下問題後，可回到同一頁查看管理員回覆。</p>
+        </div>
+        <button type="button" onClick={() => navigate('/guest/messages')}>前往留言板</button>
+      </div>
+    </div>
+  );
+}

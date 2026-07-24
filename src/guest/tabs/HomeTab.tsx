@@ -178,6 +178,7 @@ export function HomeTab() {
         </div>
         <div className="nav-grid">
           {[
+            ['guide', '🧭', '使用指南'],
             ['checkin', '📋', '入退房'],
             ['arrival', '🚃', '抵達方式'],
             ['airport', '✈️', '機場交通'],

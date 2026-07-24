@@ -13,6 +13,7 @@ import './legacy.css';
 
 const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: '首頁' },
+  { id: 'guide', icon: '🧭', label: '使用指南' },
   { id: 'checkin', icon: '📋', label: '入退房' },
   { id: 'arrival', icon: '🚃', label: '抵達' },
   { id: 'transit', icon: '🚇', label: '地鐵／公車' },
