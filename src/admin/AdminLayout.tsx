@@ -44,7 +44,6 @@ export function AdminLayout() {
     '/admin/keys',
     '/admin/guest-codes',
     '/admin/recommendations',
-    '/admin/notification-history',
     '/admin/notifications',
   ].some((path) => location.pathname.startsWith(path));
 
@@ -61,6 +60,15 @@ export function AdminLayout() {
             <small>{user?.displayName || user?.email}</small>
           </span>
         </Link>
+        <NavLink
+          to="/admin/notification-history"
+          className={({ isActive }) =>
+            `admin-mobile-notification${isActive ? ' active' : ''}`
+          }
+          aria-label="查看通知紀錄"
+        >
+          <MobileNavIcon name="notificationHistory" />
+        </NavLink>
       </header>
       <aside className="admin-sidebar">
         <div className="admin-brand">
@@ -137,7 +145,6 @@ export function AdminLayout() {
               <MoreLink to="/admin/keys" label="鑰匙管理" icon="keys" />
               <MoreLink to="/admin/guest-codes" label="訪客碼" icon="codes" />
               <MoreLink to="/admin/recommendations" label="推薦地點" icon="places" />
-              <MoreLink to="/admin/notification-history" label="通知紀錄" icon="notificationHistory" />
               <MoreLink to="/admin/notifications" label="通知設定" icon="notifications" />
             </div>
             <div className="admin-more-actions">

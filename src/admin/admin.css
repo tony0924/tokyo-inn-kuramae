@@ -541,6 +541,10 @@
   display: none;
 }
 
+.admin-mobile-notification {
+  display: none;
+}
+
 /* Today operations dashboard */
 .today-dashboard {
   max-width: 1440px;
@@ -1703,6 +1707,33 @@
     display: flex;
     align-items: center;
     gap: 10px;
+  }
+  .admin-mobile-notification {
+    width: 42px;
+    height: 42px;
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    border: 1px solid var(--border-card);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--text-mid);
+    transition: var(--transition);
+  }
+  .admin-mobile-notification svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .admin-mobile-notification.active {
+    border-color: rgba(201, 168, 76, 0.28);
+    background: var(--gold-pale);
+    color: var(--gold-light);
   }
   .admin-mobile-brand > span:last-child {
     min-width: 0;
