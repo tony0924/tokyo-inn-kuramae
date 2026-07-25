@@ -592,15 +592,40 @@
 
 .admin-page-subtitle { margin: 6px 0 0; color: var(--text-soft); font-size: 13px; }
 .admin-empty-state { padding: 28px; color: var(--text-soft); text-align: center; border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--bg-high); }
-.admin-message-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; }
-.admin-message-boards { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 150px); overflow-y: auto; }
-.admin-message-board { padding: 13px; text-align: left; border: 1px solid var(--border-card); border-radius: var(--radius-sm); background: var(--bg-high); color: var(--text); display: grid; gap: 5px; }
-.admin-message-board.active { border-color: var(--gold); background: var(--gold-pale); }
-.admin-message-board span, .admin-message-board small { color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.admin-message-thread { min-height: 580px; padding: 18px; border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--bg-mid); display: flex; flex-direction: column; }
-.admin-message-thread .message-thread { flex: 1; }
-.admin-message-thread-head { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid var(--border-card); color: var(--text-soft); font-size: 13px; }
-.admin-message-thread-head strong { color: var(--text); }
+.admin-message-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; align-items: start; }
+.admin-message-list-panel { min-width: 0; }
+.admin-message-section-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: var(--text-mid); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.admin-message-section-label small { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 999px; background: var(--gold-pale); color: var(--gold-light); font-size: 10px; }
+.admin-message-boards { display: flex; flex-direction: column; gap: 8px; max-height: calc(100dvh - 190px); overflow-y: auto; scrollbar-width: thin; }
+.admin-message-board { min-width: 0; padding: 14px; text-align: left; border: 1px solid var(--border-card); border-radius: 14px; background: var(--bg-high); color: var(--text); display: grid; gap: 6px; transition: var(--transition); }
+.admin-message-board:hover { border-color: rgba(201, 168, 76, 0.35); background: var(--bg-hover); }
+.admin-message-board.active { border-color: rgba(201, 168, 76, 0.7); background: linear-gradient(135deg, rgba(201,168,76,0.13), rgba(201,168,76,0.05)); box-shadow: inset 3px 0 0 var(--gold); }
+.admin-message-board-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text) !important; }
+.admin-message-board-top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-message-board-top small { flex-shrink: 0; color: var(--gold) !important; font-size: 10px; }
+.admin-message-board > span:not(.admin-message-board-top),
+.admin-message-board > small { color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.admin-message-board > small { color: var(--text-mid); font-size: 12px; }
+.admin-message-thread { min-height: min(620px, calc(100dvh - 130px)); padding: 18px; border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--bg-mid); display: flex; flex-direction: column; overflow: hidden; }
+.admin-message-thread-head { display: flex; align-items: center; gap: 11px; padding-bottom: 14px; border-bottom: 1px solid var(--border-card); }
+.admin-message-thread-head > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+.admin-message-thread-head strong { color: var(--text); font-size: 14px; }
+.admin-message-thread-head small { overflow: hidden; color: var(--text-soft); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.admin-message-avatar { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 50%; background: var(--gold-pale); color: var(--gold-light); font-family: 'Noto Serif TC', serif; font-size: 14px; }
+.admin-message-thread .message-thread { min-height: 160px; flex: 1; display: flex; flex-direction: column; gap: 10px; margin: 16px 0; overflow-y: auto; overscroll-behavior: contain; }
+.admin-message-thread .message-bubble { width: min(82%, 560px); padding: 11px 13px; border: 1px solid var(--border-card); border-radius: 16px 16px 16px 5px; background: var(--bg-high); }
+.admin-message-thread .message-bubble.guest { align-self: flex-start; }
+.admin-message-thread .message-bubble.admin { align-self: flex-end; border-color: rgba(201,168,76,0.3); border-radius: 16px 16px 5px 16px; background: var(--gold-pale); }
+.admin-message-thread .message-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-soft); font-size: 10px; }
+.admin-message-thread .message-meta strong { color: var(--gold-light); font-size: 11px; }
+.admin-message-thread .message-bubble p { margin: 5px 0 0; color: var(--text); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.admin-message-thread .message-compose { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 10px; padding-top: 14px; border-top: 1px solid var(--border-card); }
+.admin-message-thread .message-compose label { grid-column: 1 / -1; color: var(--text-mid); font-size: 12px; font-weight: 600; }
+.admin-message-thread .message-compose textarea { width: 100%; min-width: 0; min-height: 82px; resize: vertical; padding: 11px 12px; border: 1px solid var(--border-card); border-radius: 12px; outline: none; background: var(--bg); color: var(--text); font: inherit; line-height: 1.5; }
+.admin-message-thread .message-compose textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
+.admin-message-thread .message-compose textarea::placeholder { color: var(--text-soft); }
+.admin-message-thread .message-compose .btn-gold { align-self: end; min-height: 44px; }
+.admin-message-thread .message-error { grid-column: 1 / -1; color: var(--vermilion); font-size: 12px; }
 
 .admin-page-header {
   display: flex;
@@ -1371,10 +1396,10 @@
   .admin-message-boards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-height: 260px;
+    max-height: 240px;
   }
   .admin-message-thread {
-    min-height: 460px;
+    min-height: 520px;
   }
   .modal-backdrop {
     align-items: stretch;
@@ -1712,9 +1737,41 @@
     justify-content: center;
   }
   .admin-message-boards {
-    grid-template-columns: 1fr;
+    display: flex;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-direction: row;
+    padding: 1px 1px 5px;
+    scroll-snap-type: x proximity;
+  }
+  .admin-message-board {
+    width: min(78vw, 280px);
+    flex: 0 0 min(78vw, 280px);
+    scroll-snap-align: start;
+  }
+  .admin-message-board:only-child {
+    width: 100%;
+    flex-basis: 100%;
   }
   .admin-message-thread {
-    padding: 14px;
+    min-height: 0;
+    padding: 15px;
+  }
+  .admin-message-thread .message-thread {
+    min-height: 110px;
+    max-height: 46dvh;
+    flex: 0 1 auto;
+    margin: 14px 0;
+  }
+  .admin-message-thread .message-bubble {
+    width: min(92%, 420px);
+  }
+  .admin-message-thread .message-compose {
+    grid-template-columns: 1fr;
+  }
+  .admin-message-thread .message-compose .btn-gold {
+    width: 100%;
+    justify-content: center;
   }
 }

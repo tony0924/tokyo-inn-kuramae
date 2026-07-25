@@ -72,8 +72,13 @@ https://tokyo-inn-kuramae.web.app
 
 - `sendUpcomingCheckInReminders`
 - `sendCheckoutAdminReminders`
+- `sendTodayCheckInAdminPushes`
+- `sendTodayCheckoutAdminPushes`
+- `sendGuestMessagePush`
+- `sendBookingUpdatedPush`
+- `sendBookingDeletedPush`
 
-兩個都在 `asia-east1`，Trigger 是 `scheduled`。
+以上 Functions 都應位於 `asia-east1`；入住與退房提醒為 `scheduled` Trigger。
 
 ### 前端、Firestore、Functions 都有改
 

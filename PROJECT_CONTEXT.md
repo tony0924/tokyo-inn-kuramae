@@ -275,12 +275,25 @@ Functions:
   - Email intentionally does not show room price.
 
 - `sendCheckoutAdminReminders`
-- `sendGuestMessagePush`
   - Schedule: `0 12 * * *`
   - Timezone: `Asia/Taipei`
   - Finds bookings where `checkOut` is today.
   - Sends to all active admin users.
   - Email intentionally does not show room price.
+
+## Admin Mobile Push Notifications
+
+Enabled admin devices receive push notifications for:
+
+- Guest messages.
+- New pending users and users returned to pending.
+- New, deleted, or date-modified bookings.
+- Booking/key conflicts detected after a booking write.
+- Same-day check-in and missing/invalid guest access codes at 09:00.
+- Same-day checkout and unreturned keys at 11:00.
+
+Notification clicks deep-link to the corresponding admin page. Invalid FCM
+registrations are deleted automatically.
 
 Important implementation details:
 

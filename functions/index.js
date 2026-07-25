@@ -5,7 +5,11 @@ import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentDeleted,
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
 import { InvalidGoogleMapsUrlError, resolveGoogleMapsUrl } from "./googleMapsUrl.js";
 
@@ -53,6 +57,16 @@ export const sendBookingCreatedReminder = onDocumentCreated(
       ...event.data?.data(),
     };
 
+    await Promise.all([
+      sendAdminPush({
+        title: `新預約｜${booking.guestName || "未命名房客"}`,
+        body: `${formatDateInTimeZone(booking.checkIn)} 入住・${formatDateInTimeZone(booking.checkOut)} 退房・${booking.partySize || 0} 人`,
+        url: `${WEBSITE_URL}/admin/bookings`,
+        tag: `booking-created-${event.params.bookingId}`,
+      }),
+      sendBookingConflictPush(booking),
+    ]);
+
     if (!booking.guestEmail) {
       logger.warn("Booking created without guest email. Skipping booking created reminder.", {
         bookingId: event.params.bookingId,
@@ -93,6 +107,13 @@ export const sendPendingUserApprovalReminder = onDocumentCreated(
     const user = event.data?.data();
     if (user?.role !== "pending" || !user.email) return;
 
+    await sendAdminPush({
+      title: "新使用者等待審核",
+      body: `${user.displayName || "未命名使用者"}・${user.email}`,
+      url: `${WEBSITE_URL}/admin/users`,
+      tag: `pending-user-${event.params.userId}`,
+    });
+
     const settings = await getNotificationSettings();
     const adminEmails = await getAdminEmails();
     if (!adminEmails.length) return;
@@ -121,79 +142,64 @@ export const sendGuestMessagePush = onDocumentCreated(
     const message = event.data?.data();
     if (!message || message.authorType !== "guest") return;
 
-    const devicesSnapshot = await db
-      .collection("adminPushDevices")
-      .where("enabled", "==", true)
-      .get();
-    if (devicesSnapshot.empty) {
-      logger.info("No admin push devices registered. Skipping guest message push.", {
-        messageId: event.params.messageId,
-      });
-      return;
+    await sendAdminPush({
+      title: `${message.guestName || "房客"} 有新留言`,
+      body: message.body || "請開啟管理後台查看留言。",
+      url: `${WEBSITE_URL}/admin/messages`,
+      tag: `guest-message-${event.params.code}`,
+    });
+  }
+);
+
+export const sendBookingUpdatedPush = onDocumentUpdated(
+  {
+    document: "bookings/{bookingId}",
+    database: "default",
+    region: REGION,
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const afterData = event.data?.after.data();
+    if (!before || !afterData) return;
+
+    const datesChanged =
+      !timestampsEqual(before.checkIn, afterData.checkIn)
+      || !timestampsEqual(before.checkOut, afterData.checkOut);
+    const keyChanged = before.keyCode !== afterData.keyCode;
+    if (!datesChanged && !keyChanged) return;
+
+    const after = { id: event.params.bookingId, ...afterData };
+    const tasks = [sendBookingConflictPush(after)];
+    if (datesChanged) {
+      tasks.push(
+        sendAdminPush({
+          title: `預約日期已修改｜${after.guestName || "未命名房客"}`,
+          body: `${formatDateInTimeZone(after.checkIn)} 入住・${formatDateInTimeZone(after.checkOut)} 退房`,
+          url: `${WEBSITE_URL}/admin/bookings`,
+          tag: `booking-updated-${event.params.bookingId}`,
+        })
+      );
     }
+    await Promise.all(tasks);
+  }
+);
 
-    const devicesByToken = new Map();
-    for (const deviceDocument of devicesSnapshot.docs) {
-      const token = deviceDocument.data().token;
-      if (typeof token === "string" && token.length > 20 && !devicesByToken.has(token)) {
-        devicesByToken.set(token, deviceDocument.ref);
-      }
-    }
+export const sendBookingDeletedPush = onDocumentDeleted(
+  {
+    document: "bookings/{bookingId}",
+    database: "default",
+    region: REGION,
+  },
+  async (event) => {
+    const booking = event.data?.data();
+    if (!booking) return;
 
-    const devices = [...devicesByToken.entries()].map(([token, reference]) => ({
-      token,
-      reference,
-    }));
-    const invalidReferences = [];
-    const title = `${message.guestName || "房客"} 有新留言`;
-    const body = truncatePushText(message.body || "請開啟管理後台查看留言。", 160);
-    const url = `${WEBSITE_URL}/admin/messages`;
-
-    for (let offset = 0; offset < devices.length; offset += 500) {
-      const batch = devices.slice(offset, offset + 500);
-      const response = await getMessaging().sendEachForMulticast({
-        tokens: batch.map((device) => device.token),
-        data: {
-          title,
-          body,
-          url,
-          badge: "1",
-          tag: `guest-message-${event.params.code}`,
-        },
-        webpush: {
-          headers: {
-            Urgency: "high",
-          },
-          fcmOptions: {
-            link: url,
-          },
-        },
-      });
-
-      response.responses.forEach((result, index) => {
-        if (result.success) return;
-        const code = result.error?.code || "";
-        if (
-          code === "messaging/registration-token-not-registered" ||
-          code === "messaging/invalid-registration-token"
-        ) {
-          invalidReferences.push(batch[index].reference);
-          return;
-        }
-        logger.warn("Failed to send admin guest message push.", {
-          code,
-          messageId: event.params.messageId,
-        });
-      });
-    }
-
-    for (let offset = 0; offset < invalidReferences.length; offset += 500) {
-      const deleteBatch = db.batch();
-      invalidReferences
-        .slice(offset, offset + 500)
-        .forEach((reference) => deleteBatch.delete(reference));
-      await deleteBatch.commit();
-    }
+    await sendAdminPush({
+      title: `預約已取消｜${booking.guestName || "未命名房客"}`,
+      body: `${formatDateInTimeZone(booking.checkIn)} 入住的預約已刪除`,
+      url: `${WEBSITE_URL}/admin/bookings`,
+      tag: `booking-deleted-${event.params.bookingId}`,
+    });
   }
 );
 
@@ -237,6 +243,13 @@ export const sendUserReturnedToPendingReminder = onDocumentUpdated(
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!before || !after || before.role === "pending" || after.role !== "pending" || !after.email) return;
+
+    await sendAdminPush({
+      title: "使用者等待重新審核",
+      body: `${after.displayName || "未命名使用者"}・${after.email}`,
+      url: `${WEBSITE_URL}/admin/users`,
+      tag: `pending-user-${event.params.userId}`,
+    });
 
     const settings = await getNotificationSettings();
     const adminEmails = await getAdminEmails();
@@ -283,6 +296,60 @@ export const sendUpcomingCheckInReminders = onSchedule(
         text: renderTemplate(settings.checkInReminder.body, variables),
         senderName: settings.senderName,
         senderEmail: settings.senderEmail,
+      });
+    }
+  }
+);
+
+export const sendTodayCheckInAdminPushes = onSchedule(
+  {
+    schedule: "0 9 * * *",
+    timeZone: TIME_ZONE,
+    region: REGION,
+  },
+  async () => {
+    const target = atMidnightDaysFromNow(0);
+    const bookings = await getBookingsByDateField("checkIn", target);
+
+    for (const booking of bookings) {
+      await sendAdminPush({
+        title: `今日入住｜${booking.guestName || "未命名房客"}`,
+        body: `${booking.partySize || 0} 人入住，請確認房況、鑰匙與入住準備`,
+        url: `${WEBSITE_URL}/admin/today`,
+        tag: `checkin-today-${booking.id}`,
+      });
+
+      if (!(await hasValidGuestAccessCode(booking))) {
+        await sendAdminPush({
+          title: `尚無有效訪客碼｜${booking.guestName || "未命名房客"}`,
+          body: "房客今天入住，請立即建立或確認訪客碼",
+          url: `${WEBSITE_URL}/admin/guest-codes`,
+          tag: `missing-guest-code-${booking.id}`,
+        });
+      }
+    }
+  }
+);
+
+export const sendTodayCheckoutAdminPushes = onSchedule(
+  {
+    schedule: "0 11 * * *",
+    timeZone: TIME_ZONE,
+    region: REGION,
+  },
+  async () => {
+    const target = atMidnightDaysFromNow(0);
+    const bookings = await getBookingsByDateField("checkOut", target);
+
+    for (const booking of bookings) {
+      const keyPending = Boolean(booking.keyCode && !booking.keyReturnedAt);
+      await sendAdminPush({
+        title: `退房提醒｜${booking.guestName || "未命名房客"}`,
+        body: keyPending
+          ? `已到退房時間，鑰匙 ${booking.keyCode} 尚未標記歸還`
+          : "已到退房時間，請確認房況與後續清潔",
+        url: `${WEBSITE_URL}/admin/today`,
+        tag: `checkout-today-${booking.id}`,
       });
     }
   }
@@ -522,6 +589,145 @@ async function getBookingsByDateField(fieldName, date) {
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
+async function sendAdminPush({
+  title,
+  body,
+  url,
+  tag,
+  badge = "1",
+}) {
+  const devicesSnapshot = await db
+    .collection("adminPushDevices")
+    .where("enabled", "==", true)
+    .get();
+  if (devicesSnapshot.empty) {
+    logger.info("No admin push devices registered. Skipping push.", { tag });
+    return;
+  }
+
+  const devicesByToken = new Map();
+  for (const deviceDocument of devicesSnapshot.docs) {
+    const token = deviceDocument.data().token;
+    if (typeof token === "string" && token.length > 20 && !devicesByToken.has(token)) {
+      devicesByToken.set(token, deviceDocument.ref);
+    }
+  }
+
+  const devices = [...devicesByToken.entries()].map(([token, reference]) => ({
+    token,
+    reference,
+  }));
+  const invalidReferences = [];
+
+  for (let offset = 0; offset < devices.length; offset += 500) {
+    const batch = devices.slice(offset, offset + 500);
+    const response = await getMessaging().sendEachForMulticast({
+      tokens: batch.map((device) => device.token),
+      data: {
+        title: truncatePushText(title, 80),
+        body: truncatePushText(body, 160),
+        url,
+        badge,
+        tag,
+      },
+      webpush: {
+        headers: {
+          Urgency: "high",
+        },
+        fcmOptions: {
+          link: url,
+        },
+      },
+    });
+
+    response.responses.forEach((result, index) => {
+      if (result.success) return;
+      const code = result.error?.code || "";
+      if (
+        code === "messaging/registration-token-not-registered"
+        || code === "messaging/invalid-registration-token"
+      ) {
+        invalidReferences.push(batch[index].reference);
+        return;
+      }
+      logger.warn("Failed to send admin push.", { code, tag });
+    });
+  }
+
+  for (let offset = 0; offset < invalidReferences.length; offset += 500) {
+    const deleteBatch = db.batch();
+    invalidReferences
+      .slice(offset, offset + 500)
+      .forEach((reference) => deleteBatch.delete(reference));
+    await deleteBatch.commit();
+  }
+}
+
+async function sendBookingConflictPush(booking) {
+  if (!booking?.id || !booking.checkIn?.toMillis || !booking.checkOut?.toMillis) return;
+
+  const snapshot = await db.collection("bookings").get();
+  const conflicts = snapshot.docs
+    .filter((item) => item.id !== booking.id)
+    .map((item) => ({ id: item.id, ...item.data() }))
+    .filter((other) => bookingsOverlap(booking, other));
+  if (!conflicts.length) return;
+
+  const normalizedKey = String(booking.keyCode || "").trim().toUpperCase();
+  const keyConflict = normalizedKey
+    ? conflicts.some(
+      (other) => String(other.keyCode || "").trim().toUpperCase() === normalizedKey
+    )
+    : false;
+  const otherGuests = conflicts
+    .slice(0, 3)
+    .map((item) => item.guestName || "未命名房客")
+    .join("、");
+
+  await sendAdminPush({
+    title: keyConflict ? "鑰匙與預約衝突" : "預約時間衝突",
+    body: `${booking.guestName || "未命名房客"} 與 ${otherGuests} 的入住日期重疊${keyConflict ? `，且皆使用鑰匙 ${booking.keyCode}` : ""}`,
+    url: `${WEBSITE_URL}/admin/calendar`,
+    tag: `booking-conflict-${booking.id}`,
+  });
+}
+
+function bookingsOverlap(first, second) {
+  if (
+    !first.checkIn?.toMillis
+    || !first.checkOut?.toMillis
+    || !second.checkIn?.toMillis
+    || !second.checkOut?.toMillis
+  ) {
+    return false;
+  }
+  return (
+    first.checkIn.toMillis() < second.checkOut.toMillis()
+    && first.checkOut.toMillis() > second.checkIn.toMillis()
+  );
+}
+
+async function hasValidGuestAccessCode(booking) {
+  const code = String(booking.guestAccessCode || "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase();
+  if (!code) return false;
+
+  const snapshot = await db.collection("guestAccessCodes").doc(code).get();
+  if (!snapshot.exists) return false;
+  const access = snapshot.data();
+  const now = Date.now();
+  return (
+    access?.active === true
+    && access.startsAt?.toMillis?.() <= now
+    && access.expiresAt?.toMillis?.() > now
+  );
+}
+
+function timestampsEqual(first, second) {
+  return first?.toMillis?.() === second?.toMillis?.();
+}
+
 function atMidnightDaysFromNow(offsetDays) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TIME_ZONE,
@@ -561,6 +767,15 @@ function formatGuestCode(code) {
 function formatTimestamp(value) {
   if (!value?.toDate) return "";
   return value.toDate().toISOString().slice(0, 10);
+}
+
+function formatDateInTimeZone(value) {
+  if (!value?.toDate) return "日期未設定";
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: TIME_ZONE,
+    month: "numeric",
+    day: "numeric",
+  }).format(value.toDate());
 }
 
 function renderTemplate(template, variables) {

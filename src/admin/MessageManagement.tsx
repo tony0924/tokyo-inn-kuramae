@@ -91,20 +91,34 @@ export function MessageManagement() {
 
       {loadError ? <div className="admin-empty-state">{loadError}</div> : boards.length === 0 ? <div className="admin-empty-state">目前還沒有訪客留言。</div> : (
         <div className="admin-message-layout">
-          <div className="admin-message-boards">
-            {boards.map((board) => (
-              <button key={board.code} type="button" onClick={() => setSelectedCode(board.code)} className={`admin-message-board ${board.code === selectedCode ? 'active' : ''}`}>
-                <strong>{board.guestName}</strong><span>{board.guestEmail || `訪客碼 ${board.code}`}</span><small>{board.messages[0]?.body}</small>
-              </button>
-            ))}
+          <div className="admin-message-list-panel">
+            <div className="admin-message-section-label">
+              <span>房客對話</span>
+              <small>{boards.length}</small>
+            </div>
+            <div className="admin-message-boards">
+              {boards.map((board) => (
+                <button key={board.code} type="button" onClick={() => setSelectedCode(board.code)} className={`admin-message-board ${board.code === selectedCode ? 'active' : ''}`}>
+                  <span className="admin-message-board-top">
+                    <strong>{board.guestName}</strong>
+                    <small>{board.messages.length} 則</small>
+                  </span>
+                  <span>{board.guestEmail || `訪客碼 ${board.code}`}</span>
+                  <small>{board.messages[0]?.body}</small>
+                </button>
+              ))}
+            </div>
           </div>
           {selectedBoard && <section className="admin-message-thread">
-            <div className="admin-message-thread-head"><strong>{selectedBoard.guestName}</strong><span>{selectedBoard.guestEmail || `訪客碼 ${selectedBoard.code}`}</span></div>
+            <div className="admin-message-thread-head">
+              <span className="admin-message-avatar" aria-hidden="true">{selectedBoard.guestName.slice(0, 1)}</span>
+              <span><strong>{selectedBoard.guestName}</strong><small>{selectedBoard.guestEmail || `訪客碼 ${selectedBoard.code}`}</small></span>
+            </div>
             <div className="message-thread">
               {thread.map((message) => <article key={message.id} className={`message-bubble ${message.authorType}`}><div className="message-meta"><strong>{message.authorType === 'admin' ? '管理員' : message.authorName}</strong><span>{formatMessageTime(message)}</span></div><p>{message.body}</p></article>)}
             </div>
             <form className="message-compose" onSubmit={handleReply}>
-              <label htmlFor="admin-reply">回覆訪客</label>
+              <label htmlFor="admin-reply">回覆 {selectedBoard.guestName}</label>
               <textarea id="admin-reply" value={body} onChange={(event) => setBody(event.target.value)} maxLength={1000} placeholder="輸入回覆內容…" rows={4} />
               {error && <p className="message-error">{error}</p>}
               <button type="submit" className="btn-gold" disabled={sending || !body.trim()}>{sending ? '送出中…' : '送出回覆'}</button>

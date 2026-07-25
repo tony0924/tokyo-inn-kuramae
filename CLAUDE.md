@@ -224,6 +224,10 @@ Secrets（用 `defineSecret`，勿寫進 code）：`GMAIL_APP_PASSWORD`、`GOOGL
 | `sendUpcomingCheckInReminders` | 排程 `0 9 * * *` | 入住前一天 09:00 寄提醒給房客、CC admin |
 | `sendCheckoutAdminReminders` | 排程 `0 12 * * *` | 退房當天 12:00 寄提醒給 admin |
 | `sendGuestMessagePush` | `guestMessageBoards/{code}/messages/{messageId}` onCreate | 房客新增留言時推播到已註冊的 admin 裝置 |
+| `sendBookingUpdatedPush` | `bookings/{bookingId}` onUpdate | 預約日期異動或鑰匙變更時檢查並推播 |
+| `sendBookingDeletedPush` | `bookings/{bookingId}` onDelete | 預約取消時推播 |
+| `sendTodayCheckInAdminPushes` | 排程 `0 9 * * *` | 入住當天與缺少有效訪客碼時推播 |
+| `sendTodayCheckoutAdminPushes` | 排程 `0 11 * * *` | 退房時間與鑰匙未歸還時推播 |
 | `lookupGoogleMapPlace` | onCall（限 admin） | 貼 Google Maps 連結，解析出名稱/地址/座標（Places API New，含 fallback） |
 | `normalizeRecommendationCategorySortOrders` | onRequest（需 `x-maintenance-token`） | 一次性重排某 section/category 的 sortOrder |
 
