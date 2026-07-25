@@ -1719,6 +1719,7 @@
     border-radius: 13px;
     background: rgba(255, 255, 255, 0.035);
     color: var(--text-mid);
+    cursor: pointer;
     transition: var(--transition);
   }
   .admin-mobile-notification svg {

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { signOut } from '@/lib/auth';
 import { PwaStatus } from '@/pwa/PwaStatus';
@@ -23,7 +23,9 @@ const navItems = [
 export function AdminLayout() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const notificationHistoryActive = location.pathname.startsWith('/admin/notification-history');
 
   useEffect(() => {
     setMoreOpen(false);
@@ -60,15 +62,26 @@ export function AdminLayout() {
             <small>{user?.displayName || user?.email}</small>
           </span>
         </Link>
-        <NavLink
-          to="/admin/notification-history"
-          className={({ isActive }) =>
-            `admin-mobile-notification${isActive ? ' active' : ''}`
-          }
-          aria-label="查看通知紀錄"
+        <button
+          type="button"
+          className={`admin-mobile-notification${notificationHistoryActive ? ' active' : ''}`}
+          aria-label={notificationHistoryActive ? '返回上一頁' : '查看通知紀錄'}
+          onClick={() => {
+            if (notificationHistoryActive) {
+              if (location.state?.openedFromNotificationButton === true) {
+                navigate(-1);
+              } else {
+                navigate('/admin/today');
+              }
+              return;
+            }
+            navigate('/admin/notification-history', {
+              state: { openedFromNotificationButton: true },
+            });
+          }}
         >
           <MobileNavIcon name="notificationHistory" />
-        </NavLink>
+        </button>
       </header>
       <aside className="admin-sidebar">
         <div className="admin-brand">
