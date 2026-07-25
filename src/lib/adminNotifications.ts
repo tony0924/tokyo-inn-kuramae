@@ -1,13 +1,20 @@
 import {
   collection,
+  doc,
   limit,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
+  type Timestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { AdminNotification } from '@/types';
+import type {
+  AdminNotification,
+  AdminNotificationReadState,
+} from '@/types';
 
 const COLLECTION = 'adminNotifications';
 
@@ -31,4 +38,31 @@ export function watchAdminNotifications(
     },
     onError
   );
+}
+
+export function watchAdminNotificationReadState(
+  uid: string,
+  onUpdate: (state: AdminNotificationReadState | null) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, 'adminNotificationReads', uid),
+    (snapshot) => {
+      onUpdate(snapshot.exists()
+        ? snapshot.data() as AdminNotificationReadState
+        : null);
+    },
+    onError
+  );
+}
+
+export async function markAdminNotificationsRead(
+  uid: string,
+  lastReadAt?: Timestamp
+): Promise<void> {
+  await setDoc(doc(db, 'adminNotificationReads', uid), {
+    ownerUid: uid,
+    lastReadAt: lastReadAt ?? serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }

@@ -140,6 +140,12 @@ export interface AdminNotification extends AdminNotificationDoc {
   id: string;
 }
 
+export interface AdminNotificationReadState {
+  ownerUid: string;
+  lastReadAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export type GuestMessageAuthorType = 'guest' | 'admin';
 
 export interface GuestMessageDoc {

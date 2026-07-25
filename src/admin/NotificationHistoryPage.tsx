@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { watchAdminNotifications } from '@/lib/adminNotifications';
+import { useAuth } from '@/auth/AuthProvider';
+import {
+  markAdminNotificationsRead,
+  watchAdminNotifications,
+} from '@/lib/adminNotifications';
 import type {
   AdminNotification,
   AdminNotificationStatus,
@@ -14,6 +18,7 @@ const STATUS_LABELS: Record<AdminNotificationStatus, string> = {
 };
 
 export function NotificationHistoryPage() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +37,14 @@ export function NotificationHistoryPage() {
     ),
     []
   );
+
+  useEffect(() => {
+    if (!user || loading || error) return;
+    const latestCreatedAt = notifications[0]?.createdAt;
+    markAdminNotificationsRead(user.uid, latestCreatedAt).catch((readError) => {
+      console.warn('mark admin notifications read failed', readError);
+    });
+  }, [error, loading, notifications, user]);
 
   const groups = useMemo(() => {
     const grouped = new Map<string, AdminNotification[]>();

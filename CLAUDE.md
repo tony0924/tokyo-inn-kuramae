@@ -213,6 +213,13 @@ tokyo_inn/
 由 Cloud Functions 在每次管理員推播時寫入，Admin 後台「通知紀錄」顯示最近 100 則。
 前端僅限 Admin 讀取，不可新增、修改或刪除。
 
+### `adminNotificationReads/{uid}` — Admin 通知已讀位置
+```ts
+{ ownerUid, lastReadAt, updatedAt }
+```
+每位 Admin 只能讀寫自己的文件。手機版右上角鈴鐺依 `lastReadAt` 顯示未讀數量，
+進入「通知紀錄」後自動更新已讀時間。
+
 ### `guestCodeDailyLogins/{code_YYYY-MM-DD}` — 訪客碼每日首次登入去重
 
 由 Cloud Function 寫入，記錄各訪客碼以台北日期計算的每日第一筆成功登入，
@@ -225,6 +232,7 @@ tokyo_inn/
 - `guestAccessCodes`：admin 全權；有效碼可被 `get`（供訪客驗證）。
 - `guestPageViews`：admin 讀/刪；create 需通過身分驗證（登入者或持有效訪客碼），不可 update。
 - `adminNotifications`：僅 admin 可讀，由 Cloud Functions 寫入。
+- `adminNotificationReads`：admin 僅能讀寫自己的已讀位置。
 - `bookings`：admin 全寫；guest 只能讀 `guestUid == uid` 的那筆。
 
 ---

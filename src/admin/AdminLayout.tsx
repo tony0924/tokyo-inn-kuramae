@@ -2,6 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { signOut } from '@/lib/auth';
+import {
+  watchAdminNotificationReadState,
+  watchAdminNotifications,
+} from '@/lib/adminNotifications';
+import type { AdminNotification } from '@/types';
 import { PwaStatus } from '@/pwa/PwaStatus';
 import { PushForegroundBridge } from '@/pwa/PushForegroundBridge';
 import './admin.css';
@@ -25,11 +30,34 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [lastNotificationReadAt, setLastNotificationReadAt] = useState(0);
   const notificationHistoryActive = location.pathname.startsWith('/admin/notification-history');
+  const unreadNotificationCount = notifications.filter(
+    (notification) =>
+      (notification.createdAt?.toMillis?.() ?? 0) > lastNotificationReadAt
+  ).length;
 
   useEffect(() => {
     setMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(
+    () => watchAdminNotifications(
+      setNotifications,
+      (error) => console.warn('watch admin notifications failed', error)
+    ),
+    []
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    return watchAdminNotificationReadState(
+      user.uid,
+      (state) => setLastNotificationReadAt(state?.lastReadAt?.toMillis?.() ?? 0),
+      (error) => console.warn('watch admin notification read state failed', error)
+    );
+  }, [user]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -65,7 +93,13 @@ export function AdminLayout() {
         <button
           type="button"
           className={`admin-mobile-notification${notificationHistoryActive ? ' active' : ''}`}
-          aria-label={notificationHistoryActive ? '返回上一頁' : '查看通知紀錄'}
+          aria-label={
+            notificationHistoryActive
+              ? '返回上一頁'
+              : unreadNotificationCount > 0
+                ? `查看通知紀錄，${unreadNotificationCount} 則未讀`
+                : '查看通知紀錄'
+          }
           onClick={() => {
             if (notificationHistoryActive) {
               if (location.state?.openedFromNotificationButton === true) {
@@ -81,6 +115,11 @@ export function AdminLayout() {
           }}
         >
           <MobileNavIcon name="notificationHistory" />
+          {unreadNotificationCount > 0 && (
+            <span className="admin-notification-badge">
+              {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+            </span>
+          )}
         </button>
       </header>
       <aside className="admin-sidebar">

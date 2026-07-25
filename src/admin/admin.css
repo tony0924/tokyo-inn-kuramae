@@ -1709,6 +1709,7 @@
     gap: 10px;
   }
   .admin-mobile-notification {
+    position: relative;
     width: 42px;
     height: 42px;
     margin-left: auto;
@@ -1735,6 +1736,24 @@
     border-color: rgba(201, 168, 76, 0.28);
     background: var(--gold-pale);
     color: var(--gold-light);
+  }
+  .admin-notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border: 2px solid #0c0c0e;
+    border-radius: 999px;
+    background: #d94a42;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(217, 74, 66, 0.38);
   }
   .admin-mobile-brand > span:last-child {
     min-width: 0;
