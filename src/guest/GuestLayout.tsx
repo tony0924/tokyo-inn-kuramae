@@ -9,7 +9,10 @@ import {
 } from '@/lib/guestAccessCodes';
 import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 import { searchIndex, type GuestTabId, type SearchEntry } from './data/searchIndex';
+import { WelcomeGuideModal } from './shared/WelcomeGuideModal';
 import './legacy.css';
+
+const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
 
 const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: '首頁' },
@@ -36,13 +39,27 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
+function getTodayKey() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function GuestLayout() {
   const { user } = useAuth();
   const guestCode = !user ? getStoredGuestAccessCode() : null;
   const [query, setQuery] = useState('');
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const visitorKey = guestCode
+    ? `code:${guestCode}`
+    : user && user.role !== 'admin'
+      ? `user:${user.uid}`
+      : null;
 
   const matches: SearchEntry[] = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -81,8 +98,41 @@ export function GuestLayout() {
     }
   }, [guestCode, location.pathname, user]);
 
+  useEffect(() => {
+    if (!visitorKey) {
+      setShowWelcomeGuide(false);
+      return;
+    }
+
+    try {
+      const storageKey = `${WELCOME_GUIDE_STORAGE_PREFIX}:${visitorKey}`;
+      setShowWelcomeGuide(localStorage.getItem(storageKey) !== getTodayKey());
+    } catch {
+      setShowWelcomeGuide(true);
+    }
+  }, [visitorKey]);
+
+  const dismissWelcomeGuideToday = () => {
+    if (visitorKey) {
+      try {
+        localStorage.setItem(
+          `${WELCOME_GUIDE_STORAGE_PREFIX}:${visitorKey}`,
+          getTodayKey()
+        );
+      } catch {
+        // The guide can still be closed when browser storage is unavailable.
+      }
+    }
+    setShowWelcomeGuide(false);
+  };
+
   return (
     <LightboxProvider>
+      <WelcomeGuideModal
+        open={showWelcomeGuide}
+        onClose={() => setShowWelcomeGuide(false)}
+        onDismissToday={dismissWelcomeGuideToday}
+      />
       <div className="top-bar" />
       <header className="site-header">
         <div className="header-inner">
