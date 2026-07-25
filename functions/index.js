@@ -151,6 +151,61 @@ export const sendGuestMessagePush = onDocumentCreated(
   }
 );
 
+export const sendFirstDailyGuestCodeLoginPush = onDocumentCreated(
+  {
+    document: "guestPageViews/{viewId}",
+    database: "default",
+    region: REGION,
+  },
+  async (event) => {
+    const view = event.data?.data();
+    if (
+      !view
+      || view.eventType !== "code_login"
+      || view.visitorType !== "guest_code"
+      || typeof view.guestAccessCode !== "string"
+    ) {
+      return;
+    }
+
+    const code = view.guestAccessCode.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (!code) return;
+
+    const dateKey = formatDateKey(view.createdAt);
+    const markerReference = db
+      .collection("guestCodeDailyLogins")
+      .doc(`${code}_${dateKey}`);
+    const shouldSend = await db.runTransaction(async (transaction) => {
+      const marker = await transaction.get(markerReference);
+      if (marker.exists) {
+        const data = marker.data();
+        return data?.eventId === event.id && !data?.sentAt;
+      }
+
+      transaction.set(markerReference, {
+        code,
+        dateKey,
+        eventId: event.id,
+        guestName: view.guestName || null,
+        guestEmail: view.guestEmail || null,
+        firstLoginAt: view.createdAt || Timestamp.now(),
+        createdAt: Timestamp.now(),
+        sentAt: null,
+      });
+      return true;
+    });
+    if (!shouldSend) return;
+
+    await sendAdminPush({
+      title: "訪客碼今日首次登入",
+      body: `${view.guestName || "訪客"} 使用 ${formatGuestCode(code)} 登入`,
+      url: `${WEBSITE_URL}/admin/guest-codes`,
+      tag: `guest-code-first-login-${code}-${dateKey}`,
+    });
+    await markerReference.update({ sentAt: Timestamp.now() });
+  }
+);
+
 export const sendBookingUpdatedPush = onDocumentUpdated(
   {
     document: "bookings/{bookingId}",
@@ -776,6 +831,16 @@ function formatDateInTimeZone(value) {
     month: "numeric",
     day: "numeric",
   }).format(value.toDate());
+}
+
+function formatDateKey(value) {
+  const date = value?.toDate ? value.toDate() : new Date();
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 function renderTemplate(template, variables) {

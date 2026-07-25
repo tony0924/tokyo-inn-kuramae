@@ -285,6 +285,7 @@ Functions:
 
 Enabled admin devices receive push notifications for:
 
+- The first successful login for each guest code per Taiwan-local day.
 - Guest messages.
 - New pending users and users returned to pending.
 - New, deleted, or date-modified bookings.

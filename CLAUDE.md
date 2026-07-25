@@ -204,6 +204,11 @@ tokyo_inn/
 ```
 每位 admin 只能管理自己的裝置。Web Push 需要 `.env.local` 的 `VITE_FIREBASE_VAPID_KEY`；此值來自 Firebase Console 的 Cloud Messaging → Web Push certificates。
 
+### `guestCodeDailyLogins/{code_YYYY-MM-DD}` — 訪客碼每日首次登入去重
+
+由 Cloud Function 寫入，記錄各訪客碼以台北日期計算的每日第一筆成功登入，
+避免同一天重複發送管理員推播。前端不可直接讀寫。
+
 ### Security rules 重點（`firestore.rules`）
 - `users`：自己讀自己 / admin 全讀；create 僅限「自建 pending」或「符合 emailAccess 白名單」；self update 不得改 role/active/bookingId/email。
 - `emailAccess`/`settings`/`keys`：admin 全權；`emailAccess` 本人可讀自己那筆。
@@ -224,6 +229,7 @@ Secrets（用 `defineSecret`，勿寫進 code）：`GMAIL_APP_PASSWORD`、`GOOGL
 | `sendUpcomingCheckInReminders` | 排程 `0 9 * * *` | 入住前一天 09:00 寄提醒給房客、CC admin |
 | `sendCheckoutAdminReminders` | 排程 `0 12 * * *` | 退房當天 12:00 寄提醒給 admin |
 | `sendGuestMessagePush` | `guestMessageBoards/{code}/messages/{messageId}` onCreate | 房客新增留言時推播到已註冊的 admin 裝置 |
+| `sendFirstDailyGuestCodeLoginPush` | `guestPageViews/{viewId}` onCreate | 每個訪客碼每日第一次成功登入時推播 |
 | `sendBookingUpdatedPush` | `bookings/{bookingId}` onUpdate | 預約日期異動或鑰匙變更時檢查並推播 |
 | `sendBookingDeletedPush` | `bookings/{bookingId}` onDelete | 預約取消時推播 |
 | `sendTodayCheckInAdminPushes` | 排程 `0 9 * * *` | 入住當天與缺少有效訪客碼時推播 |

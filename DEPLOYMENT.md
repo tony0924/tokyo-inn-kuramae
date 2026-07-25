@@ -75,6 +75,7 @@ https://tokyo-inn-kuramae.web.app
 - `sendTodayCheckInAdminPushes`
 - `sendTodayCheckoutAdminPushes`
 - `sendGuestMessagePush`
+- `sendFirstDailyGuestCodeLoginPush`
 - `sendBookingUpdatedPush`
 - `sendBookingDeletedPush`
 
