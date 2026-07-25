@@ -115,6 +115,31 @@ export interface GuestPageView extends GuestPageViewDoc {
   id: string;
 }
 
+export type AdminNotificationStatus =
+  | 'pending'
+  | 'sent'
+  | 'partial'
+  | 'failed'
+  | 'no_devices';
+
+export interface AdminNotificationDoc {
+  title: string;
+  body: string;
+  url: string;
+  tag: string;
+  badge: string;
+  status: AdminNotificationStatus;
+  deviceCount: number;
+  successCount: number;
+  failureCount: number;
+  createdAt: Timestamp;
+  completedAt: Timestamp | null;
+}
+
+export interface AdminNotification extends AdminNotificationDoc {
+  id: string;
+}
+
 export type GuestMessageAuthorType = 'guest' | 'admin';
 
 export interface GuestMessageDoc {

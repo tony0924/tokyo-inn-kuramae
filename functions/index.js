@@ -651,11 +651,39 @@ async function sendAdminPush({
   tag,
   badge = "1",
 }) {
+  const notificationReference = db.collection("adminNotifications").doc();
+  const notification = {
+    title: truncatePushText(title, 80),
+    body: truncatePushText(body, 160),
+    url,
+    tag,
+    badge,
+    status: "pending",
+    deviceCount: 0,
+    successCount: 0,
+    failureCount: 0,
+    createdAt: Timestamp.now(),
+    completedAt: null,
+  };
+
+  try {
+    await notificationReference.set(notification);
+  } catch (error) {
+    logger.error("Failed to save admin notification history.", {
+      error,
+      tag,
+    });
+  }
+
   const devicesSnapshot = await db
     .collection("adminPushDevices")
     .where("enabled", "==", true)
     .get();
   if (devicesSnapshot.empty) {
+    await updateAdminNotificationHistory(notificationReference, {
+      status: "no_devices",
+      completedAt: Timestamp.now(),
+    });
     logger.info("No admin push devices registered. Skipping push.", { tag });
     return;
   }
@@ -672,41 +700,65 @@ async function sendAdminPush({
     token,
     reference,
   }));
+  if (devices.length === 0) {
+    await updateAdminNotificationHistory(notificationReference, {
+      status: "no_devices",
+      completedAt: Timestamp.now(),
+    });
+    logger.info("No valid admin push tokens registered. Skipping push.", { tag });
+    return;
+  }
+
   const invalidReferences = [];
+  let successCount = 0;
+  let failureCount = 0;
 
-  for (let offset = 0; offset < devices.length; offset += 500) {
-    const batch = devices.slice(offset, offset + 500);
-    const response = await getMessaging().sendEachForMulticast({
-      tokens: batch.map((device) => device.token),
-      data: {
-        title: truncatePushText(title, 80),
-        body: truncatePushText(body, 160),
-        url,
-        badge,
-        tag,
-      },
-      webpush: {
-        headers: {
-          Urgency: "high",
+  try {
+    for (let offset = 0; offset < devices.length; offset += 500) {
+      const batch = devices.slice(offset, offset + 500);
+      const response = await getMessaging().sendEachForMulticast({
+        tokens: batch.map((device) => device.token),
+        data: {
+          title: notification.title,
+          body: notification.body,
+          url,
+          badge,
+          tag,
         },
-        fcmOptions: {
-          link: url,
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          fcmOptions: {
+            link: url,
+          },
         },
-      },
-    });
+      });
 
-    response.responses.forEach((result, index) => {
-      if (result.success) return;
-      const code = result.error?.code || "";
-      if (
-        code === "messaging/registration-token-not-registered"
-        || code === "messaging/invalid-registration-token"
-      ) {
-        invalidReferences.push(batch[index].reference);
-        return;
-      }
-      logger.warn("Failed to send admin push.", { code, tag });
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+      response.responses.forEach((result, index) => {
+        if (result.success) return;
+        const code = result.error?.code || "";
+        if (
+          code === "messaging/registration-token-not-registered"
+          || code === "messaging/invalid-registration-token"
+        ) {
+          invalidReferences.push(batch[index].reference);
+          return;
+        }
+        logger.warn("Failed to send admin push.", { code, tag });
+      });
+    }
+  } catch (error) {
+    await updateAdminNotificationHistory(notificationReference, {
+      status: "failed",
+      deviceCount: devices.length,
+      successCount,
+      failureCount: Math.max(failureCount, devices.length - successCount),
+      completedAt: Timestamp.now(),
     });
+    throw error;
   }
 
   for (let offset = 0; offset < invalidReferences.length; offset += 500) {
@@ -715,6 +767,25 @@ async function sendAdminPush({
       .slice(offset, offset + 500)
       .forEach((reference) => deleteBatch.delete(reference));
     await deleteBatch.commit();
+  }
+
+  await updateAdminNotificationHistory(notificationReference, {
+    status: failureCount === 0 ? "sent" : successCount > 0 ? "partial" : "failed",
+    deviceCount: devices.length,
+    successCount,
+    failureCount,
+    completedAt: Timestamp.now(),
+  });
+}
+
+async function updateAdminNotificationHistory(reference, data) {
+  try {
+    await reference.update(data);
+  } catch (error) {
+    logger.error("Failed to update admin notification history.", {
+      error,
+      notificationId: reference.id,
+    });
   }
 }
 

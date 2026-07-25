@@ -204,6 +204,15 @@ tokyo_inn/
 ```
 每位 admin 只能管理自己的裝置。Web Push 需要 `.env.local` 的 `VITE_FIREBASE_VAPID_KEY`；此值來自 Firebase Console 的 Cloud Messaging → Web Push certificates。
 
+### `adminNotifications/{id}` — Admin 通知紀錄
+```ts
+{ title, body, url, tag, badge,
+  status: 'pending'|'sent'|'partial'|'failed'|'no_devices',
+  deviceCount, successCount, failureCount, createdAt, completedAt }
+```
+由 Cloud Functions 在每次管理員推播時寫入，Admin 後台「通知紀錄」顯示最近 100 則。
+前端僅限 Admin 讀取，不可新增、修改或刪除。
+
 ### `guestCodeDailyLogins/{code_YYYY-MM-DD}` — 訪客碼每日首次登入去重
 
 由 Cloud Function 寫入，記錄各訪客碼以台北日期計算的每日第一筆成功登入，
@@ -215,6 +224,7 @@ tokyo_inn/
 - `recommendations`：公開讀、admin 寫。
 - `guestAccessCodes`：admin 全權；有效碼可被 `get`（供訪客驗證）。
 - `guestPageViews`：admin 讀/刪；create 需通過身分驗證（登入者或持有效訪客碼），不可 update。
+- `adminNotifications`：僅 admin 可讀，由 Cloud Functions 寫入。
 - `bookings`：admin 全寫；guest 只能讀 `guestUid == uid` 的那筆。
 
 ---

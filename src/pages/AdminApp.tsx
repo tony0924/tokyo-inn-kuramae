@@ -7,6 +7,7 @@ const TodayDashboard = lazy(() => import('@/admin/TodayDashboard').then((module)
 const CalendarView = lazy(() => import('@/admin/CalendarView').then((module) => ({ default: module.CalendarView })));
 const BookingList = lazy(() => import('@/admin/BookingList').then((module) => ({ default: module.BookingList })));
 const NotificationSettingsPage = lazy(() => import('@/admin/NotificationSettingsPage').then((module) => ({ default: module.NotificationSettingsPage })));
+const NotificationHistoryPage = lazy(() => import('@/admin/NotificationHistoryPage').then((module) => ({ default: module.NotificationHistoryPage })));
 const UserManagement = lazy(() => import('@/admin/UserManagement').then((module) => ({ default: module.UserManagement })));
 const GuestCodeManagement = lazy(() => import('@/admin/GuestCodeManagement').then((module) => ({ default: module.GuestCodeManagement })));
 const KeyManagement = lazy(() => import('@/admin/KeyManagement').then((module) => ({ default: module.KeyManagement })));
@@ -27,6 +28,7 @@ export default function AdminApp() {
         <Route path="guest-codes" element={<GuestCodeManagement />} />
         <Route path="recommendations" element={<RecommendationManagement />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
+        <Route path="notification-history" element={<NotificationHistoryPage />} />
         <Route path="messages" element={<MessageManagement />} />
         <Route path="*" element={<Navigate to="today" replace />} />
       </Route>

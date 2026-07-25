@@ -231,6 +231,11 @@ Shared types: `src/types/index.ts`.
 
 Each admin can read and manage only their own device documents. Cloud Functions use enabled device tokens for management push notifications and delete invalid registrations automatically.
 
+`adminNotifications/{id}` stores every management push event, including its
+title, body, deep link, delivery status, device count, and timestamps. Admins
+can read the latest 100 records from the `通知紀錄` page; clients cannot write
+or delete these documents.
+
 ## Firestore Rules
 
 Rules file: `firestore.rules`.
@@ -295,6 +300,9 @@ Enabled admin devices receive push notifications for:
 
 Notification clicks deep-link to the corresponding admin page. Invalid FCM
 registrations are deleted automatically.
+Every push event is also saved to `adminNotifications`, including events that
+had no enabled device. History starts accumulating only after this feature is
+deployed; previously delivered FCM messages cannot be recovered.
 
 Important implementation details:
 

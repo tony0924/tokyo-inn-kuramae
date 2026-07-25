@@ -16,6 +16,7 @@ const navItems = [
   { to: '/admin/keys', label: '鑰匙管理' },
   { to: '/admin/guest-codes', label: '訪客碼' },
   { to: '/admin/recommendations', label: '推薦地點' },
+  { to: '/admin/notification-history', label: '通知紀錄' },
   { to: '/admin/notifications', label: '通知設定' },
 ];
 
@@ -43,6 +44,7 @@ export function AdminLayout() {
     '/admin/keys',
     '/admin/guest-codes',
     '/admin/recommendations',
+    '/admin/notification-history',
     '/admin/notifications',
   ].some((path) => location.pathname.startsWith(path));
 
@@ -135,6 +137,7 @@ export function AdminLayout() {
               <MoreLink to="/admin/keys" label="鑰匙管理" icon="keys" />
               <MoreLink to="/admin/guest-codes" label="訪客碼" icon="codes" />
               <MoreLink to="/admin/recommendations" label="推薦地點" icon="places" />
+              <MoreLink to="/admin/notification-history" label="通知紀錄" icon="notificationHistory" />
               <MoreLink to="/admin/notifications" label="通知設定" icon="notifications" />
             </div>
             <div className="admin-more-actions">
@@ -161,6 +164,7 @@ type MobileIconName =
   | 'keys'
   | 'codes'
   | 'places'
+  | 'notificationHistory'
   | 'notifications';
 
 function MobileNavLink({ to, label, icon }: { to: string; label: string; icon: MobileIconName }) {
@@ -193,6 +197,7 @@ function MobileNavIcon({ name }: { name: MobileIconName }) {
     keys: <><circle cx="8" cy="15.5" r="4.5" /><path d="m11.5 12.5 7-7M16 8l2 2M18.5 5.5l2 2" /></>,
     codes: <><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2" /></>,
     places: <><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    notificationHistory: <><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3v-4ZM10 20h4" /><path d="M8 7 5 4M16 7l3-3" /></>,
     notifications: <><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3v-4ZM10 20h4" /></>,
   };
 
