@@ -1,7 +1,15 @@
 import { useMemo, useState } from 'react';
+import { format } from 'date-fns';
 import { useBookings } from './useBookings';
+import type { PaymentStatus } from '@/types';
 
 type RevenueScope = 'all' | 'year' | 'month';
+
+const PAYMENT_LABEL: Record<PaymentStatus, string> = {
+  paid: '已全額收款',
+  partial: '部分付款',
+  unpaid: '尚未收款',
+};
 
 export function RevenueOverview() {
   const { bookings, loading } = useBookings();
@@ -43,6 +51,14 @@ export function RevenueOverview() {
       { total: 0, paid: 0, partial: 0, unpaid: 0, count: 0 }
     );
   }, [filteredBookings]);
+
+  const detailBookings = useMemo(
+    () =>
+      [...filteredBookings].sort(
+        (a, b) => b.checkIn.toDate().getTime() - a.checkIn.toDate().getTime()
+      ),
+    [filteredBookings]
+  );
 
   const scopeLabel =
     scope === 'all'
@@ -116,6 +132,59 @@ export function RevenueOverview() {
               `已全額收款 / 部分付款 / 尚未收款` 會依照目前每筆預約的付款狀態分類。
             </div>
           </div>
+
+          <section className="revenue-detail-section" aria-labelledby="revenue-detail-title">
+            <div className="revenue-detail-heading">
+              <div>
+                <h2 id="revenue-detail-title" className="admin-section-title">收入明細</h2>
+                <p>{scopeLabel}共 {detailBookings.length} 筆</p>
+              </div>
+            </div>
+
+            {detailBookings.length === 0 ? (
+              <div className="admin-table revenue-detail-empty">
+                此期間沒有預約收入明細。
+              </div>
+            ) : (
+              <div className="admin-table-scroll">
+                <table className="admin-table mobile-card-table revenue-detail-table">
+                  <thead>
+                    <tr>
+                      <th>房客</th>
+                      <th>入住</th>
+                      <th>退房</th>
+                      <th>人數</th>
+                      <th>金額</th>
+                      <th>付款狀態</th>
+                      <th>付款備註</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailBookings.map((booking) => (
+                      <tr key={booking.id}>
+                        <td>
+                          <div className="revenue-guest">
+                            <strong>{booking.guestName}</strong>
+                            <small>{booking.guestEmail}</small>
+                          </div>
+                        </td>
+                        <td>{format(booking.checkIn.toDate(), 'yyyy-MM-dd')}</td>
+                        <td>{format(booking.checkOut.toDate(), 'yyyy-MM-dd')}</td>
+                        <td>{booking.partySize}</td>
+                        <td className="revenue-amount">TWD {booking.amount.toLocaleString()}</td>
+                        <td>
+                          <span className={`badge ${booking.paymentStatus}`}>
+                            {PAYMENT_LABEL[booking.paymentStatus]}
+                          </span>
+                        </td>
+                        <td className="revenue-payment-note">{booking.paymentNotes || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </>
       )}
     </div>

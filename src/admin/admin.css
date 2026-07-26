@@ -1266,6 +1266,57 @@
   color: var(--gold-light);
 }
 
+.revenue-detail-section {
+  margin-top: 24px;
+}
+
+.revenue-detail-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.revenue-detail-heading p {
+  margin-top: 5px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.revenue-detail-empty {
+  padding: 20px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.revenue-guest {
+  display: grid;
+  gap: 3px;
+}
+
+.revenue-guest strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.revenue-guest small {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.revenue-amount {
+  color: var(--gold-light);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.revenue-payment-note {
+  max-width: 280px;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+
 .guest-code-summary {
   display: grid;
   gap: 3px;
@@ -1656,6 +1707,13 @@
   .guest-code-table td:nth-child(5)::before { content: '有效區間'; }
   .guest-code-table td:nth-child(6)::before { content: '最後登入'; }
   .guest-code-table td:nth-child(7)::before { content: '操作'; }
+  .revenue-detail-table td:nth-child(1)::before { content: '房客'; }
+  .revenue-detail-table td:nth-child(2)::before { content: '入住'; }
+  .revenue-detail-table td:nth-child(3)::before { content: '退房'; }
+  .revenue-detail-table td:nth-child(4)::before { content: '人數'; }
+  .revenue-detail-table td:nth-child(5)::before { content: '金額'; }
+  .revenue-detail-table td:nth-child(6)::before { content: '付款狀態'; }
+  .revenue-detail-table td:nth-child(7)::before { content: '付款備註'; }
   .recommendation-table td:nth-child(1)::before { content: '分頁'; }
   .recommendation-table td:nth-child(2)::before { content: '分類'; }
   .recommendation-table td:nth-child(3)::before { content: '名稱'; }
