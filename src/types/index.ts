@@ -3,6 +3,9 @@ import type { Timestamp } from 'firebase/firestore';
 export type UserRole = 'admin' | 'guest' | 'pending';
 
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
+export type StayType = 'paid_guest' | 'self' | 'family' | 'complimentary' | 'other';
+export type BookingPaymentKind = 'payment' | 'refund';
+export type BookingPaymentMethod = 'cash' | 'transfer' | 'card' | 'platform' | 'other';
 
 export interface KeyLoanRecord {
   keyCode: string;
@@ -30,6 +33,8 @@ export interface BookingDoc {
   checkIn: Timestamp;
   checkOut: Timestamp;
   amount: number;
+  stayType?: StayType;
+  expectedRevenue?: number;
   paymentStatus: PaymentStatus;
   paymentNotes: string;
   keyCode: string | null;
@@ -42,6 +47,22 @@ export interface BookingDoc {
 }
 
 export interface Booking extends BookingDoc {
+  id: string;
+}
+
+export interface BookingPaymentDoc {
+  bookingId: string;
+  guestName: string;
+  amount: number;
+  kind: BookingPaymentKind;
+  method: BookingPaymentMethod;
+  receivedAt: Timestamp;
+  note: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface BookingPayment extends BookingPaymentDoc {
   id: string;
 }
 

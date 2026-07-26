@@ -1270,6 +1270,59 @@
   margin-top: 24px;
 }
 
+.revenue-page-intro {
+  margin-top: 8px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.revenue-filter-panel,
+.revenue-payment-form {
+  padding: 18px;
+}
+
+.revenue-filter-panel {
+  margin-bottom: 20px;
+}
+
+.revenue-scope-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.revenue-scope-controls button {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.revenue-scope-controls input {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--bg-mid);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.revenue-definition-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 12px;
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.revenue-definition-note span::before {
+  content: '•';
+  margin-right: 6px;
+  color: var(--gold);
+}
+
 .revenue-detail-heading {
   display: flex;
   align-items: end;
@@ -1315,6 +1368,37 @@
   max-width: 280px;
   color: var(--text-mid);
   line-height: 1.55;
+}
+
+.stay-type-badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border: 1px solid var(--border-card);
+  border-radius: 999px;
+  color: var(--text-mid);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.stay-type-badge.self,
+.stay-type-badge.family,
+.stay-type-badge.complimentary {
+  border-color: rgba(108, 164, 126, 0.35);
+  background: rgba(108, 164, 126, 0.12);
+  color: #8bc99f;
+}
+
+.legacy-estimate {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-soft);
+  font-size: 10px;
+}
+
+.revenue-refund {
+  color: var(--vermilion);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .guest-code-summary {
@@ -1708,12 +1792,20 @@
   .guest-code-table td:nth-child(6)::before { content: '最後登入'; }
   .guest-code-table td:nth-child(7)::before { content: '操作'; }
   .revenue-detail-table td:nth-child(1)::before { content: '房客'; }
-  .revenue-detail-table td:nth-child(2)::before { content: '入住'; }
-  .revenue-detail-table td:nth-child(3)::before { content: '退房'; }
-  .revenue-detail-table td:nth-child(4)::before { content: '人數'; }
-  .revenue-detail-table td:nth-child(5)::before { content: '金額'; }
-  .revenue-detail-table td:nth-child(6)::before { content: '付款狀態'; }
-  .revenue-detail-table td:nth-child(7)::before { content: '付款備註'; }
+  .revenue-detail-table td:nth-child(2)::before { content: '住宿性質'; }
+  .revenue-detail-table td:nth-child(3)::before { content: '入住'; }
+  .revenue-detail-table td:nth-child(4)::before { content: '退房'; }
+  .revenue-detail-table td:nth-child(5)::before { content: '住宿價值'; }
+  .revenue-detail-table td:nth-child(6)::before { content: '應收'; }
+  .revenue-detail-table td:nth-child(7)::before { content: '已收'; }
+  .revenue-detail-table td:nth-child(8)::before { content: '狀態'; }
+  .payment-detail-table td:nth-child(1)::before { content: '日期'; }
+  .payment-detail-table td:nth-child(2)::before { content: '房客'; }
+  .payment-detail-table td:nth-child(3)::before { content: '類型'; }
+  .payment-detail-table td:nth-child(4)::before { content: '方式'; }
+  .payment-detail-table td:nth-child(5)::before { content: '金額'; }
+  .payment-detail-table td:nth-child(6)::before { content: '備註'; }
+  .payment-detail-table td:nth-child(7)::before { content: '操作'; }
   .recommendation-table td:nth-child(1)::before { content: '分頁'; }
   .recommendation-table td:nth-child(2)::before { content: '分類'; }
   .recommendation-table td:nth-child(3)::before { content: '名稱'; }

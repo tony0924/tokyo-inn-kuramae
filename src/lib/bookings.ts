@@ -56,6 +56,8 @@ export type NewBookingInput = {
   checkIn: Date;
   checkOut: Date;
   amount: number;
+  stayType?: BookingDoc['stayType'];
+  expectedRevenue?: number;
   paymentStatus: BookingDoc['paymentStatus'];
   paymentNotes: string;
   keyCode: string | null;
@@ -72,6 +74,8 @@ export async function createBooking(input: NewBookingInput): Promise<string> {
     checkIn: Timestamp.fromDate(input.checkIn),
     checkOut: Timestamp.fromDate(input.checkOut),
     amount: input.amount,
+    stayType: input.stayType ?? 'paid_guest',
+    expectedRevenue: input.expectedRevenue ?? input.amount,
     paymentStatus: input.paymentStatus,
     paymentNotes: input.paymentNotes,
     keyCode: input.keyCode,
@@ -115,6 +119,8 @@ export async function createBookingWithGuestAccessCode(
     checkIn: Timestamp.fromDate(input.checkIn),
     checkOut: Timestamp.fromDate(input.checkOut),
     amount: input.amount,
+    stayType: input.stayType ?? 'paid_guest',
+    expectedRevenue: input.expectedRevenue ?? input.amount,
     paymentStatus: input.paymentStatus,
     paymentNotes: input.paymentNotes,
     keyCode: input.keyCode,

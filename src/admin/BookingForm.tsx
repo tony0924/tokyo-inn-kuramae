@@ -14,7 +14,14 @@ import { updateBookingGuestAccessCode } from '@/lib/guestAccessCodes';
 import { useBookings } from './useBookings';
 import { useKeys } from './useKeys';
 import { normalizeKeyCode } from '@/lib/keys';
-import type { Booking, PaymentStatus } from '@/types';
+import {
+  getDefaultStayTypeForGuestName,
+  getExpectedRevenue,
+  inferStayType,
+  isNonRevenueStay,
+  STAY_TYPE_LABEL,
+} from '@/lib/bookingFinance';
+import type { Booking, PaymentStatus, StayType } from '@/types';
 
 interface Props {
   /** Existing booking to edit, or null for create */
@@ -32,6 +39,8 @@ interface FormState {
   checkOut: string;
   nightlyRate: string;
   amount: string;
+  stayType: StayType;
+  expectedRevenue: string;
   paymentStatus: PaymentStatus;
   paymentNotes: string;
   keyCode: string;
@@ -81,6 +90,8 @@ function buildInitialState(b: Booking | null, defaultCheckIn?: string): FormStat
       checkOut,
       nightlyRate: nights > 0 ? String(Math.round(b.amount / nights)) : '0',
       amount: String(b.amount),
+      stayType: inferStayType(b),
+      expectedRevenue: String(getExpectedRevenue(b)),
       paymentStatus: b.paymentStatus,
       paymentNotes: b.paymentNotes,
       keyCode: b.keyCode ?? '',
@@ -97,6 +108,8 @@ function buildInitialState(b: Booking | null, defaultCheckIn?: string): FormStat
     checkOut: '',
     nightlyRate: '2500',
     amount: '0',
+    stayType: 'paid_guest',
+    expectedRevenue: '0',
     paymentStatus: 'unpaid',
     paymentNotes: '',
     keyCode: '',
@@ -185,8 +198,15 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
     const nightlyRate = Number(state.nightlyRate);
     if (!Number.isFinite(nightlyRate) || nightlyRate < 0) return;
     const nextAmount = String(nights * nightlyRate);
-    setState((s) => (s.amount === nextAmount ? s : { ...s, amount: nextAmount }));
-  }, [state.checkIn, state.checkOut, state.nightlyRate]);
+    setState((s) => {
+      if (s.amount === nextAmount && (isEdit || s.expectedRevenue === nextAmount)) return s;
+      return {
+        ...s,
+        amount: nextAmount,
+        expectedRevenue: !isEdit && s.stayType === 'paid_guest' ? nextAmount : s.expectedRevenue,
+      };
+    });
+  }, [isEdit, state.checkIn, state.checkOut, state.nightlyRate]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setState((s) => ({ ...s, [key]: value }));
@@ -225,6 +245,8 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
       return '每日房價需為非負數';
     if (!Number.isFinite(Number(state.amount)) || Number(state.amount) < 0)
       return '金額需為非負數';
+    if (!Number.isFinite(Number(state.expectedRevenue)) || Number(state.expectedRevenue) < 0)
+      return '應收金額需為非負數';
     if (Number(state.partySize) < 1) return '人數至少 1';
     if (selectedKeyCode) {
       const key = keys.find((item) => normalizeKeyCode(item.code) === selectedKeyCode);
@@ -272,6 +294,8 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           checkIn: Timestamp.fromDate(checkIn),
           checkOut: Timestamp.fromDate(checkOut),
           amount: Number(state.amount),
+          stayType: state.stayType,
+          expectedRevenue: Number(state.expectedRevenue),
           paymentStatus: state.paymentStatus,
           paymentNotes: state.paymentNotes,
           keyCode: selectedKeyCode || null,
@@ -307,6 +331,8 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           checkIn: new Date(`${state.checkIn}T15:00`),
           checkOut: new Date(`${state.checkOut}T11:00`),
           amount: Number(state.amount),
+          stayType: state.stayType,
+          expectedRevenue: Number(state.expectedRevenue),
           paymentStatus: state.paymentStatus,
           paymentNotes: state.paymentNotes,
           keyCode: selectedKeyCode || null,
@@ -348,7 +374,15 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
             value={state.guestName}
             onChange={(e) => {
               lastAutoFilledNameRef.current = '';
-              update('guestName', e.target.value);
+              const guestName = e.target.value;
+              const suggestedStayType = getDefaultStayTypeForGuestName(guestName);
+              setState((current) => ({
+                ...current,
+                guestName,
+                ...(!booking && suggestedStayType !== 'paid_guest'
+                  ? { stayType: suggestedStayType, expectedRevenue: '0' }
+                  : {}),
+              }));
             }}
             required
           />
@@ -445,7 +479,7 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
         </div>
 
         <div className="form-field">
-          <label>金額 (TWD)</label>
+          <label>住宿價值 (TWD)</label>
           <div className="currency-input-row">
             <span className="currency-prefix">TWD</span>
             <input
@@ -456,7 +490,45 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
               readOnly
             />
           </div>
-          <span className="helper-text">總金額 = 晚數 × 每日房價。</span>
+          <span className="helper-text">住宿創造的市場價值 = 晚數 × 每日房價。</span>
+        </div>
+
+        <div className="form-field">
+          <label>住宿性質</label>
+          <select
+            value={state.stayType}
+            onChange={(e) => {
+              const stayType = e.target.value as StayType;
+              setState((current) => ({
+                ...current,
+                stayType,
+                expectedRevenue: isNonRevenueStay(stayType) ? '0' : current.amount,
+              }));
+            }}
+          >
+            {(Object.keys(STAY_TYPE_LABEL) as StayType[]).map((stayType) => (
+              <option key={stayType} value={stayType}>
+                {STAY_TYPE_LABEL[stayType]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-field">
+          <label>應收金額 (TWD)</label>
+          <div className="currency-input-row">
+            <span className="currency-prefix">TWD</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={state.expectedRevenue}
+              onChange={(e) => update('expectedRevenue', e.target.value)}
+            />
+          </div>
+          <span className="helper-text">
+            自住、家人與免費招待預設為 0；實際收到的款項請到收入總覽登記。
+          </span>
         </div>
 
         <div className="form-field">

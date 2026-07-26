@@ -249,5 +249,9 @@ service cloud.firestore {
         || isValidGuestAccessCode(resource.data.guestAccessCode);
       allow create, update, delete: if isAdmin();
     }
+
+    match /bookingPayments/{id} {
+      allow read, create, update, delete: if isAdmin();
+    }
   }
 }

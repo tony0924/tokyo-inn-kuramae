@@ -1,7 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { useBookings } from './useBookings';
-import type { PaymentStatus } from '@/types';
+import {
+  createBookingPayment,
+  deleteBookingPayment,
+  watchBookingPayments,
+} from '@/lib/bookingPayments';
+import {
+  getExpectedRevenue,
+  getLegacyReceivedAmount,
+  inferStayType,
+  isNonRevenueStay,
+  STAY_TYPE_LABEL,
+} from '@/lib/bookingFinance';
+import type {
+  Booking,
+  BookingPayment,
+  BookingPaymentKind,
+  BookingPaymentMethod,
+  PaymentStatus,
+} from '@/types';
 
 type RevenueScope = 'all' | 'year' | 'month';
 
@@ -11,46 +29,68 @@ const PAYMENT_LABEL: Record<PaymentStatus, string> = {
   unpaid: '尚未收款',
 };
 
+const METHOD_LABEL: Record<BookingPaymentMethod, string> = {
+  cash: '現金',
+  transfer: '轉帳',
+  card: '信用卡',
+  platform: '訂房平台',
+  other: '其他',
+};
+
+function todayInput(): string {
+  return format(new Date(), 'yyyy-MM-dd');
+}
+
 export function RevenueOverview() {
   const { bookings, loading } = useBookings();
+  const [payments, setPayments] = useState<BookingPayment[]>([]);
   const now = new Date();
   const [scope, setScope] = useState<RevenueScope>('month');
   const [year, setYear] = useState(String(now.getFullYear()));
   const [month, setMonth] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   );
+  const [paymentBookingId, setPaymentBookingId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDate, setPaymentDate] = useState(todayInput());
+  const [paymentKind, setPaymentKind] = useState<BookingPaymentKind>('payment');
+  const [paymentMethod, setPaymentMethod] = useState<BookingPaymentMethod>('transfer');
+  const [paymentNote, setPaymentNote] = useState('');
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const filteredBookings = useMemo(() => {
-    if (scope === 'all') return bookings;
+  useEffect(() => watchBookingPayments(setPayments), []);
 
-    return bookings.filter((booking) => {
-      const checkIn = booking.checkIn.toDate();
+  const bookingById = useMemo(
+    () => new Map(bookings.map((booking) => [booking.id, booking])),
+    [bookings]
+  );
 
-      if (scope === 'year') {
-        return checkIn.getFullYear() === Number(year);
-      }
-
-      const [selectedYear, selectedMonth] = month.split('-').map(Number);
-      return (
-        checkIn.getFullYear() === selectedYear &&
-        checkIn.getMonth() + 1 === selectedMonth
-      );
+  const paymentsByBooking = useMemo(() => {
+    const result = new Map<string, BookingPayment[]>();
+    payments.forEach((payment) => {
+      const current = result.get(payment.bookingId) ?? [];
+      current.push(payment);
+      result.set(payment.bookingId, current);
     });
-  }, [bookings, month, scope, year]);
+    return result;
+  }, [payments]);
 
-  const summary = useMemo(() => {
-    return filteredBookings.reduce(
-      (acc, booking) => {
-        acc.total += booking.amount;
-        acc.count += 1;
-        if (booking.paymentStatus === 'paid') acc.paid += booking.amount;
-        if (booking.paymentStatus === 'partial') acc.partial += booking.amount;
-        if (booking.paymentStatus === 'unpaid') acc.unpaid += booking.amount;
-        return acc;
-      },
-      { total: 0, paid: 0, partial: 0, unpaid: 0, count: 0 }
-    );
-  }, [filteredBookings]);
+  const filteredBookings = useMemo(
+    () =>
+      bookings.filter((booking) =>
+        isDateInScope(booking.checkIn.toDate(), scope, year, month)
+      ),
+    [bookings, month, scope, year]
+  );
+
+  const filteredPayments = useMemo(
+    () =>
+      payments.filter((payment) =>
+        isDateInScope(payment.receivedAt.toDate(), scope, year, month)
+      ),
+    [month, payments, scope, year]
+  );
 
   const detailBookings = useMemo(
     () =>
@@ -60,6 +100,42 @@ export function RevenueOverview() {
     [filteredBookings]
   );
 
+  const summary = useMemo(() => {
+    const accommodationValue = filteredBookings.reduce(
+      (total, booking) => total + booking.amount,
+      0
+    );
+    const expectedRevenue = filteredBookings.reduce(
+      (total, booking) => total + getExpectedRevenue(booking),
+      0
+    );
+    const nonCashValue = filteredBookings.reduce((total, booking) => {
+      const expected = getExpectedRevenue(booking);
+      return total + Math.max(booking.amount - expected, 0);
+    }, 0);
+    const recordedCash = filteredPayments.reduce(
+      (total, payment) =>
+        total + (payment.kind === 'refund' ? -payment.amount : payment.amount),
+      0
+    );
+    const legacyCash = filteredBookings.reduce((total, booking) => {
+      if ((paymentsByBooking.get(booking.id)?.length ?? 0) > 0) return total;
+      return total + getLegacyReceivedAmount(booking);
+    }, 0);
+    const outstanding = filteredBookings.reduce((total, booking) => {
+      const received = getBookingReceived(booking, paymentsByBooking.get(booking.id) ?? []);
+      return total + Math.max(getExpectedRevenue(booking) - received, 0);
+    }, 0);
+
+    return {
+      accommodationValue,
+      expectedRevenue,
+      actualCash: recordedCash + legacyCash,
+      nonCashValue,
+      outstanding,
+    };
+  }, [filteredBookings, filteredPayments, paymentsByBooking]);
+
   const scopeLabel =
     scope === 'all'
       ? '全部期間'
@@ -67,117 +143,235 @@ export function RevenueOverview() {
         ? `${year} 年`
         : `${month.replace('-', ' 年 ')} 月`;
 
+  function selectPaymentBooking(id: string) {
+    setPaymentBookingId(id);
+    const booking = bookingById.get(id);
+    if (!booking) return;
+    const received = getBookingReceived(booking, paymentsByBooking.get(id) ?? []);
+    setPaymentAmount(String(Math.max(getExpectedRevenue(booking) - received, 0)));
+  }
+
+  async function handlePaymentSubmit(event: FormEvent) {
+    event.preventDefault();
+    const booking = bookingById.get(paymentBookingId);
+    const amount = Number(paymentAmount);
+    if (!booking) {
+      setPaymentError('請選擇預約');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setPaymentError('請輸入大於 0 的金額');
+      return;
+    }
+    if (!paymentDate) {
+      setPaymentError('請選擇收款日期');
+      return;
+    }
+
+    setSavingPayment(true);
+    setPaymentError(null);
+    try {
+      await createBookingPayment({
+        bookingId: booking.id,
+        guestName: booking.guestName,
+        amount,
+        kind: paymentKind,
+        method: paymentMethod,
+        receivedAt: new Date(`${paymentDate}T12:00:00`),
+        note: paymentNote,
+      });
+      setPaymentAmount('');
+      setPaymentNote('');
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : '收款紀錄建立失敗');
+    } finally {
+      setSavingPayment(false);
+    }
+  }
+
   return (
     <div>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">收入總覽</h1>
+        <div>
+          <h1 className="admin-page-title">收入總覽</h1>
+          <p className="revenue-page-intro">同時查看住宿創造的價值與真正收到的款項。</p>
+        </div>
       </div>
 
       {loading ? (
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
         <>
-          <div className="admin-table" style={{ padding: 18, marginBottom: 20 }}>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="admin-table revenue-filter-panel">
+            <div className="revenue-scope-controls">
               {(['all', 'year', 'month'] as const).map((item) => (
                 <button
                   key={item}
                   type="button"
                   className={scope === item ? 'btn-gold' : 'btn-ghost'}
                   onClick={() => setScope(item)}
-                  style={{ padding: '6px 14px', fontSize: 13 }}
                 >
-                  {item === 'all' ? '總收入' : item === 'year' ? '年度收入' : '當月收入'}
+                  {item === 'all' ? '全部期間' : item === 'year' ? '年度' : '月份'}
                 </button>
               ))}
-
               {scope === 'year' && (
                 <input
                   type="number"
                   value={year}
-                  onChange={(e) => setYear(e.target.value)}
+                  onChange={(event) => setYear(event.target.value)}
                   min={2000}
                   max={2100}
-                  style={controlInputStyle}
                   aria-label="選擇年份"
                 />
               )}
-
               {scope === 'month' && (
                 <input
                   type="month"
                   value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  style={controlInputStyle}
+                  onChange={(event) => setMonth(event.target.value)}
                   aria-label="選擇月份"
                 />
               )}
             </div>
           </div>
 
-          <div className="stats-grid">
-            <StatCard label={`${scopeLabel}收入`} value={summary.total} tone="gold" />
-            <StatCard label="已全額收款" value={summary.paid} tone="green" />
-            <StatCard label="部分付款" value={summary.partial} tone="amber" />
-            <StatCard label="尚未收款" value={summary.unpaid} tone="muted" />
+          <div className="stats-grid revenue-stats-grid">
+            <StatCard label={`${scopeLabel}住宿價值`} value={summary.accommodationValue} tone="gold" />
+            <StatCard label="實際入帳" value={summary.actualCash} tone="green" />
+            <StatCard label="尚待收款" value={summary.outstanding} tone="amber" />
+            <StatCard label="非現金住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
 
-          <div className="admin-table" style={{ marginTop: 24, padding: 18 }}>
-            <div style={{ color: 'var(--text)', fontSize: 14, marginBottom: 8 }}>
-              {scopeLabel}共有 {summary.count} 筆預約
-            </div>
-            <div style={{ color: 'var(--text-mid)', fontSize: 13, lineHeight: 1.7 }}>
-              收入以預約的入住日歸屬期間計算。
-              <br />
-              `已全額收款 / 部分付款 / 尚未收款` 會依照目前每筆預約的付款狀態分類。
-            </div>
+          <div className="revenue-definition-note">
+            <span>住宿價值依入住日期統計</span>
+            <span>實際入帳依收款日期統計</span>
+            <span>舊資料若沒有收款紀錄，會暫時依「已全額付」推估</span>
           </div>
 
-          <section className="revenue-detail-section" aria-labelledby="revenue-detail-title">
+          <section className="revenue-detail-section" aria-labelledby="stay-value-title">
             <div className="revenue-detail-heading">
               <div>
-                <h2 id="revenue-detail-title" className="admin-section-title">收入明細</h2>
-                <p>{scopeLabel}共 {detailBookings.length} 筆</p>
+                <h2 id="stay-value-title" className="admin-section-title">住宿價值明細</h2>
+                <p>{scopeLabel}共 {detailBookings.length} 筆，應收 TWD {summary.expectedRevenue.toLocaleString()}</p>
               </div>
             </div>
-
             {detailBookings.length === 0 ? (
-              <div className="admin-table revenue-detail-empty">
-                此期間沒有預約收入明細。
-              </div>
+              <div className="admin-table revenue-detail-empty">此期間沒有住宿明細。</div>
             ) : (
               <div className="admin-table-scroll">
                 <table className="admin-table mobile-card-table revenue-detail-table">
                   <thead>
                     <tr>
-                      <th>房客</th>
-                      <th>入住</th>
-                      <th>退房</th>
-                      <th>人數</th>
-                      <th>金額</th>
-                      <th>付款狀態</th>
-                      <th>付款備註</th>
+                      <th>房客</th><th>性質</th><th>入住</th><th>退房</th>
+                      <th>住宿價值</th><th>應收</th><th>已收</th><th>狀態</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {detailBookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td>
-                          <div className="revenue-guest">
-                            <strong>{booking.guestName}</strong>
-                            <small>{booking.guestEmail}</small>
-                          </div>
+                    {detailBookings.map((booking) => {
+                      const stayType = inferStayType(booking);
+                      const bookingPayments = paymentsByBooking.get(booking.id) ?? [];
+                      const received = getBookingReceived(booking, bookingPayments);
+                      return (
+                        <tr key={booking.id}>
+                          <td><div className="revenue-guest"><strong>{booking.guestName}</strong><small>{booking.guestEmail}</small></div></td>
+                          <td><span className={`stay-type-badge ${stayType}`}>{STAY_TYPE_LABEL[stayType]}</span></td>
+                          <td>{format(booking.checkIn.toDate(), 'yyyy-MM-dd')}</td>
+                          <td>{format(booking.checkOut.toDate(), 'yyyy-MM-dd')}</td>
+                          <td className="revenue-amount">TWD {booking.amount.toLocaleString()}</td>
+                          <td>TWD {getExpectedRevenue(booking).toLocaleString()}</td>
+                          <td>TWD {received.toLocaleString()}{bookingPayments.length === 0 && received > 0 ? <small className="legacy-estimate">推估</small> : null}</td>
+                          <td><span className={`badge ${booking.paymentStatus}`}>{isNonRevenueStay(stayType) ? '不收費' : PAYMENT_LABEL[booking.paymentStatus]}</span></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="revenue-detail-section" aria-labelledby="payment-entry-title">
+            <div className="revenue-detail-heading">
+              <div>
+                <h2 id="payment-entry-title" className="admin-section-title">登記實際收款</h2>
+                <p>訂金、尾款與退款都可分開記錄。</p>
+              </div>
+            </div>
+            <form className="admin-table revenue-payment-form" onSubmit={handlePaymentSubmit}>
+              <div className="form-grid">
+                <div className="form-field full">
+                  <label>預約</label>
+                  <select value={paymentBookingId} onChange={(event) => selectPaymentBooking(event.target.value)}>
+                    <option value="">請選擇房客</option>
+                    {bookings.map((booking) => (
+                      <option key={booking.id} value={booking.id}>
+                        {booking.guestName} · {format(booking.checkIn.toDate(), 'yyyy-MM-dd')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>類型</label>
+                  <select value={paymentKind} onChange={(event) => setPaymentKind(event.target.value as BookingPaymentKind)}>
+                    <option value="payment">收款</option>
+                    <option value="refund">退款</option>
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>金額</label>
+                  <input type="number" min={1} step={1} value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label>日期</label>
+                  <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label>方式</label>
+                  <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BookingPaymentMethod)}>
+                    {Object.entries(METHOD_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </div>
+                <div className="form-field full">
+                  <label>備註</label>
+                  <input value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} placeholder="例如：訂金、尾款、Airbnb 撥款" />
+                </div>
+              </div>
+              {paymentError && <p className="field-error">{paymentError}</p>}
+              <div className="form-actions">
+                <button type="submit" className="btn-gold" disabled={savingPayment}>
+                  {savingPayment ? '儲存中…' : paymentKind === 'refund' ? '登記退款' : '登記收款'}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="revenue-detail-section" aria-labelledby="cash-detail-title">
+            <div className="revenue-detail-heading">
+              <div>
+                <h2 id="cash-detail-title" className="admin-section-title">實際入帳明細</h2>
+                <p>{scopeLabel}共 {filteredPayments.length} 筆手動紀錄</p>
+              </div>
+            </div>
+            {filteredPayments.length === 0 ? (
+              <div className="admin-table revenue-detail-empty">此期間還沒有手動收款紀錄。</div>
+            ) : (
+              <div className="admin-table-scroll">
+                <table className="admin-table mobile-card-table payment-detail-table">
+                  <thead><tr><th>日期</th><th>房客</th><th>類型</th><th>方式</th><th>金額</th><th>備註</th><th>操作</th></tr></thead>
+                  <tbody>
+                    {filteredPayments.map((payment) => (
+                      <tr key={payment.id}>
+                        <td>{format(payment.receivedAt.toDate(), 'yyyy-MM-dd')}</td>
+                        <td>{bookingById.get(payment.bookingId)?.guestName || payment.guestName}</td>
+                        <td>{payment.kind === 'refund' ? '退款' : '收款'}</td>
+                        <td>{METHOD_LABEL[payment.method]}</td>
+                        <td className={payment.kind === 'refund' ? 'revenue-refund' : 'revenue-amount'}>
+                          {payment.kind === 'refund' ? '−' : ''}TWD {payment.amount.toLocaleString()}
                         </td>
-                        <td>{format(booking.checkIn.toDate(), 'yyyy-MM-dd')}</td>
-                        <td>{format(booking.checkOut.toDate(), 'yyyy-MM-dd')}</td>
-                        <td>{booking.partySize}</td>
-                        <td className="revenue-amount">TWD {booking.amount.toLocaleString()}</td>
-                        <td>
-                          <span className={`badge ${booking.paymentStatus}`}>
-                            {PAYMENT_LABEL[booking.paymentStatus]}
-                          </span>
-                        </td>
-                        <td className="revenue-payment-note">{booking.paymentNotes || '—'}</td>
+                        <td>{payment.note || '—'}</td>
+                        <td><button type="button" className="btn-danger" onClick={() => {
+                          if (confirm('確定刪除這筆收款紀錄嗎？')) void deleteBookingPayment(payment.id);
+                        }}>刪除</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -191,14 +385,20 @@ export function RevenueOverview() {
   );
 }
 
-const controlInputStyle = {
-  background: 'var(--bg-mid)',
-  border: '1px solid var(--border-card)',
-  borderRadius: 'var(--radius-sm)',
-  color: 'var(--text)',
-  padding: '8px 10px',
-  fontSize: 13,
-} as const;
+function isDateInScope(date: Date, scope: RevenueScope, year: string, month: string): boolean {
+  if (scope === 'all') return true;
+  if (scope === 'year') return date.getFullYear() === Number(year);
+  const [selectedYear, selectedMonth] = month.split('-').map(Number);
+  return date.getFullYear() === selectedYear && date.getMonth() + 1 === selectedMonth;
+}
+
+function getBookingReceived(booking: Booking, payments: BookingPayment[]): number {
+  if (payments.length === 0) return getLegacyReceivedAmount(booking);
+  return payments.reduce(
+    (total, payment) => total + (payment.kind === 'refund' ? -payment.amount : payment.amount),
+    0
+  );
+}
 
 function StatCard({
   label,
