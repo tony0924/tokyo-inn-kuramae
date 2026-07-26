@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { useBookings } from './useBookings';
+import { migrateHostedStayGuestName } from '@/lib/bookings';
 import {
   createBookingPayment,
   deleteBookingPayment,
@@ -62,6 +63,11 @@ export function RevenueOverview() {
   const [expandedPaymentRows, setExpandedPaymentRows] = useState<Set<string>>(() => new Set());
 
   useEffect(() => watchBookingPayments(setPayments), []);
+  useEffect(() => {
+    void migrateHostedStayGuestName().catch((error) => {
+      console.error('Failed to migrate hosted stay guest name', error);
+    });
+  }, []);
 
   const bookingById = useMemo(
     () => new Map(bookings.map((booking) => [booking.id, booking])),

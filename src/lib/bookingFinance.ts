@@ -13,7 +13,6 @@ const LEGACY_NO_REVENUE_GUESTS = new Map<string, StayType>([
   ['郭婷瑜', 'family'],
   ['郭婷渝', 'complimentary'],
   ['怡臻爸媽', 'family'],
-  ['婷瑜', 'family'],
 ]);
 
 export function getDefaultStayTypeForGuestName(guestName: string): StayType {

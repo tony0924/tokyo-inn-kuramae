@@ -3,12 +3,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   Timestamp,
   updateDoc,
+  where,
   writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -157,6 +159,33 @@ export async function updateBooking(
     ...patch,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function migrateHostedStayGuestName(): Promise<number> {
+  const legacyQuery = query(collection(db, BOOKINGS), where('guestName', '==', '婷瑜'));
+  const snapshot = await getDocs(legacyQuery);
+  if (snapshot.empty) return 0;
+
+  const batch = writeBatch(db);
+  snapshot.docs.forEach((bookingSnapshot) => {
+    const booking = bookingSnapshot.data() as BookingDoc;
+    batch.update(bookingSnapshot.ref, {
+      guestName: '郭婷渝',
+      stayType: 'complimentary',
+      expectedRevenue: 0,
+      updatedAt: serverTimestamp(),
+    });
+
+    if (booking.guestAccessCode) {
+      batch.update(doc(db, 'guestAccessCodes', normalizeGuestCode(booking.guestAccessCode)), {
+        guestName: '郭婷渝',
+        label: '郭婷渝 的預約訪客碼',
+        updatedAt: serverTimestamp(),
+      });
+    }
+  });
+  await batch.commit();
+  return snapshot.size;
 }
 
 export async function deleteBooking(id: string): Promise<void> {
