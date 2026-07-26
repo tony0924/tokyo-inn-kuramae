@@ -214,6 +214,10 @@
     .search-box input::placeholder { color: rgba(255,255,255,0.35); }
     .search-icon { color: var(--gold); font-size: 0.9rem; flex-shrink: 0; }
 
+    .guest-mobile-guide-toggle {
+      display: none;
+    }
+
     /* First daily visit guide */
     .welcome-guide-backdrop {
       position: fixed;
@@ -2691,6 +2695,37 @@
       main {
         padding-top: 24px;
         padding-bottom: calc(92px + env(safe-area-inset-bottom));
+      }
+
+      .guest-mobile-guide-toggle {
+        width: 44px;
+        min-height: 46px;
+        display: flex;
+        flex: 0 0 44px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border: 1px solid var(--border-card);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text-mid);
+        font-family: inherit;
+      }
+
+      .guest-mobile-guide-toggle > span {
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .guest-mobile-guide-toggle small {
+        font-size: 0.6rem;
+      }
+
+      .guest-mobile-guide-toggle.active {
+        border-color: rgba(201, 168, 76, 0.28);
+        background: var(--gold-pale);
+        color: var(--gold-light);
       }
 
       .guest-mobile-nav {

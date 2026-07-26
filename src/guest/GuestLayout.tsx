@@ -31,7 +31,9 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
 ];
 
 const MOBILE_PRIMARY_TABS: GuestTabId[] = ['home', 'checkin', 'arrival', 'messages'];
-const MOBILE_MORE_TABS = TABS.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab.id));
+const MOBILE_MORE_TABS = TABS.filter(
+  (tab) => tab.id !== 'guide' && !MOBILE_PRIMARY_TABS.includes(tab.id)
+);
 
 function Highlight({ text, query }: { text: string; query: string }) {
   if (!query) return text;
@@ -77,6 +79,26 @@ export function GuestLayout() {
   }, [query]);
 
   const isSearching = query.trim().length > 0;
+  const guideActive = location.pathname.startsWith('/guest/guide');
+
+  const toggleMobileGuide = () => {
+    setQuery('');
+
+    if (guideActive) {
+      const returnTo =
+        typeof location.state?.guideReturnTo === 'string' &&
+        location.state.guideReturnTo.startsWith('/guest/') &&
+        !location.state.guideReturnTo.startsWith('/guest/guide')
+          ? location.state.guideReturnTo
+          : '/guest/home';
+      navigate(returnTo);
+      return;
+    }
+
+    navigate('/guest/guide', {
+      state: { guideReturnTo: location.pathname },
+    });
+  };
 
   // Scroll to top on tab change
   useEffect(() => {
@@ -194,6 +216,15 @@ export function GuestLayout() {
                 />
               </div>
             </div>
+            <button
+              type="button"
+              className={`guest-mobile-guide-toggle${guideActive ? ' active' : ''}`}
+              aria-label={guideActive ? '返回原本瀏覽頁面' : '開啟使用指南'}
+              onClick={toggleMobileGuide}
+            >
+              <span aria-hidden="true">{guideActive ? '↩' : '🧭'}</span>
+              <small>{guideActive ? '返回' : '指南'}</small>
+            </button>
           </div>
           <nav className="nav-tabs">
             {TABS.map((t) => (
