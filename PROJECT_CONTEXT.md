@@ -138,8 +138,12 @@ Relevant files:
 - The public Preview route is intentionally outside the authenticated Firebase
   application shell. Firebase Auth and Firestore load only after navigating to
   login, guest, pending, or admin routes.
-- The public Leaflet map loads only when its section approaches the viewport.
+- `index.html` contains a lightweight public hero shell so first content does not
+  wait for React to download and start.
+- The public Leaflet map loads only after the visitor explicitly requests it.
   Leaflet CSS is bundled with the map chunk and must not also be linked globally.
+- The Gmail login card renders without Firebase; authentication state initializes
+  during browser idle time or immediately after the visitor clicks sign in.
 - Google Fonts load asynchronously with system-font fallbacks for first paint.
 - Valid guest-code lookups are cached briefly in memory so route authorization
   and the personalized booking card do not read the same document twice.

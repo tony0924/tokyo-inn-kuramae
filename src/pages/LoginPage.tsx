@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
-import { signInWithGoogle } from '@/lib/auth';
-import { useAuth } from '@/auth/AuthProvider';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
+const LoginAuthBridge = lazy(() => import('@/pages/LoginAuthBridge'));
 
 export default function LoginPage() {
-  const { fbUser, user, loading } = useAuth();
   const location = useLocation();
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shouldCheckAuth, setShouldCheckAuth] = useState(false);
 
-  if (!loading && fbUser && user) {
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'guest' && user.active) return <Navigate to="/guest" replace />;
-    return <Navigate to="/pending" replace />;
-  }
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(
+        () => setShouldCheckAuth(true),
+        { timeout: 1_500 }
+      );
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timerId = globalThis.setTimeout(() => setShouldCheckAuth(true), 800);
+    return () => globalThis.clearTimeout(timerId);
+  }, []);
 
   const handleSignIn = async () => {
     setError(null);
     setSigningIn(true);
+    setShouldCheckAuth(true);
     try {
+      const { signInWithGoogle } = await import('@/lib/auth');
       await signInWithGoogle();
     } catch (err) {
       const message = err instanceof Error ? err.message : '登入失敗';
@@ -32,6 +41,11 @@ export default function LoginPage() {
   return (
     <div className="full-page-center" style={{ flexDirection: 'column', gap: 20, padding: 24 }}>
       <div className="top-bar" />
+      {shouldCheckAuth && (
+        <Suspense fallback={null}>
+          <LoginAuthBridge />
+        </Suspense>
+      )}
       <div className="card" style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
         <h1
           style={{

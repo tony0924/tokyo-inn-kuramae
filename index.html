@@ -13,6 +13,105 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="藏前管理" />
+    <script>
+      document.documentElement.dataset.initialRoute =
+        window.location.pathname === '/' ? 'preview' : 'app';
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --initial-bg: #0c0c0e;
+        --initial-text: #e4e0da;
+        --initial-muted: #8a8278;
+        --initial-gold: #c9a84c;
+        --initial-gold-light: #e8cc7a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--initial-bg);
+        color: var(--initial-text);
+      }
+      [data-initial-route='app'] .initial-preview-shell {
+        display: none;
+      }
+      .initial-preview-shell {
+        min-height: 100vh;
+        padding: 80px 24px 48px;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        text-align: center;
+        background:
+          radial-gradient(ellipse 55% 45% at 70% 5%, rgba(201, 168, 76, 0.07), transparent 60%),
+          linear-gradient(180deg, #0e0e10, var(--initial-bg));
+      }
+      .initial-preview-shell::before {
+        content: '';
+        position: fixed;
+        inset: 0 0 auto;
+        height: 2px;
+        background: linear-gradient(to right, transparent, var(--initial-gold), transparent);
+      }
+      .initial-preview-eyebrow {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 4px 14px;
+        border: 1px solid rgba(201, 168, 76, 0.16);
+        border-radius: 999px;
+        color: var(--initial-gold);
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+      }
+      .initial-preview-title {
+        margin: 0 0 12px;
+        font-family: Georgia, 'Noto Serif TC', serif;
+        font-size: 44px;
+        line-height: 1.2;
+        letter-spacing: 0.05em;
+      }
+      .initial-preview-title span {
+        color: var(--initial-gold);
+      }
+      .initial-preview-subtitle {
+        margin: 0 0 32px;
+        color: var(--initial-muted);
+        font-family: Georgia, 'Noto Serif TC', serif;
+        letter-spacing: 0.06em;
+      }
+      .initial-preview-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+      .initial-preview-actions a {
+        display: inline-flex;
+        padding: 12px 24px;
+        border-radius: 10px;
+        color: var(--initial-text);
+        text-decoration: none;
+      }
+      .initial-preview-actions .primary {
+        background: var(--initial-gold);
+        color: #1c1814;
+        font-weight: 600;
+      }
+      .initial-preview-actions .secondary {
+        border: 1px solid rgba(201, 168, 76, 0.16);
+      }
+      @media (max-width: 600px) {
+        .initial-preview-shell {
+          padding: 60px 16px 40px;
+        }
+        .initial-preview-title {
+          font-size: 32px;
+        }
+      }
+    </style>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/admin-apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,7 +130,17 @@
     </noscript>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="initial-preview-shell">
+        <span class="initial-preview-eyebrow">Tokyo · Kuramae</span>
+        <h1 class="initial-preview-title">藏前 <span>NEXT</span></h1>
+        <p class="initial-preview-subtitle">東京下町的靜謐住處</p>
+        <nav class="initial-preview-actions" aria-label="住宿資訊入口">
+          <a class="primary" href="/login">我已預訂・進入完整資訊</a>
+          <a class="secondary" href="/code-login">使用訪客碼查看</a>
+        </nav>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

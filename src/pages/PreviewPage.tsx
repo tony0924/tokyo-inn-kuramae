@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '@/preview/preview.css';
 
@@ -120,46 +120,34 @@ export default function PreviewPage() {
 }
 
 function DeferredPreviewMap() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    if (!('IntersectionObserver' in window)) {
-      setShouldLoad(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setShouldLoad(true);
-        observer.disconnect();
-      },
-      { rootMargin: '240px 0px' }
+  if (shouldLoad) {
+    return (
+      <Suspense fallback={<MapLoadingPlaceholder />}>
+        <PreviewMap />
+      </Suspense>
     );
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  }
 
   return (
-    <div ref={containerRef}>
-      {shouldLoad ? (
-        <Suspense fallback={<MapPlaceholder />}>
-          <PreviewMap />
-        </Suspense>
-      ) : (
-        <MapPlaceholder />
-      )}
+    <div className="preview-map-loading">
+      <button
+        type="button"
+        className="btn-ghost"
+        onClick={() => setShouldLoad(true)}
+      >
+        顯示大致位置地圖
+      </button>
+      <span>需要時才會下載互動地圖</span>
     </div>
   );
 }
 
-function MapPlaceholder() {
+function MapLoadingPlaceholder() {
   return (
     <div className="preview-map-loading" role="status">
-      地圖會在滑到附近時載入
+      載入地圖中…
     </div>
   );
 }
