@@ -58,8 +58,8 @@ tokyo_inn/
 │   │   ├── LoginPage.tsx            # /login（Google 登入）
 │   │   ├── GuestCodeLoginPage.tsx   # /code-login（訪客碼登入）
 │   │   ├── PendingApprovalPage.tsx  # /pending
-│   │   ├── GuestApp.tsx             # /guest/* — 10 個 tab routes
-│   │   └── AdminApp.tsx             # /admin/* — 8 個管理頁 routes
+│   │   ├── GuestApp.tsx             # /guest/* — 13 個 tab routes
+│   │   └── AdminApp.tsx             # /admin/* — 11 個管理頁 routes
 │   │
 │   ├── styles/                      # tokens.css / reset.css / global.css（共用 design tokens）
 │   ├── preview/                     # PreviewPage 專屬（PreviewMap + preview.css）
@@ -337,11 +337,10 @@ firebase deploy --only functions --project tokyo-inn-kuramae
 
 ---
 
-## 住宿基本資訊
+## 住宿資料安全
 
-- 地址：〒111-0051 東京都台東区蔵前 4丁目23−7，日神デュオステージ蔵前ＮＥＸＴ，房號 **204**（二樓，出電梯左轉第一間）
-- Wi-Fi：SSID `chen204` / 密碼 `12345678`
-- 住宿座標（admin 行事曆地圖）：`[35.7073, 139.7876]`
-- Preview 地圖中心：Kuramae 站 `[35.7064, 139.7912]`（不顯示真實房屋座標）
+完整地址、房號、Wi-Fi、門鎖與進房資訊屬 Guest 敏感內容，不應重複寫在架構文件。
+公開 Preview 只能使用模糊地點。現行 Guest 靜態 bundle 的敏感內容風險與遷移建議見
+`docs/CODE_REVIEW.md`。
 </content>
 </invoke>

@@ -25,12 +25,20 @@ const navItems = [
   { to: '/admin/notifications', label: '通知設定' },
 ];
 
+export type AdminOutletContext = {
+  notifications: AdminNotification[];
+  notificationsLoading: boolean;
+  notificationsError: string | null;
+};
+
 export function AdminLayout() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
   const [lastNotificationReadAt, setLastNotificationReadAt] = useState(0);
   const notificationHistoryActive = location.pathname.startsWith('/admin/notification-history');
   const unreadNotificationCount = notifications.filter(
@@ -44,8 +52,16 @@ export function AdminLayout() {
 
   useEffect(
     () => watchAdminNotifications(
-      setNotifications,
-      (error) => console.warn('watch admin notifications failed', error)
+      (items) => {
+        setNotifications(items);
+        setNotificationsLoading(false);
+        setNotificationsError(null);
+      },
+      (error) => {
+        console.warn('watch admin notifications failed', error);
+        setNotificationsLoading(false);
+        setNotificationsError('無法載入通知紀錄，請重新整理後再試。');
+      }
     ),
     []
   );
@@ -154,7 +170,13 @@ export function AdminLayout() {
       </aside>
 
       <main className="admin-main">
-        <Outlet />
+        <Outlet
+          context={{
+            notifications,
+            notificationsLoading,
+            notificationsError,
+          } satisfies AdminOutletContext}
+        />
       </main>
 
       <nav className="admin-mobile-nav" aria-label="手機版主要導覽">

@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
-import {
-  markAdminNotificationsRead,
-  watchAdminNotifications,
-} from '@/lib/adminNotifications';
+import { markAdminNotificationsRead } from '@/lib/adminNotifications';
 import type {
   AdminNotification,
   AdminNotificationStatus,
 } from '@/types';
+import type { AdminOutletContext } from './AdminLayout';
 
 const STATUS_LABELS: Record<AdminNotificationStatus, string> = {
   pending: '傳送中',
@@ -19,24 +18,11 @@ const STATUS_LABELS: Record<AdminNotificationStatus, string> = {
 
 export function NotificationHistoryPage() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(
-    () => watchAdminNotifications(
-      (items) => {
-        setNotifications(items);
-        setLoading(false);
-        setError(null);
-      },
-      () => {
-        setLoading(false);
-        setError('無法載入通知紀錄，請重新整理後再試。');
-      }
-    ),
-    []
-  );
+  const {
+    notifications,
+    notificationsLoading: loading,
+    notificationsError: error,
+  } = useOutletContext<AdminOutletContext>();
 
   useEffect(() => {
     if (!user || loading || error) return;
