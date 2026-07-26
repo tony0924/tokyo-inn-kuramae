@@ -30,6 +30,9 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'faq', icon: '❓', label: 'FAQ' },
 ];
 
+const MOBILE_PRIMARY_TABS: GuestTabId[] = ['home', 'checkin', 'arrival', 'messages'];
+const MOBILE_MORE_TABS = TABS.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab.id));
+
 function Highlight({ text, query }: { text: string; query: string }) {
   if (!query) return text;
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -52,6 +55,7 @@ export function GuestLayout() {
   const guestCode = !user ? getStoredGuestAccessCode() : null;
   const [query, setQuery] = useState('');
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +81,17 @@ export function GuestLayout() {
   // Scroll to top on tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    setMobileMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileMoreOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMoreOpen]);
 
   useEffect(() => {
     if (user) {
@@ -242,6 +256,84 @@ export function GuestLayout() {
           <Outlet />
         )}
       </main>
+
+      <nav className="guest-mobile-nav" aria-label="手機版主要導覽">
+        {TABS.filter((tab) => MOBILE_PRIMARY_TABS.includes(tab.id)).map((tab) => (
+          <NavLink
+            key={tab.id}
+            to={`/guest/${tab.id}`}
+            className={({ isActive }) =>
+              `guest-mobile-nav-item${isActive && !isSearching ? ' active' : ''}`
+            }
+            onClick={() => setQuery('')}
+          >
+            <span aria-hidden="true">{tab.icon}</span>
+            <small>{tab.label === '留言板' ? '留言' : tab.label}</small>
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className={`guest-mobile-nav-item${
+            mobileMoreOpen ||
+            MOBILE_MORE_TABS.some((tab) => location.pathname.startsWith(`/guest/${tab.id}`))
+              ? ' active'
+              : ''
+          }`}
+          aria-expanded={mobileMoreOpen}
+          aria-controls="guest-mobile-more-menu"
+          onClick={() => setMobileMoreOpen(true)}
+        >
+          <span className="guest-mobile-more-icon" aria-hidden="true">•••</span>
+          <small>更多</small>
+        </button>
+      </nav>
+
+      {mobileMoreOpen && (
+        <div className="guest-mobile-more-menu" id="guest-mobile-more-menu">
+          <button
+            type="button"
+            className="guest-mobile-more-backdrop"
+            aria-label="關閉更多選單"
+            onClick={() => setMobileMoreOpen(false)}
+          />
+          <section
+            className="guest-mobile-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guest-mobile-more-title"
+          >
+            <div className="guest-mobile-more-handle" aria-hidden="true" />
+            <div className="guest-mobile-more-heading">
+              <div>
+                <p>藏前 NEXT</p>
+                <h2 id="guest-mobile-more-title">住宿資訊</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMoreOpen(false)}
+                aria-label="關閉更多選單"
+              >
+                ×
+              </button>
+            </div>
+            <div className="guest-mobile-more-grid">
+              {MOBILE_MORE_TABS.map((tab) => (
+                <NavLink
+                  key={tab.id}
+                  to={`/guest/${tab.id}`}
+                  className={({ isActive }) =>
+                    `guest-mobile-more-link${isActive ? ' active' : ''}`
+                  }
+                  onClick={() => setQuery('')}
+                >
+                  <span aria-hidden="true">{tab.icon}</span>
+                  <small>{tab.label}</small>
+                </NavLink>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </LightboxProvider>
   );
 }
