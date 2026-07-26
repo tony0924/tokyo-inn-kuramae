@@ -64,8 +64,9 @@ export function GuestCodeManagement() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('status');
+  const [sortKey, setSortKey] = useState<SortKey>('validRange');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [expandedCodeIds, setExpandedCodeIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => watchGuestAccessCodes(setCodes), []);
   useEffect(() => watchGuestPageViews(setViews), []);
@@ -197,6 +198,15 @@ export function GuestCodeManagement() {
     }
     setSortKey(nextKey);
     setSortDirection('asc');
+  }
+
+  function toggleCodeExpanded(id: string) {
+    setExpandedCodeIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function renderSortHeader(label: string, key: SortKey) {
@@ -343,7 +353,7 @@ export function GuestCodeManagement() {
             <th>{renderSortHeader('訪客碼', 'code')}</th>
             <th>{renderSortHeader('狀態', 'status')}</th>
             <th>{renderSortHeader('使用次數', 'usage')}</th>
-            <th>{renderSortHeader('有效區間', 'validRange')}</th>
+            <th>{renderSortHeader('入住／有效區間', 'validRange')}</th>
             <th>{renderSortHeader('最後登入時間', 'lastLoginAt')}</th>
             <th>操作</th>
           </tr>
@@ -358,14 +368,30 @@ export function GuestCodeManagement() {
           ) : (
             sortedCodes.map((item) => {
               const status = getStatus(item);
+              const expanded = expandedCodeIds.has(item.id);
               const usage = codeStats.get(item.code) ?? {
                 loginCount: 0,
                 viewCount: 0,
                 lastLoginAt: null,
               };
               return (
-                <tr key={item.id}>
-                  <td style={{ color: 'var(--text)' }}>{item.label}</td>
+                <tr
+                  key={item.id}
+                  className={expanded ? 'guest-code-expanded' : 'guest-code-collapsed'}
+                >
+                  <td className="guest-code-summary-cell" style={{ color: 'var(--text)' }}>
+                    <div className="guest-code-summary">
+                      <span>{item.label}</span>
+                      <button
+                        type="button"
+                        className="guest-code-expand-button"
+                        aria-expanded={expanded}
+                        onClick={() => toggleCodeExpanded(item.id)}
+                      >
+                        {expanded ? '收合' : '展開'}
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ color: 'var(--gold-light)', letterSpacing: '0.08em' }}>
                     {formatGuestCode(item.code)}
                   </td>
@@ -474,13 +500,30 @@ function compareGuestCodes(
         (aStats?.viewCount ?? 0) - (bStats?.viewCount ?? 0)
       );
     case 'validRange':
-      return (
-        compareTimestamp(a.startsAt, b.startsAt) ||
-        compareTimestamp(a.expiresAt, b.expiresAt)
-      );
+      return compareArrivalPriority(a, b);
     case 'lastLoginAt':
       return compareTimestamp(aStats?.lastLoginAt, bStats?.lastLoginAt);
     default:
       return 0;
   }
+}
+
+function compareArrivalPriority(a: GuestAccessCode, b: GuestAccessCode): number {
+  const now = Date.now();
+  const aStart = a.startsAt.toDate().getTime();
+  const bStart = b.startsAt.toDate().getTime();
+  const aExpired = a.expiresAt.toDate().getTime() <= now;
+  const bExpired = b.expiresAt.toDate().getTime() <= now;
+
+  if (aExpired !== bExpired) return aExpired ? 1 : -1;
+
+  if (aExpired && bExpired) {
+    return bStart - aStart;
+  }
+
+  const aUntilArrival = Math.max(aStart - now, 0);
+  const bUntilArrival = Math.max(bStart - now, 0);
+  if (aUntilArrival !== bUntilArrival) return aUntilArrival - bUntilArrival;
+
+  return bStart - aStart || compareTimestamp(a.expiresAt, b.expiresAt);
 }
