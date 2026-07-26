@@ -9,7 +9,8 @@ import {
   watchGuestAccessCodes,
 } from '@/lib/guestAccessCodes';
 import { watchGuestPageViews } from '@/lib/guestAnalytics';
-import type { GuestAccessCode, GuestPageView } from '@/types';
+import type { Booking, GuestAccessCode, GuestPageView } from '@/types';
+import { useBookings } from './useBookings';
 
 type SortKey =
   | 'label'
@@ -55,6 +56,7 @@ function formatMaybeDate(view: GuestPageView): string {
 
 export function GuestCodeManagement() {
   const now = useMemo(() => new Date(), []);
+  const { bookings } = useBookings();
   const [codes, setCodes] = useState<GuestAccessCode[]>([]);
   const [views, setViews] = useState<GuestPageView[]>([]);
   const [label, setLabel] = useState('房客訪客碼');
@@ -74,6 +76,21 @@ export function GuestCodeManagement() {
   const codeByValue = useMemo(() => {
     return new Map(codes.map((item) => [item.code, item]));
   }, [codes]);
+
+  const bookingById = useMemo(
+    () => new Map(bookings.map((booking) => [booking.id, booking])),
+    [bookings]
+  );
+
+  const bookingByCode = useMemo(() => {
+    const result = new Map<string, Booking>();
+    bookings.forEach((booking) => {
+      if (booking.guestAccessCode) {
+        result.set(normalizeCodeLookup(booking.guestAccessCode), booking);
+      }
+    });
+    return result;
+  }, [bookings]);
 
   const codeStats = useMemo(() => {
     const stats = new Map<
@@ -106,12 +123,22 @@ export function GuestCodeManagement() {
   const sortedCodes = useMemo(() => {
     return [...codes].sort((a, b) => {
       const direction = sortDirection === 'asc' ? 1 : -1;
+      const aBooking = findCodeBooking(a, bookingById, bookingByCode);
+      const bBooking = findCodeBooking(b, bookingById, bookingByCode);
       const primary =
-        compareGuestCodes(a, b, sortKey, codeStats.get(a.code), codeStats.get(b.code)) * direction;
+        compareGuestCodes(
+          a,
+          b,
+          sortKey,
+          codeStats.get(a.code),
+          codeStats.get(b.code),
+          aBooking,
+          bBooking
+        ) * direction;
       if (primary !== 0) return primary;
       return a.code.localeCompare(b.code, 'zh-Hant') * direction;
     });
-  }, [codeStats, codes, sortDirection, sortKey]);
+  }, [bookingByCode, bookingById, codeStats, codes, sortDirection, sortKey]);
 
   const dashboard = useMemo(() => {
     const pageViews = views.filter((view) => view.eventType === 'page_view');
@@ -369,6 +396,8 @@ export function GuestCodeManagement() {
             sortedCodes.map((item) => {
               const status = getStatus(item);
               const expanded = expandedCodeIds.has(item.id);
+              const booking = findCodeBooking(item, bookingById, bookingByCode);
+              const guestName = booking?.guestName || item.guestName || item.label || '未命名房客';
               const usage = codeStats.get(item.code) ?? {
                 loginCount: 0,
                 viewCount: 0,
@@ -381,7 +410,15 @@ export function GuestCodeManagement() {
                 >
                   <td className="guest-code-summary-cell" style={{ color: 'var(--text)' }}>
                     <div className="guest-code-summary">
-                      <span>{item.label}</span>
+                      <span>{guestName}</span>
+                      <small>
+                        {booking
+                          ? `入住 ${format(booking.checkIn.toDate(), 'yyyy-MM-dd')} · 退房 ${format(
+                              booking.checkOut.toDate(),
+                              'yyyy-MM-dd'
+                            )}`
+                          : item.label}
+                      </small>
                       <button
                         type="button"
                         className="guest-code-expand-button"
@@ -485,7 +522,9 @@ function compareGuestCodes(
   b: GuestAccessCode,
   sortKey: SortKey,
   aStats?: { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null },
-  bStats?: { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null }
+  bStats?: { loginCount: number; viewCount: number; lastLoginAt: GuestPageView['createdAt'] | null },
+  aBooking?: Booking,
+  bBooking?: Booking
 ): number {
   switch (sortKey) {
     case 'label':
@@ -500,7 +539,7 @@ function compareGuestCodes(
         (aStats?.viewCount ?? 0) - (bStats?.viewCount ?? 0)
       );
     case 'validRange':
-      return compareArrivalPriority(a, b);
+      return compareArrivalPriority(a, b, aBooking, bBooking);
     case 'lastLoginAt':
       return compareTimestamp(aStats?.lastLoginAt, bStats?.lastLoginAt);
     default:
@@ -508,12 +547,19 @@ function compareGuestCodes(
   }
 }
 
-function compareArrivalPriority(a: GuestAccessCode, b: GuestAccessCode): number {
+function compareArrivalPriority(
+  a: GuestAccessCode,
+  b: GuestAccessCode,
+  aBooking?: Booking,
+  bBooking?: Booking
+): number {
   const now = Date.now();
-  const aStart = a.startsAt.toDate().getTime();
-  const bStart = b.startsAt.toDate().getTime();
-  const aExpired = a.expiresAt.toDate().getTime() <= now;
-  const bExpired = b.expiresAt.toDate().getTime() <= now;
+  const aStart = (aBooking?.checkIn ?? a.startsAt).toDate().getTime();
+  const bStart = (bBooking?.checkIn ?? b.startsAt).toDate().getTime();
+  const aEnd = (aBooking?.checkOut ?? a.expiresAt).toDate().getTime();
+  const bEnd = (bBooking?.checkOut ?? b.expiresAt).toDate().getTime();
+  const aExpired = aEnd <= now;
+  const bExpired = bEnd <= now;
 
   if (aExpired !== bExpired) return aExpired ? 1 : -1;
 
@@ -526,4 +572,19 @@ function compareArrivalPriority(a: GuestAccessCode, b: GuestAccessCode): number 
   if (aUntilArrival !== bUntilArrival) return aUntilArrival - bUntilArrival;
 
   return bStart - aStart || compareTimestamp(a.expiresAt, b.expiresAt);
+}
+
+function normalizeCodeLookup(value: string): string {
+  return value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+}
+
+function findCodeBooking(
+  code: GuestAccessCode,
+  bookingById: Map<string, Booking>,
+  bookingByCode: Map<string, Booking>
+): Booking | undefined {
+  return (
+    (code.bookingId ? bookingById.get(code.bookingId) : undefined) ??
+    bookingByCode.get(normalizeCodeLookup(code.code))
+  );
 }
