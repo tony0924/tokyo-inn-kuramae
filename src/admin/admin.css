@@ -2065,9 +2065,20 @@
     display: none;
   }
   .revenue-row-summary {
-    width: auto;
+    width: 100%;
+    min-width: 0;
     display: block;
+    justify-self: stretch !important;
     text-align: left;
+  }
+  .revenue-row-summary .revenue-guest {
+    min-width: 0;
+    text-align: left;
+  }
+  .revenue-row-summary .revenue-guest strong,
+  .revenue-row-summary .revenue-guest small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
   .revenue-row-toggle {
     display: inline-flex;

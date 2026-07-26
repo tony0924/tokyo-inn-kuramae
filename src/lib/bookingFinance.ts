@@ -11,6 +11,7 @@ export const STAY_TYPE_LABEL: Record<StayType, string> = {
 const LEGACY_NO_REVENUE_GUESTS = new Map<string, StayType>([
   ['自住', 'self'],
   ['郭婷瑜', 'family'],
+  ['郭婷渝', 'complimentary'],
   ['怡臻爸媽', 'family'],
   ['婷瑜', 'family'],
 ]);
@@ -20,7 +21,8 @@ export function getDefaultStayTypeForGuestName(guestName: string): StayType {
 }
 
 export function inferStayType(booking: Pick<Booking, 'guestName' | 'stayType'>): StayType {
-  return booking.stayType ?? getDefaultStayTypeForGuestName(booking.guestName);
+  const namedDefault = getDefaultStayTypeForGuestName(booking.guestName);
+  return namedDefault !== 'paid_guest' ? namedDefault : booking.stayType ?? 'paid_guest';
 }
 
 export function isNonRevenueStay(stayType: StayType): boolean {
@@ -30,8 +32,9 @@ export function isNonRevenueStay(stayType: StayType): boolean {
 export function getExpectedRevenue(
   booking: Pick<Booking, 'amount' | 'expectedRevenue' | 'guestName' | 'stayType'>
 ): number {
+  if (isNonRevenueStay(inferStayType(booking))) return 0;
   if (typeof booking.expectedRevenue === 'number') return booking.expectedRevenue;
-  return isNonRevenueStay(inferStayType(booking)) ? 0 : booking.amount;
+  return booking.amount;
 }
 
 export function getLegacyReceivedAmount(
