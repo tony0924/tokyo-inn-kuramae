@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 import { useBookings } from './useBookings';
 import { useKeys } from './useKeys';
 import { Modal } from './Modal';
@@ -27,6 +28,7 @@ type SortKey =
 type SortDirection = 'asc' | 'desc';
 
 export function BookingList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { bookings, loading } = useBookings();
   const { keys } = useKeys();
   const [editing, setEditing] = useState<Booking | null>(null);
@@ -47,6 +49,18 @@ export function BookingList() {
     mediaQuery.addEventListener('change', updateLayout);
     return () => mediaQuery.removeEventListener('change', updateLayout);
   }, []);
+
+  useEffect(() => {
+    const bookingId = searchParams.get('booking');
+    if (loading || !bookingId) return;
+    const requestedBooking = bookings.find((booking) => booking.id === bookingId);
+    if (requestedBooking) {
+      setEditing(requestedBooking);
+    } else {
+      setError('找不到指定的預約，可能已被移除。');
+    }
+    setSearchParams({}, { replace: true });
+  }, [bookings, loading, searchParams, setSearchParams]);
 
   const filtered = useMemo(() => {
     const now = new Date();

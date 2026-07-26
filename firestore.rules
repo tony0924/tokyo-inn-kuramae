@@ -189,6 +189,14 @@ service cloud.firestore {
         );
     }
 
+    function isAssignedBookingGuest(bookingId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && getUserDoc(request.auth.uid).role == 'guest'
+        && getUserDoc(request.auth.uid).active == true
+        && getUserDoc(request.auth.uid).bookingId == bookingId;
+    }
+
     match /guestPageViews/{id} {
       allow read, list, delete: if isAdmin();
       allow create: if request.resource.data.createdAt == request.time
@@ -236,7 +244,9 @@ service cloud.firestore {
 
     match /bookings/{id} {
       allow read: if isAdmin()
-        || (isSignedIn() && resource.data.guestUid == request.auth.uid);
+        || (isSignedIn() && resource.data.guestUid == request.auth.uid)
+        || isAssignedBookingGuest(id)
+        || isValidGuestAccessCode(resource.data.guestAccessCode);
       allow create, update, delete: if isAdmin();
     }
   }

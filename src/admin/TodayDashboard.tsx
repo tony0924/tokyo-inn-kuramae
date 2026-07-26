@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useBookings } from './useBookings';
 import { BookingForm } from './BookingForm';
 import { Modal } from './Modal';
 import { watchAllGuestMessages } from '@/lib/guestMessages';
+import { setAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
+import { getStayStatus, selectOperationalBooking, type StayStage } from '@/lib/stayStatus';
 import type { Booking, GuestMessage } from '@/types';
 
 const PAYMENT_LABEL = {
@@ -62,6 +64,21 @@ export function TodayDashboard() {
     () => messages.filter((message) => message.authorType === 'guest').slice(0, 3),
     [messages]
   );
+  const operationalBooking = useMemo(
+    () => selectOperationalBooking(bookings, now),
+    [bookings]
+  );
+  const operationalMessageCount = useMemo(
+    () =>
+      operationalBooking
+        ? messages.filter(
+            (message) =>
+              message.authorType === 'guest' &&
+              message.guestAccessCode === operationalBooking.guestAccessCode
+          ).length
+        : 0,
+    [messages, operationalBooking]
+  );
 
   return (
     <div className="today-dashboard">
@@ -82,6 +99,21 @@ export function TodayDashboard() {
         <div className="today-loading">載入今日營運資料…</div>
       ) : (
         <>
+          {operationalBooking ? (
+            <OperationsCard
+              booking={operationalBooking}
+              guestMessageCount={operationalMessageCount}
+            />
+          ) : (
+            <section className="operations-card empty">
+              <div>
+                <p className="today-eyebrow">住宿狀態</p>
+                <h2>目前沒有進行中或即將入住的預約</h2>
+                <span>新增預約後，這裡會集中顯示房客、款項、鑰匙與留言狀態。</span>
+              </div>
+            </section>
+          )}
+
           <section className="today-summary-grid" aria-label="今日摘要">
             <SummaryCard label="今日入住" value={summary.arrivals.length} detail={guestNames(summary.arrivals)} tone="gold" to="/admin/bookings" />
             <SummaryCard label="今日退房" value={summary.departures.length} detail={guestNames(summary.departures)} tone="blue" to="/admin/bookings" />
@@ -188,6 +220,123 @@ export function TodayDashboard() {
       </Modal>
     </div>
   );
+}
+
+function OperationsCard({
+  booking,
+  guestMessageCount,
+}: {
+  booking: Booking;
+  guestMessageCount: number;
+}) {
+  const navigate = useNavigate();
+  const status = getStayStatus(booking);
+  const stage = OPERATIONS_STAGE_COPY[status.stage];
+  const checkIn = booking.checkIn.toDate();
+  const checkOut = booking.checkOut.toDate();
+
+  return (
+    <section className={`operations-card stage-${status.stage}`} aria-labelledby="operations-card-title">
+      <div className="operations-card-main">
+        <div className="operations-card-title-row">
+          <span className="operations-card-icon" aria-hidden="true">{stage.icon}</span>
+          <div>
+            <p className="today-eyebrow">{stage.label}</p>
+            <h2 id="operations-card-title">{booking.guestName}</h2>
+            <span>
+              {format(checkIn, 'M/d HH:mm')} → {format(checkOut, 'M/d HH:mm')}・{booking.partySize} 人
+            </span>
+          </div>
+        </div>
+        <strong className="operations-countdown">{operationsCountdown(status)}</strong>
+      </div>
+
+      <div className="operations-signal-grid">
+        <OperationSignal
+          label="款項"
+          value={PAYMENT_LABEL[booking.paymentStatus]}
+          attention={booking.paymentStatus !== 'paid'}
+        />
+        <OperationSignal
+          label="鑰匙"
+          value={keyStatus(booking)}
+          attention={Boolean(booking.keyLentAt && !booking.keyReturnedAt && status.stage === 'checkout_today')}
+        />
+        <OperationSignal
+          label="訪客碼"
+          value={booking.guestAccessCode ? '已建立' : '尚未建立'}
+          attention={!booking.guestAccessCode}
+        />
+        <OperationSignal
+          label="房客留言"
+          value={guestMessageCount > 0 ? `${guestMessageCount} 則` : '目前沒有'}
+          attention={guestMessageCount > 0}
+        />
+      </div>
+
+      <div className="operations-actions">
+        <Link to={`/admin/bookings?booking=${booking.id}`} className="btn-gold">開啟這筆預約</Link>
+        <Link to="/admin/messages" className="operations-secondary-action">查看留言</Link>
+        <button
+          type="button"
+          className="operations-secondary-action"
+          onClick={() => {
+            setAdminGuestPreviewBookingId(booking.id);
+            navigate('/guest/home');
+          }}
+        >
+          預覽房客首頁
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function OperationSignal({
+  label,
+  value,
+  attention,
+}: {
+  label: string;
+  value: string;
+  attention: boolean;
+}) {
+  return (
+    <div className={attention ? 'operation-signal attention' : 'operation-signal'}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+const OPERATIONS_STAGE_COPY: Record<StayStage, { label: string; icon: string }> = {
+  before_checkin: { label: '下一筆預約', icon: '🗓️' },
+  checkin_today: { label: '今日入住', icon: '🔑' },
+  staying: { label: '住宿中', icon: '🏠' },
+  checkout_today: { label: '今日退房', icon: '🏁' },
+  completed: { label: '已完成', icon: '✓' },
+};
+
+function operationsCountdown(status: ReturnType<typeof getStayStatus>): string {
+  switch (status.stage) {
+    case 'before_checkin':
+      return status.daysUntilCheckIn === 1 ? '明天入住' : `${status.daysUntilCheckIn} 天後入住`;
+    case 'checkin_today':
+      return '今天入住';
+    case 'staying':
+      return status.daysUntilCheckOut === 1 ? '明天退房' : `${status.daysUntilCheckOut} 天後退房`;
+    case 'checkout_today':
+      return '今天退房';
+    case 'completed':
+      return '已完成';
+  }
+}
+
+function keyStatus(booking: Booking): string {
+  if (!booking.keyCode) return '未指定';
+  if (booking.keyReturnedAt) return '已歸還';
+  if (booking.keyLentAt) return '借出中';
+  return '尚未借出';
 }
 
 function SummaryCard({

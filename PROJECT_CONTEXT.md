@@ -104,6 +104,35 @@ There are two guest access paths:
 
 Guest code helpers: `src/lib/guestAccessCodes.ts`.
 
+## Personalized Stay Status
+
+The Guest home page loads the booking assigned to the signed-in Gmail guest or
+the active guest code and shows a date-aware stay card:
+
+- Before check-in: arrival countdown and arrival guidance.
+- Check-in day: check-in time and entry guidance.
+- During the stay: checkout countdown and facilities shortcuts.
+- Checkout day: urgent checkout state.
+- After checkout: completed-stay message.
+
+The same status calculation is shared with the Admin today dashboard. The Admin
+operations card brings the next operational booking, payment, key, guest-code,
+and guest-message status into one place.
+
+The Guest checkout checklist is stored per booking in browser local storage so
+each device remembers its progress without adding guest-writable booking fields.
+Guest booking reads remain single-document reads and are authorized for the
+assigned active Gmail guest or through the booking's active guest access code.
+
+Relevant files:
+
+- `src/lib/stayStatus.ts`
+- `src/lib/bookingPreview.ts`
+- `src/guest/useGuestBooking.ts`
+- `src/guest/shared/StayOverviewCard.tsx`
+- `src/admin/TodayDashboard.tsx`
+- `firestore.rules`
+
 ## Booking And Guest Code Flow
 
 Bookings are stored in `bookings`.

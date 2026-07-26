@@ -29,6 +29,24 @@ export function watchAllBookings(cb: (bookings: Booking[]) => void): Unsubscribe
   });
 }
 
+export function watchBooking(
+  id: string,
+  cb: (booking: Booking | null) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, BOOKINGS, id),
+    (snap) => {
+      cb(
+        snap.exists()
+          ? { id: snap.id, ...(snap.data() as BookingDoc) }
+          : null
+      );
+    },
+    (error) => onError?.(error)
+  );
+}
+
 export type NewBookingInput = {
   guestUid: string | null;
   guestEmail: string;

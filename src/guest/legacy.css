@@ -936,6 +936,249 @@
       overflow: hidden;
     }
 
+    /* Personalized stay status and checkout checklist */
+    .stay-overview-loading,
+    .stay-overview-unavailable {
+      margin-bottom: 16px;
+      padding: 18px 20px;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      background: var(--bg-high);
+      color: var(--text-mid);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .stay-overview-card {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+      padding: 24px;
+      border: 1px solid rgba(201, 168, 76, 0.28);
+      border-radius: var(--radius-lg);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(201, 168, 76, 0.16), transparent 38%),
+        linear-gradient(145deg, #1a1815, #121214 72%);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stay-overview-card.stage-checkout_today {
+      border-color: rgba(192, 57, 43, 0.5);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(192, 57, 43, 0.18), transparent 40%),
+        linear-gradient(145deg, #1d1514, #121214 72%);
+    }
+
+    .stay-overview-heading {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stay-overview-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(201, 168, 76, 0.28);
+      border-radius: 14px;
+      background: var(--gold-pale);
+      font-size: 1.35rem;
+    }
+
+    .stay-overview-heading p,
+    .checkout-widget-heading p {
+      margin-bottom: 4px;
+      color: var(--gold);
+      font-size: 0.67rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .stay-overview-heading h2,
+    .checkout-widget-heading h2 {
+      color: #fff;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1.12rem;
+    }
+
+    .stay-overview-countdown {
+      padding: 7px 11px;
+      border: 1px solid rgba(201, 168, 76, 0.28);
+      border-radius: 999px;
+      background: var(--gold-pale);
+      color: var(--gold-light);
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .stay-overview-description {
+      margin: 17px 0;
+      color: var(--text-mid);
+      font-size: 0.83rem;
+      line-height: 1.65;
+    }
+
+    .stay-date-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      overflow: hidden;
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .stay-date-grid > div {
+      min-width: 0;
+      padding: 14px;
+      display: grid;
+      gap: 4px;
+      border-right: 1px solid var(--border-card);
+    }
+
+    .stay-date-grid > div:last-child {
+      border-right: 0;
+    }
+
+    .stay-date-grid span,
+    .stay-date-grid small {
+      overflow: hidden;
+      color: var(--text-soft);
+      font-size: 0.67rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stay-date-grid strong {
+      overflow: hidden;
+      color: var(--text);
+      font-size: 0.82rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stay-overview-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .checkout-widget {
+      margin-bottom: 16px;
+      padding: 22px 24px;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      background: var(--bg-high);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .checkout-widget.urgent {
+      border-color: rgba(192, 57, 43, 0.45);
+      box-shadow: 0 8px 28px rgba(192, 57, 43, 0.1);
+    }
+
+    .checkout-widget-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .checkout-widget-heading > strong {
+      color: var(--gold-light);
+      font-size: 1.15rem;
+    }
+
+    .checkout-progress {
+      height: 5px;
+      overflow: hidden;
+      margin: 15px 0 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .checkout-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      transition: width 180ms ease;
+    }
+
+    .checkout-checklist {
+      display: grid;
+      gap: 8px;
+    }
+
+    .checkout-checklist label {
+      display: grid;
+      grid-template-columns: 0 30px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 9px 11px;
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.025);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .checkout-checklist label.checked {
+      border-color: rgba(126, 212, 160, 0.25);
+      background: rgba(126, 212, 160, 0.06);
+    }
+
+    .checkout-checklist input {
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+
+    .checkout-checklist label > span {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(201, 168, 76, 0.34);
+      border-radius: 9px;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .checkout-checklist label.checked > span {
+      border-color: #7ed4a0;
+      background: #7ed4a0;
+    }
+
+    .checkout-checklist label > strong {
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .checkout-checklist label.checked > strong {
+      color: var(--text-mid);
+      text-decoration: line-through;
+    }
+
+    .checkout-checklist label:focus-within {
+      outline: 3px solid rgba(232, 204, 122, 0.28);
+      outline-offset: 2px;
+    }
+
+    .checkout-detail-link {
+      margin-top: 14px;
+      color: var(--gold-light);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
     .wifi-card::before {
       content: '';
       position: absolute;
@@ -2481,6 +2724,22 @@
       .img-grid { grid-template-columns: repeat(2, 1fr); }
       .place-card { flex-direction: column; align-items: flex-start; }
       .search-wrap { max-width: unset; flex: 1; }
+      .stay-overview-card,
+      .checkout-widget { padding: 19px 17px; }
+      .stay-overview-heading {
+        grid-template-columns: 42px minmax(0, 1fr);
+      }
+      .stay-overview-icon { width: 42px; height: 42px; }
+      .stay-overview-countdown {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+      .stay-date-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stay-date-grid > div:nth-child(2) { border-right: 0; }
+      .stay-date-grid > div:last-child {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--border-card);
+      }
     }
 
     @media (max-width: 420px) {

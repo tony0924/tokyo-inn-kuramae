@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
+import { useGuestBooking } from '@/guest/useGuestBooking';
 
 const WIFI_PASSWORD = '12345678';
 
 export function HomeTab() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const { booking, loading: bookingLoading, error: bookingError } = useGuestBooking();
 
   const copyWifi = async () => {
     try {
@@ -48,6 +51,16 @@ export function HomeTab() {
           </button>
         </div>
       </div>
+
+      {bookingLoading ? (
+        <div className="stay-overview-loading">正在整理你的住宿資訊…</div>
+      ) : booking ? (
+        <StayOverviewCard booking={booking} />
+      ) : bookingError ? (
+        <div className="stay-overview-unavailable" role="status">
+          暫時無法載入住宿資訊，其他房客指南仍可正常使用。
+        </div>
+      ) : null}
 
       <div className="wifi-card">
         <div className="wifi-icon-wrap">📶</div>
