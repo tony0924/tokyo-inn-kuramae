@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   collectionGroup,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -32,9 +33,14 @@ export function watchGuestMessages(
 
 export function watchAllGuestMessages(
   cb: (messages: GuestMessage[]) => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
+  maxItems = 500
 ): Unsubscribe {
-  const q = query(collectionGroup(db, 'messages'), orderBy('createdAt', 'desc'));
+  const q = query(
+    collectionGroup(db, 'messages'),
+    orderBy('createdAt', 'desc'),
+    limit(maxItems)
+  );
   return onSnapshot(
     q,
     (snap) => cb(snap.docs.map((item) => toMessage(item.id, item.data() as GuestMessageDoc))),

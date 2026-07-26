@@ -133,6 +133,23 @@ Relevant files:
 - `src/admin/TodayDashboard.tsx`
 - `firestore.rules`
 
+## Frontend Performance
+
+- The public Preview route is intentionally outside the authenticated Firebase
+  application shell. Firebase Auth and Firestore load only after navigating to
+  login, guest, pending, or admin routes.
+- The public Leaflet map loads only when its section approaches the viewport.
+  Leaflet CSS is bundled with the map chunk and must not also be linked globally.
+- Google Fonts load asynchronously with system-font fallbacks for first paint.
+- Valid guest-code lookups are cached briefly in memory so route authorization
+  and the personalized booking card do not read the same document twice.
+- The Admin today dashboard loads only the latest 100 guest messages; the full
+  message management screen remains capped at the latest 500.
+- Guest instructional photos are resized and recompressed for the app viewport.
+  Original source photos remain in `pic/`; packaged assets live in
+  `src/guest/assets/`.
+- Firebase Hosting gives hashed `/assets/**` files a one-year immutable cache.
+
 ## Booking And Guest Code Flow
 
 Bookings are stored in `bookings`.

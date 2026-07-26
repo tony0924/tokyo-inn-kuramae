@@ -80,6 +80,7 @@ export function ZoomableImg({ src, alt = '', ...rest }: ZoomableImgProps) {
       src={src}
       alt={alt}
       loading="lazy"
+      decoding="async"
       onLoad={(e) => e.currentTarget.classList.add('loaded')}
       onClick={() => open(src, alt)}
       onKeyDown={(e) => {

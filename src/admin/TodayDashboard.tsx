@@ -22,7 +22,7 @@ export function TodayDashboard() {
   const [creating, setCreating] = useState(false);
   const now = new Date();
 
-  useEffect(() => watchAllGuestMessages(setMessages), []);
+  useEffect(() => watchAllGuestMessages(setMessages, undefined, 100), []);
 
   const summary = useMemo(() => {
     const startToday = new Date(now);

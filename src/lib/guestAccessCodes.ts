@@ -18,6 +18,11 @@ import type { GuestAccessCode, GuestAccessCodeDoc } from '@/types';
 const COLLECTION = 'guestAccessCodes';
 const SESSION_KEY = 'tokyoInnGuestAccessCode';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const VALIDATION_CACHE_MS = 30_000;
+const validCodeCache = new Map<
+  string,
+  { access: GuestAccessCode; checkedAt: number }
+>();
 
 export function normalizeGuestCode(code: string): string {
   return code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -115,20 +120,33 @@ export async function validateGuestAccessCode(
   const normalized = normalizeGuestCode(code);
   if (!normalized) return null;
 
+  const now = Date.now();
+  const cached = validCodeCache.get(normalized);
+  if (
+    cached &&
+    now - cached.checkedAt < VALIDATION_CACHE_MS &&
+    cached.access.active &&
+    cached.access.startsAt.toDate().getTime() <= now &&
+    cached.access.expiresAt.toDate().getTime() > now
+  ) {
+    return cached.access;
+  }
+
   const snap = await getDoc(doc(db, COLLECTION, normalized));
   if (!snap.exists()) return null;
 
   const data = snap.data() as GuestAccessCodeDoc;
-  const now = Date.now();
   const startsAt = data.startsAt.toDate().getTime();
   const expiresAt = data.expiresAt.toDate().getTime();
 
   if (!data.active || startsAt > now || expiresAt <= now) return null;
 
-  return {
+  const access = {
     id: snap.id,
     ...data,
   };
+  validCodeCache.set(normalized, { access, checkedAt: now });
+  return access;
 }
 
 export function saveGuestAccessSession(code: string): void {
@@ -140,5 +158,7 @@ export function getStoredGuestAccessCode(): string | null {
 }
 
 export function clearGuestAccessSession(): void {
+  const storedCode = getStoredGuestAccessCode();
+  if (storedCode) validCodeCache.delete(normalizeGuestCode(storedCode));
   localStorage.removeItem(SESSION_KEY);
 }

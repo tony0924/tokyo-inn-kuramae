@@ -1,7 +1,5 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/auth/AuthProvider';
-import { signOut } from '@/lib/auth';
 import '@/preview/preview.css';
 
 const PreviewMap = lazy(() => import('@/preview/PreviewMap').then((module) => ({ default: module.PreviewMap })));
@@ -30,37 +28,10 @@ const features = [
 ];
 
 export default function PreviewPage() {
-  const { fbUser, user } = useAuth();
-
   return (
     <>
       <div className="top-bar" />
       <div className="preview-page">
-        {fbUser && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 24,
-              right: 24,
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-            }}
-          >
-            <span className="preview-status-line">
-              {fbUser.email}
-            </span>
-            <button
-              type="button"
-              className="btn-ghost"
-              style={{ padding: '6px 12px', fontSize: 12 }}
-              onClick={() => signOut().catch(() => {})}
-            >
-              登出
-            </button>
-          </div>
-        )}
-
         <header className="preview-hero">
           <span className="preview-eyebrow">Tokyo · Kuramae</span>
           <h1 className="preview-title">
@@ -69,35 +40,12 @@ export default function PreviewPage() {
           <p className="preview-subtitle">東京下町的靜謐住處</p>
 
           <div className="preview-cta-row">
-            {fbUser ? (
-              <>
-                {user?.role === 'admin' && (
-                  <Link to="/admin" className="btn-gold">
-                    進入管理者頁面
-                  </Link>
-                )}
-                {user?.role === 'guest' && user.active && (
-                  <Link to="/guest" className="btn-gold">
-                    進入房客頁面
-                  </Link>
-                )}
-                {(user?.role === 'pending' ||
-                  (user && !user.active && user.role !== 'admin')) && (
-                  <Link to="/pending" className="btn-ghost">
-                    查看審核狀態
-                  </Link>
-                )}
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="btn-gold">
-                  我已預訂・登入查看完整資訊
-                </Link>
-                <Link to="/code-login" className="btn-ghost">
-                  使用訪客碼查看
-                </Link>
-              </>
-            )}
+            <Link to="/login" className="btn-gold">
+              我已預訂・進入完整資訊
+            </Link>
+            <Link to="/code-login" className="btn-ghost">
+              使用訪客碼查看
+            </Link>
           </div>
         </header>
 
@@ -114,9 +62,7 @@ export default function PreviewPage() {
             位於東京都台東區藏前一帶 — 介於淺草與秋葉原之間的傳統下町，
             既近主要景點也保有低調生活感。確切地址將於入住前提供給已預訂的房客。
           </p>
-          <Suspense fallback={<div className="preview-map-loading" role="status">載入地圖中…</div>}>
-            <PreviewMap />
-          </Suspense>
+          <DeferredPreviewMap />
         </section>
 
         <section className="preview-section">
@@ -170,5 +116,50 @@ export default function PreviewPage() {
         </p>
       </div>
     </>
+  );
+}
+
+function DeferredPreviewMap() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    if (!('IntersectionObserver' in window)) {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: '240px 0px' }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef}>
+      {shouldLoad ? (
+        <Suspense fallback={<MapPlaceholder />}>
+          <PreviewMap />
+        </Suspense>
+      ) : (
+        <MapPlaceholder />
+      )}
+    </div>
+  );
+}
+
+function MapPlaceholder() {
+  return (
+    <div className="preview-map-loading" role="status">
+      地圖會在滑到附近時載入
+    </div>
   );
 }
