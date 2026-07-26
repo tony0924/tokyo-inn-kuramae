@@ -58,6 +58,8 @@ export function RevenueOverview() {
   const [paymentNote, setPaymentNote] = useState('');
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [expandedStayRows, setExpandedStayRows] = useState<Set<string>>(() => new Set());
+  const [expandedPaymentRows, setExpandedPaymentRows] = useState<Set<string>>(() => new Set());
 
   useEffect(() => watchBookingPayments(setPayments), []);
 
@@ -151,6 +153,14 @@ export function RevenueOverview() {
     setPaymentAmount(String(Math.max(getExpectedRevenue(booking) - received, 0)));
   }
 
+  function toggleStayRow(id: string) {
+    setExpandedStayRows((current) => toggleSetValue(current, id));
+  }
+
+  function togglePaymentRow(id: string) {
+    setExpandedPaymentRows((current) => toggleSetValue(current, id));
+  }
+
   async function handlePaymentSubmit(event: FormEvent) {
     event.preventDefault();
     const booking = bookingById.get(paymentBookingId);
@@ -239,7 +249,7 @@ export function RevenueOverview() {
             <StatCard label={`${scopeLabel}住宿價值`} value={summary.accommodationValue} tone="gold" />
             <StatCard label="實際入帳" value={summary.actualCash} tone="green" />
             <StatCard label="尚待收款" value={summary.outstanding} tone="amber" />
-            <StatCard label="非現金住宿價值" value={summary.nonCashValue} tone="muted" />
+            <StatCard label="未收費住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
 
           <div className="revenue-definition-note">
@@ -271,9 +281,25 @@ export function RevenueOverview() {
                       const stayType = inferStayType(booking);
                       const bookingPayments = paymentsByBooking.get(booking.id) ?? [];
                       const received = getBookingReceived(booking, bookingPayments);
+                      const expanded = expandedStayRows.has(booking.id);
                       return (
-                        <tr key={booking.id}>
-                          <td><div className="revenue-guest"><strong>{booking.guestName}</strong><small>{booking.guestEmail}</small></div></td>
+                        <tr
+                          key={booking.id}
+                          className={expanded ? 'revenue-row-expanded' : 'revenue-row-collapsed'}
+                        >
+                          <td className="revenue-row-summary-cell">
+                            <div className="revenue-row-summary">
+                              <div className="revenue-guest"><strong>{booking.guestName}</strong><small>{booking.guestEmail}</small></div>
+                              <button
+                                type="button"
+                                className="revenue-row-toggle"
+                                aria-expanded={expanded}
+                                onClick={() => toggleStayRow(booking.id)}
+                              >
+                                {expanded ? '收合' : '展開'}
+                              </button>
+                            </div>
+                          </td>
                           <td><span className={`stay-type-badge ${stayType}`}>{STAY_TYPE_LABEL[stayType]}</span></td>
                           <td>{format(booking.checkIn.toDate(), 'yyyy-MM-dd')}</td>
                           <td>{format(booking.checkOut.toDate(), 'yyyy-MM-dd')}</td>
@@ -360,8 +386,23 @@ export function RevenueOverview() {
                   <thead><tr><th>日期</th><th>房客</th><th>類型</th><th>方式</th><th>金額</th><th>備註</th><th>操作</th></tr></thead>
                   <tbody>
                     {filteredPayments.map((payment) => (
-                      <tr key={payment.id}>
-                        <td>{format(payment.receivedAt.toDate(), 'yyyy-MM-dd')}</td>
+                      <tr
+                        key={payment.id}
+                        className={expandedPaymentRows.has(payment.id) ? 'revenue-row-expanded' : 'revenue-row-collapsed'}
+                      >
+                        <td className="revenue-row-summary-cell">
+                          <div className="revenue-row-summary">
+                            <span>{format(payment.receivedAt.toDate(), 'yyyy-MM-dd')}</span>
+                            <button
+                              type="button"
+                              className="revenue-row-toggle"
+                              aria-expanded={expandedPaymentRows.has(payment.id)}
+                              onClick={() => togglePaymentRow(payment.id)}
+                            >
+                              {expandedPaymentRows.has(payment.id) ? '收合' : '展開'}
+                            </button>
+                          </div>
+                        </td>
                         <td>{bookingById.get(payment.bookingId)?.guestName || payment.guestName}</td>
                         <td>{payment.kind === 'refund' ? '退款' : '收款'}</td>
                         <td>{METHOD_LABEL[payment.method]}</td>
@@ -398,6 +439,13 @@ function getBookingReceived(booking: Booking, payments: BookingPayment[]): numbe
     (total, payment) => total + (payment.kind === 'refund' ? -payment.amount : payment.amount),
     0
   );
+}
+
+function toggleSetValue(current: Set<string>, value: string): Set<string> {
+  const next = new Set(current);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return next;
 }
 
 function StatCard({

@@ -1401,6 +1401,14 @@
   white-space: nowrap;
 }
 
+.revenue-row-summary {
+  display: contents;
+}
+
+.revenue-row-toggle {
+  display: none;
+}
+
 .guest-code-summary {
   display: grid;
   gap: 3px;
@@ -2045,6 +2053,51 @@
   .guest-code-collapsed td:nth-child(4),
   .guest-code-collapsed td:nth-child(6),
   .guest-code-collapsed td:nth-child(7) {
+    display: none !important;
+  }
+  .revenue-row-summary-cell {
+    display: block !important;
+    position: relative;
+    min-height: 54px;
+    padding-right: 72px !important;
+  }
+  .revenue-row-summary-cell::before {
+    display: none;
+  }
+  .revenue-row-summary {
+    width: auto;
+    display: block;
+    text-align: left;
+  }
+  .revenue-row-toggle {
+    display: inline-flex;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--gold-pale);
+    color: var(--gold-light);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .revenue-detail-table .revenue-row-collapsed td:nth-child(3),
+  .revenue-detail-table .revenue-row-collapsed td:nth-child(4),
+  .revenue-detail-table .revenue-row-collapsed td:nth-child(6),
+  .revenue-detail-table .revenue-row-collapsed td:nth-child(7),
+  .revenue-detail-table .revenue-row-collapsed td:nth-child(8) {
+    display: none !important;
+  }
+  .payment-detail-table .revenue-row-collapsed td:nth-child(3),
+  .payment-detail-table .revenue-row-collapsed td:nth-child(4),
+  .payment-detail-table .revenue-row-collapsed td:nth-child(6),
+  .payment-detail-table .revenue-row-collapsed td:nth-child(7) {
     display: none !important;
   }
   .admin-mobile-header {
