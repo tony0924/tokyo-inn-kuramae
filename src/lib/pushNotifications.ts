@@ -155,7 +155,11 @@ export async function setAppBadge(count: number): Promise<void> {
 
 export async function clearAppBadge(): Promise<void> {
   const badgeNavigator = navigator as BadgeNavigator;
-  await badgeNavigator.clearAppBadge?.().catch(() => {});
+  if (badgeNavigator.clearAppBadge) {
+    await badgeNavigator.clearAppBadge().catch(() => {});
+    return;
+  }
+  await badgeNavigator.setAppBadge?.(0).catch(() => {});
 }
 
 function getOrCreateDeviceId(): string {

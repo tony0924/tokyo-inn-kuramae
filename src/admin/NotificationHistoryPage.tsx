@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { markAdminNotificationsRead } from '@/lib/adminNotifications';
+import { clearAppBadge } from '@/lib/pushNotifications';
 import type {
   AdminNotification,
   AdminNotificationStatus,
@@ -26,6 +27,7 @@ export function NotificationHistoryPage() {
 
   useEffect(() => {
     if (!user || loading || error) return;
+    void clearAppBadge();
     const latestCreatedAt = notifications[0]?.createdAt;
     markAdminNotificationsRead(user.uid, latestCreatedAt).catch((readError) => {
       console.warn('mark admin notifications read failed', readError);

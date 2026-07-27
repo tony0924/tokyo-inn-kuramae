@@ -6,6 +6,7 @@ import {
   watchAdminNotificationReadState,
   watchAdminNotifications,
 } from '@/lib/adminNotifications';
+import { clearAppBadge } from '@/lib/pushNotifications';
 import type { AdminNotification } from '@/types';
 import { PwaStatus } from '@/pwa/PwaStatus';
 import { PushForegroundBridge } from '@/pwa/PushForegroundBridge';
@@ -74,6 +75,11 @@ export function AdminLayout() {
       (error) => console.warn('watch admin notification read state failed', error)
     );
   }, [user]);
+
+  useEffect(() => {
+    if (notificationsLoading || notificationsError || unreadNotificationCount > 0) return;
+    void clearAppBadge();
+  }, [notificationsError, notificationsLoading, unreadNotificationCount]);
 
   useEffect(() => {
     if (!moreOpen) return;
