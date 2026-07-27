@@ -87,7 +87,7 @@ export function CalendarView() {
         />
       )}
 
-      <Modal open={showForm} onClose={close}>
+      <Modal variant="booking" open={showForm} onClose={close}>
         <BookingForm
           booking={editing}
           defaultCheckIn={createDate ?? undefined}

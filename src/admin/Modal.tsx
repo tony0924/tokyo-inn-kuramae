@@ -5,9 +5,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
+  variant?: 'default' | 'booking';
 }
 
-export function Modal({ open, onClose, children }: Props) {
+export function Modal({ open, onClose, children, variant = 'default' }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
@@ -32,12 +33,20 @@ export function Modal({ open, onClose, children }: Props) {
 
   return createPortal(
     <div
-      className="modal-backdrop"
+      className={`modal-backdrop modal-backdrop-${variant}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div ref={dialogRef} className="modal-card" role="dialog" aria-modal="true" tabIndex={-1}>{children}</div>
+      <div
+        ref={dialogRef}
+        className={`modal-card modal-card-${variant}`}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+      >
+        {children}
+      </div>
     </div>,
     document.body
   );

@@ -293,7 +293,7 @@ export function BookingList() {
         </div>
       )}
 
-      <Modal open={creating || editing !== null} onClose={() => {
+      <Modal variant="booking" open={creating || editing !== null} onClose={() => {
         setCreating(false);
         setEditing(null);
       }}>

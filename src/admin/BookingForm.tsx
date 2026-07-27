@@ -364,10 +364,20 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
   const nightCount = getNightCount(state.checkIn, state.checkOut);
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>{isEdit ? '編輯預約' : '新增預約'}</h2>
+    <form onSubmit={handleSubmit} className="booking-form">
+      <div className="booking-form-header">
+        <div>
+          <span>{isEdit ? 'Booking details' : 'New booking'}</span>
+          <h2>{isEdit ? '編輯預約' : '新增預約'}</h2>
+        </div>
+        <button type="button" className="booking-form-close" onClick={onClose} aria-label="關閉預約表單">
+          ×
+        </button>
+      </div>
 
+      <div className="booking-form-scroll">
       <div className="form-grid">
+        <div className="booking-form-section-title full">房客資訊</div>
         <div className="form-field">
           <label>姓名 *</label>
           <input
@@ -418,6 +428,7 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           </span>
         </div>
 
+        <div className="booking-form-section-title full">住宿日期</div>
         <div className="form-field">
           <label>入住日 *</label>
           <div className="date-input-row">
@@ -461,6 +472,7 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           <span className="helper-text">可直接輸入，或點右側按鈕開啟日曆。</span>
         </div>
 
+        <div className="booking-form-section-title full">住宿價值與收費</div>
         <div className="form-field">
           <label>每日房價 (TWD)</label>
           <div className="currency-input-row">
@@ -554,6 +566,7 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
           />
         </div>
 
+        <div className="booking-form-section-title full">鑰匙與入住管理</div>
         <div className="form-field">
           <label>鑰匙</label>
           <select
@@ -630,6 +643,7 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
       </div>
 
       {error && <p className="field-error" style={{ marginTop: 12 }}>{error}</p>}
+      </div>
 
       <div className="form-actions">
         {isEdit && (
