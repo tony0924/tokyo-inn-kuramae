@@ -155,6 +155,14 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /guestCommunityMessages/{id} {
+      // 共享牆不保存 Email、訪客碼等敏感資料。寫入一律交由
+      // Callable Function 驗證訪客身分並清理內容。
+      allow read: if true;
+      allow create, update: if false;
+      allow delete: if isAdmin();
+    }
+
     match /keys/{code} {
       allow read, create, update, delete: if isAdmin();
     }

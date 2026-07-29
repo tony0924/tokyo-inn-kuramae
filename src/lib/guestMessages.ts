@@ -9,11 +9,18 @@ import {
   serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from './firebase';
 import { normalizeGuestCode } from './guestAccessCodes';
-import type { GuestMessage, GuestMessageDoc } from '@/types';
+import type {
+  GuestCommunityMessage,
+  GuestCommunityMessageDoc,
+  GuestMessage,
+  GuestMessageDoc,
+} from '@/types';
 
 const BOARDS = 'guestMessageBoards';
+const COMMUNITY_MESSAGES = 'guestCommunityMessages';
 
 function messagesRef(guestAccessCode: string) {
   return collection(db, BOARDS, normalizeGuestCode(guestAccessCode), 'messages');
@@ -46,6 +53,46 @@ export function watchAllGuestMessages(
     (snap) => cb(snap.docs.map((item) => toMessage(item.id, item.data() as GuestMessageDoc))),
     (error) => onError?.(error)
   );
+}
+
+export function watchGuestCommunityMessages(
+  cb: (messages: GuestCommunityMessage[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, COMMUNITY_MESSAGES),
+    orderBy('createdAt', 'desc'),
+    limit(200)
+  );
+  return onSnapshot(
+    q,
+    (snap) => cb(
+      snap.docs
+        .map((item) => ({ id: item.id, ...(item.data() as GuestCommunityMessageDoc) }))
+        .reverse()
+    ),
+    (error) => onError?.(error)
+  );
+}
+
+export async function createGuestCommunityMessage(input: {
+  guestAccessCode?: string | null;
+  body: string;
+}): Promise<void> {
+  const body = input.body.trim();
+  if (!body) throw new Error('請輸入留言內容');
+  if (body.length > 1000) throw new Error('留言請控制在 1,000 字以內');
+
+  const submit = httpsCallable<
+    { guestAccessCode: string | null; body: string },
+    { id: string }
+  >(functions, 'createGuestCommunityMessage');
+  await submit({
+    guestAccessCode: input.guestAccessCode
+      ? normalizeGuestCode(input.guestAccessCode)
+      : null,
+    body,
+  });
 }
 
 export async function createGuestMessage(input: {

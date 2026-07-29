@@ -64,10 +64,10 @@ Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。�
 
 ### 留言
 
-1. 房客寫入 `guestMessageBoards/{code}/messages/{id}`。
-2. Function 對房客訊息發送 Admin push。
-3. Admin 從留言板回覆到相同 thread。
-4. 推播歷史與每位 Admin 已讀位置分開保存。
+1. 訪客頁的「推薦牆」讀取 `guestCommunityMessages`，所有訪客看到相同內容。
+2. 訪客送出推薦時呼叫 `createGuestCommunityMessage`；Function 驗證登入帳號或有效訪客碼。
+3. Function 僅保存顯示名稱、內容、作者類型與時間，不保存訪客碼或 Email，並發送 Admin push。
+4. 原本的 `guestMessageBoards/{code}/messages/{id}` 保留作為 Admin 與個別房客的既有私人對話資料。
 
 ## 部署單位
 

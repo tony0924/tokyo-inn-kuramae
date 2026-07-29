@@ -183,6 +183,17 @@ export interface GuestMessage extends GuestMessageDoc {
   id: string;
 }
 
+export interface GuestCommunityMessageDoc {
+  authorType: GuestMessageAuthorType;
+  authorName: string;
+  body: string;
+  createdAt: Timestamp;
+}
+
+export interface GuestCommunityMessage extends GuestCommunityMessageDoc {
+  id: string;
+}
+
 export interface KeyDoc {
   code: string;
   label: string;

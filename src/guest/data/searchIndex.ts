@@ -30,7 +30,7 @@ export const searchIndex: SearchEntry[] = [
   { section: '地鐵／公車', tab: 'transit', title: '附近地鐵與公車', content: '大江戶線 淺草線 銀座線 藏前站 田原町站 電梯 車站 地鐵 捷運 都營公車 都02 東42 東京站 錦糸町 Google Maps 地圖' },
   { section: '機場交通', tab: 'airport', title: '成田機場交通', content: '成田機場 sky access skyliner 淺草線 機場 交通 narita airport google maps 住宿到機場 回程' },
   { section: '機場交通', tab: 'airport', title: '羽田機場交通', content: '羽田機場 京急 淺草線 機場 交通 haneda airport google maps 住宿到機場 回程' },
-  { section: '留言板', tab: 'messages', title: '留言與管理員回覆', content: '留言 問問題 詢問 協助 回覆 管理員 message' },
+  { section: '訪客推薦牆', tab: 'messages', title: '查看與分享訪客推薦', content: '留言 推薦 分享 餐廳 咖啡 景點 旅遊情報 message' },
   { section: '抵達', tab: 'arrival', title: '抵達當天流程', content: '藏前站 大樓 磁扣 電梯 204 電子鎖 入房', anchor: 'anchor-arrival-flow' },
   { section: '抵達', tab: 'arrival', title: '建築進入方式', content: '玻璃門 磁扣 鑰匙 感應 電梯 204室 門鎖 入口 building entrance', anchor: 'anchor-building' },
   { section: '抵達', tab: 'arrival', title: '垃圾分類', content: '垃圾 一般垃圾 廚餘 寶特瓶 塑膠 紙板 資源回收 trash garbage', anchor: 'anchor-garbage' },

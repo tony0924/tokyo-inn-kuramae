@@ -26,7 +26,7 @@ const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'services', icon: '🏪', label: '購物' },
   { id: 'restaurant', icon: '🍜', label: '食物' },
   { id: 'cityguide', icon: '🗺️', label: '景點' },
-  { id: 'messages', icon: '💬', label: '留言板' },
+  { id: 'messages', icon: '💬', label: '推薦牆' },
   { id: 'faq', icon: '❓', label: 'FAQ' },
 ];
 
@@ -299,7 +299,7 @@ export function GuestLayout() {
             onClick={() => setQuery('')}
           >
             <span aria-hidden="true">{tab.icon}</span>
-            <small>{tab.label === '留言板' ? '留言' : tab.label}</small>
+            <small>{tab.label}</small>
           </NavLink>
         ))}
         <button

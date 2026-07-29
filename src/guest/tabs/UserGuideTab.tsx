@@ -40,8 +40,8 @@ const GUIDE_SECTIONS = [
     id: 'messages',
     icon: '💬',
     title: '需要協助',
-    description: '指南找不到答案時，可在留言板聯絡管理員並查看回覆。',
-    action: '前往留言板',
+    description: '看看其他旅人的美食、景點與旅行情報，也可以分享自己的推薦。',
+    action: '前往推薦牆',
   },
 ];
 
@@ -142,10 +142,10 @@ export function UserGuideTab() {
       <div className="guide-help-card">
         <div>
           <span>還是找不到答案？</span>
-          <strong>在留言板告訴我們</strong>
+          <strong>在推薦牆分享給大家</strong>
           <p>留下問題後，可回到同一頁查看管理員回覆。</p>
         </div>
-        <button type="button" onClick={() => navigate('/guest/messages')}>前往留言板</button>
+        <button type="button" onClick={() => navigate('/guest/messages')}>前往推薦牆</button>
       </div>
     </div>
   );

@@ -123,6 +123,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `settings/notifications` | Email 寄件者與範本 | Admin |
 | `guestPageViews/{id}` | page view / code login 分析 | 驗證身分後新增；Admin 讀 |
 | `guestMessageBoards/{code}/messages/{id}` | 房客與管理員留言 | 該預約／有效碼成員與 Admin |
+| `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |
 | `adminNotificationReads/{uid}` | 每位 Admin 最後已讀時間 | Admin 只讀寫自己 |

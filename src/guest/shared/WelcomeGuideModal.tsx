@@ -25,7 +25,7 @@ const QUICK_GUIDE = [
   {
     icon: '💬',
     title: '需要協助',
-    description: '找不到答案時，可到留言板聯絡管理員並查看回覆。',
+    description: '到訪客推薦牆看看大家分享的美食、景點與旅行情報，也歡迎留下你的推薦。',
   },
 ];
 

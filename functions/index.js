@@ -151,6 +151,40 @@ export const sendGuestMessagePush = onDocumentCreated(
   }
 );
 
+export const createGuestCommunityMessage = onCall(
+  {
+    region: REGION,
+  },
+  async (request) => {
+    const body = typeof request.data?.body === "string" ? request.data.body.trim() : "";
+    if (!body) {
+      throw new HttpsError("invalid-argument", "請輸入留言內容。");
+    }
+    if (body.length > 1000) {
+      throw new HttpsError("invalid-argument", "留言請控制在 1,000 字以內。");
+    }
+
+    const author = request.auth?.uid
+      ? await getCommunityAuthorFromAccount(request.auth.uid)
+      : await getCommunityAuthorFromGuestCode(request.data?.guestAccessCode);
+    const message = await db.collection("guestCommunityMessages").add({
+      authorType: author.authorType,
+      authorName: author.authorName,
+      body,
+      createdAt: Timestamp.now(),
+    });
+
+    await sendAdminPush({
+      title: `${author.authorName} 分享了新推薦`,
+      body,
+      url: `${WEBSITE_URL}/guest/messages`,
+      tag: `guest-community-message-${message.id}`,
+    });
+
+    return { id: message.id };
+  }
+);
+
 export const sendFirstDailyGuestCodeLoginPush = onDocumentCreated(
   {
     document: "guestPageViews/{viewId}",
@@ -848,6 +882,46 @@ async function hasValidGuestAccessCode(booking) {
     && access.startsAt?.toMillis?.() <= now
     && access.expiresAt?.toMillis?.() > now
   );
+}
+
+async function getCommunityAuthorFromAccount(uid) {
+  const snapshot = await db.collection("users").doc(uid).get();
+  const user = snapshot.data();
+  const isAdmin = snapshot.exists && user?.role === "admin";
+  const isActiveGuest = snapshot.exists && user?.role === "guest" && user?.active === true;
+  if (!isAdmin && !isActiveGuest) {
+    throw new HttpsError("permission-denied", "此帳號目前沒有留言權限。");
+  }
+  return {
+    authorType: isAdmin ? "admin" : "guest",
+    authorName: cleanCommunityAuthorName(user?.displayName),
+  };
+}
+
+async function getCommunityAuthorFromGuestCode(rawCode) {
+  const code = String(rawCode || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (!code) {
+    throw new HttpsError("unauthenticated", "請先使用有效的訪客碼登入。");
+  }
+  const snapshot = await db.collection("guestAccessCodes").doc(code).get();
+  const access = snapshot.data();
+  const now = Date.now();
+  const valid = snapshot.exists
+    && access?.active === true
+    && access.startsAt?.toMillis?.() <= now
+    && access.expiresAt?.toMillis?.() > now;
+  if (!valid) {
+    throw new HttpsError("permission-denied", "訪客碼已失效，請重新登入。");
+  }
+  return {
+    authorType: "guest",
+    authorName: cleanCommunityAuthorName(access?.guestName),
+  };
+}
+
+function cleanCommunityAuthorName(value) {
+  const name = String(value || "").trim().replace(/\s+/g, " ").slice(0, 40);
+  return name || "訪客";
 }
 
 function timestampsEqual(first, second) {
