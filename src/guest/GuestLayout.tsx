@@ -218,7 +218,7 @@ export function GuestLayout() {
             </div>
             <button
               type="button"
-              className={`guest-mobile-guide-toggle${guideActive ? ' active' : ''}`}
+              className={`guest-guide-toggle${guideActive ? ' active' : ''}`}
               aria-label={guideActive ? '返回原本瀏覽頁面' : '開啟使用指南'}
               onClick={toggleMobileGuide}
             >
@@ -227,7 +227,7 @@ export function GuestLayout() {
             </button>
           </div>
           <nav className="nav-tabs">
-            {TABS.map((t) => (
+            {TABS.filter((tab) => tab.id !== 'guide').map((t) => (
               <NavLink
                 key={t.id}
                 to={`/guest/${t.id}`}

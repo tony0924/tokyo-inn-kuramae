@@ -214,8 +214,43 @@
     .search-box input::placeholder { color: rgba(255,255,255,0.35); }
     .search-icon { color: var(--gold); font-size: 0.9rem; flex-shrink: 0; }
 
-    .guest-mobile-guide-toggle {
-      display: none;
+    .guest-guide-toggle {
+      min-height: 38px;
+      padding: 0 14px;
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--text-mid);
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    .guest-guide-toggle > span {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .guest-guide-toggle small {
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .guest-guide-toggle:hover,
+    .guest-guide-toggle.active {
+      border-color: rgba(201, 168, 76, 0.28);
+      background: var(--gold-pale);
+      color: var(--gold-light);
+    }
+
+    .guest-guide-toggle:focus-visible {
+      outline: 3px solid rgba(232, 204, 122, 0.32);
+      outline-offset: 2px;
     }
 
     /* First daily visit guide */
@@ -2697,35 +2732,21 @@
         padding-bottom: calc(92px + env(safe-area-inset-bottom));
       }
 
-      .guest-mobile-guide-toggle {
+      .guest-guide-toggle {
         width: 44px;
         min-height: 46px;
-        display: flex;
+        padding: 0;
         flex: 0 0 44px;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
         gap: 2px;
-        border: 1px solid var(--border-card);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.035);
-        color: var(--text-mid);
-        font-family: inherit;
       }
 
-      .guest-mobile-guide-toggle > span {
+      .guest-guide-toggle > span {
         font-size: 1rem;
-        line-height: 1;
       }
 
-      .guest-mobile-guide-toggle small {
+      .guest-guide-toggle small {
         font-size: 0.6rem;
-      }
-
-      .guest-mobile-guide-toggle.active {
-        border-color: rgba(201, 168, 76, 0.28);
-        background: var(--gold-pale);
-        color: var(--gold-light);
       }
 
       .guest-mobile-nav {
