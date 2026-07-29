@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS = {
   checkoutAdminReminder: {
     subject: "退房提醒｜{{guestName}} 今日退房",
     body:
-      "提醒：admin 您好，以下房客今天已到退房日，請留意後續清潔與鑰匙回收。\n\n房客姓名：{{guestName}}\n房客 Email：{{guestEmail}}\n入住日期：{{checkInDate}}\n退房日期：{{checkOutDate}}\n鑰匙編號：{{keyCode}}\n\n此信由系統自動寄出。",
+      "管理員您好，以下房客今天已到退房日，請留意後續清潔與鑰匙回收。\n\n房客姓名：{{guestName}}\n房客 Email：{{guestEmail}}\n入住日期：{{checkInDate}}\n退房日期：{{checkOutDate}}\n鑰匙編號：{{keyCode}}\n\n此信由系統自動寄出。",
   },
 };
 
@@ -465,13 +465,13 @@ export const lookupGoogleMapPlace = onCall(
   },
   async (request) => {
     if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "請先登入管理者帳號。");
+      throw new HttpsError("unauthenticated", "請先登入管理員帳號。");
     }
 
     const userSnap = await db.collection("users").doc(request.auth.uid).get();
     const userData = userSnap.data();
     if (!userSnap.exists || userData?.role !== "admin") {
-      throw new HttpsError("permission-denied", "只有管理者可以使用這個功能。");
+      throw new HttpsError("permission-denied", "只有管理員可以使用這個功能。");
     }
 
     const url = typeof request.data?.url === "string" ? request.data.url.trim() : "";

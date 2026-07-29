@@ -39,7 +39,7 @@ const GUIDE_SECTIONS = [
   {
     id: 'messages',
     icon: '💬',
-    title: '需要協助',
+    title: '旅人交流',
     description: '看看其他旅人的美食、景點與旅行情報，也可以分享自己的推薦。',
     action: '前往推薦牆',
   },
@@ -141,9 +141,9 @@ export function UserGuideTab() {
 
       <div className="guide-help-card">
         <div>
-          <span>還是找不到答案？</span>
-          <strong>在推薦牆分享給大家</strong>
-          <p>留下問題後，可回到同一頁查看管理員回覆。</p>
+          <span>旅人交流</span>
+          <strong>把你的發現分享給大家</strong>
+          <p>看看其他訪客的推薦，也能在同一頁查看管理員的公開回覆。</p>
         </div>
         <button type="button" onClick={() => navigate('/guest/messages')}>前往推薦牆</button>
       </div>

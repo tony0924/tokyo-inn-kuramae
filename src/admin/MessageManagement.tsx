@@ -81,7 +81,7 @@ export function MessageManagement() {
           </div>
           <div className="message-thread">
             {messages.length === 0 ? (
-              <div className="admin-empty-state">目前還沒有訪客留言。</div>
+              <div className="admin-empty-state">目前還沒有推薦牆留言。</div>
             ) : messages.map((message) => (
               <article key={message.id} className={`message-bubble ${message.authorType}`}>
                 <div className="message-meta">

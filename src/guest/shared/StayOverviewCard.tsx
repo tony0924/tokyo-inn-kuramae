@@ -127,7 +127,7 @@ export function StayOverviewCard({ booking }: { booking: Booking }) {
             {primaryAction(status.stage).label}
           </button>
           <button type="button" className="btn-ghost" onClick={() => navigate('/guest/messages')}>
-            💬 聯絡管理員
+            💬 查看推薦牆
           </button>
         </div>
       </section>

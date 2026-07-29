@@ -75,7 +75,7 @@ export function NotificationHistoryPage() {
         <div className="notification-history-empty">
           <span aria-hidden="true">🔔</span>
           <h2>目前還沒有通知紀錄</h2>
-          <p>下一次訪客登入、留言、預約異動或入住退房提醒發生時，就會顯示在這裡。</p>
+          <p>下一次訪客登入、推薦牆留言、預約異動或入住退房提醒發生時，就會顯示在這裡。</p>
         </div>
       ) : (
         <div className="notification-history-groups">

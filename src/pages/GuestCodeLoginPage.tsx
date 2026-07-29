@@ -63,7 +63,7 @@ export default function GuestCodeLoginPage() {
           訪客碼登入
         </h1>
         <p style={{ color: 'var(--text-mid)', fontSize: 14, marginBottom: 24 }}>
-          請輸入管理者提供的隨機碼，即可查看房客指南。
+          請輸入管理員提供的隨機碼，即可查看房客指南。
         </p>
 
         <label htmlFor="guest-access-code" className="sr-only">訪客碼</label>

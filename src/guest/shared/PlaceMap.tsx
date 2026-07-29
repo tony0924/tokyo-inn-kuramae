@@ -92,7 +92,7 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
 
             <Marker position={HOME} icon={homeIcon}>
               <Popup>
-                <b style={{ color: '#e8cc7a' }}>🏠 藏前NEXT</b>
+                <b style={{ color: '#e8cc7a' }}>🏠 藏前 NEXT</b>
                 <br />
                 <span style={{ fontSize: '0.75rem', color: '#aaa' }}>
                   住宿位置

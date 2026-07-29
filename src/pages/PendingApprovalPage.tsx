@@ -30,7 +30,7 @@ export default function PendingApprovalPage() {
           已收到。
         </p>
         <p style={{ color: 'var(--text-mid)', lineHeight: 1.7, marginBottom: 24 }}>
-          管理者確認您的預約資訊後即會開放查看。請稍候。
+          管理員確認您的預約資訊後即會開放查看。請稍候。
         </p>
         <button
           type="button"

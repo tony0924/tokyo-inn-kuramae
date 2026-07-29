@@ -27,7 +27,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   checkoutAdminReminder: {
     subject: '退房提醒｜{{guestName}} 今日退房',
     body:
-      '提醒：admin 您好，以下房客今天已到退房日，請留意後續清潔與鑰匙回收。\n\n房客姓名：{{guestName}}\n房客 Email：{{guestEmail}}\n入住日期：{{checkInDate}}\n退房日期：{{checkOutDate}}\n鑰匙編號：{{keyCode}}\n\n此信由系統自動寄出。',
+      '管理員您好，以下房客今天已到退房日，請留意後續清潔與鑰匙回收。\n\n房客姓名：{{guestName}}\n房客 Email：{{guestEmail}}\n入住日期：{{checkInDate}}\n退房日期：{{checkOutDate}}\n鑰匙編號：{{keyCode}}\n\n此信由系統自動寄出。',
   },
 };
 

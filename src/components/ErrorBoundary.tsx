@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <main className="full-page-center" role="alert" aria-live="assertive">
         <div className="card" style={{ maxWidth: 460, textAlign: 'center' }}>
           <h1>頁面暫時無法顯示</h1>
-          <p style={{ marginTop: 12 }}>請重新載入頁面；若問題持續，請聯絡管理者。</p>
+          <p style={{ marginTop: 12 }}>請重新載入頁面；若問題持續，請聯絡管理員。</p>
           <button type="button" className="btn-gold" style={{ marginTop: 20 }} onClick={() => window.location.reload()}>
             重新載入
           </button>

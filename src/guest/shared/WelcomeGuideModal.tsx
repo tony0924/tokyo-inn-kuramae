@@ -24,7 +24,7 @@ const QUICK_GUIDE = [
   },
   {
     icon: '💬',
-    title: '需要協助',
+    title: '旅人交流',
     description: '到訪客推薦牆看看大家分享的美食、景點與旅行情報，也歡迎留下你的推薦。',
   },
 ];

@@ -147,7 +147,7 @@ export function NotificationSettingsPage() {
       <div className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>預約完成通知</h2>
         <p style={helperStyle}>
-          建立預約後自動寄給房客，並 CC 所有 admin。可用變數：
+          建立預約後自動寄給房客，並副本寄送所有管理員。可用變數：
           <code> {'{{guestName}} {{guestEmail}} {{checkInDate}} {{checkOutDate}} {{partySize}} {{keyCode}} {{guestAccessCode}} {{websiteUrl}} {{guestCodeLoginUrl}} {{senderName}}'} </code>
         </p>
         <div className="form-field" style={{ marginBottom: 14 }}>
@@ -180,7 +180,7 @@ export function NotificationSettingsPage() {
       <div className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>入住前一天提醒</h2>
         <p style={helperStyle}>
-          寄給房客，並 CC 所有 admin。可用變數：
+          寄給房客，並副本寄送所有管理員。可用變數：
           <code> {'{{guestName}} {{guestEmail}} {{checkInDate}} {{checkOutDate}} {{partySize}} {{keyCode}} {{guestAccessCode}} {{websiteUrl}} {{guestCodeLoginUrl}} {{senderName}}'} </code>
         </p>
         <div className="form-field" style={{ marginBottom: 14 }}>
@@ -211,9 +211,9 @@ export function NotificationSettingsPage() {
       </div>
 
       <div className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
-        <h2 style={sectionTitleStyle}>退房後提醒 admin</h2>
+        <h2 style={sectionTitleStyle}>退房後提醒管理員</h2>
         <p style={helperStyle}>
-          寄給所有 admin。可用變數：
+          寄給所有管理員。可用變數：
           <code> {'{{guestName}} {{guestEmail}} {{checkInDate}} {{checkOutDate}} {{partySize}} {{keyCode}} {{guestAccessCode}} {{websiteUrl}} {{guestCodeLoginUrl}} {{senderName}}'} </code>
         </p>
         <div className="form-field" style={{ marginBottom: 14 }}>

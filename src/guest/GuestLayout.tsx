@@ -199,7 +199,7 @@ export function GuestLayout() {
             <div className="header-brand">
               <div className="brand-icon">🏯</div>
               <div className="brand-text">
-                <div className="title">藏前NEXT</div>
+                <div className="title">藏前 NEXT</div>
                 <div className="subtitle">Guest Guide · Room 204</div>
               </div>
             </div>
