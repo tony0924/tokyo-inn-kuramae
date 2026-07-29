@@ -169,20 +169,6 @@ export interface AdminNotificationReadState {
 
 export type GuestMessageAuthorType = 'guest' | 'admin';
 
-export interface GuestMessageDoc {
-  guestAccessCode: string;
-  guestName: string;
-  guestEmail: string | null;
-  authorType: GuestMessageAuthorType;
-  authorName: string;
-  body: string;
-  createdAt: Timestamp;
-}
-
-export interface GuestMessage extends GuestMessageDoc {
-  id: string;
-}
-
 export interface GuestCommunityMessageDoc {
   authorType: GuestMessageAuthorType;
   authorName: string;

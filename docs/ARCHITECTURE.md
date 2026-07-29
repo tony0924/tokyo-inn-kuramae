@@ -62,12 +62,12 @@ Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。�
    `guestCodeDailyLogins/{code_date}` 去重。
 4. Admin 收到 push，事件同時寫入 `adminNotifications`。
 
-### 留言
+### 訪客推薦牆
 
 1. 訪客頁的「推薦牆」讀取 `guestCommunityMessages`，所有訪客看到相同內容。
 2. 訪客送出推薦時呼叫 `createGuestCommunityMessage`；Function 驗證登入帳號或有效訪客碼。
-3. Function 僅保存顯示名稱、內容、作者類型與時間，不保存訪客碼或 Email，並發送 Admin push。
-4. 原本的 `guestMessageBoards/{code}/messages/{id}` 保留作為 Admin 與個別房客的既有私人對話資料。
+3. Function 僅保存顯示名稱、內容、作者類型與時間，不保存訪客碼或 Email；訪客發文時發送 Admin push。
+4. Admin 從同一面推薦牆公開回覆，也能刪除不適當內容；系統不再提供私人客服留言。
 
 ## 部署單位
 

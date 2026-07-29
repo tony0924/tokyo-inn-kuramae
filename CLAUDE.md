@@ -247,8 +247,7 @@ Secrets（用 `defineSecret`，勿寫進 code）：`GMAIL_APP_PASSWORD`、`GOOGL
 | `sendBookingCreatedReminder` | Firestore `bookings/{id}` onCreate | 寄「預約完成」給房客、CC admin（`suppressBookingCreatedEmail=true` 可跳過） |
 | `sendUpcomingCheckInReminders` | 排程 `0 9 * * *` | 入住前一天 09:00 寄提醒給房客、CC admin |
 | `sendCheckoutAdminReminders` | 排程 `0 12 * * *` | 退房當天 12:00 寄提醒給 admin |
-| `sendGuestMessagePush` | `guestMessageBoards/{code}/messages/{messageId}` onCreate | 房客新增留言時推播到已註冊的 admin 裝置 |
-| `createGuestCommunityMessage` | onCall（有效訪客帳號／訪客碼） | 驗證身分後新增共享推薦，並推播 admin |
+| `createGuestCommunityMessage` | onCall（有效訪客帳號／訪客碼／admin） | 驗證身分後新增共享推薦；訪客發文時推播 admin |
 | `sendFirstDailyGuestCodeLoginPush` | `guestPageViews/{viewId}` onCreate | 每個訪客碼每日第一次成功登入時推播 |
 | `sendBookingUpdatedPush` | `bookings/{bookingId}` onUpdate | 預約日期異動或鑰匙變更時檢查並推播 |
 | `sendBookingDeletedPush` | `bookings/{bookingId}` onDelete | 預約取消時推播 |

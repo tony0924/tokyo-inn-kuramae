@@ -17,7 +17,7 @@ const navItems = [
   { to: '/admin/revenue', label: '收入總覽' },
   { to: '/admin/calendar', label: '行事曆' },
   { to: '/admin/bookings', label: '預約清單' },
-  { to: '/admin/messages', label: '留言板' },
+  { to: '/admin/messages', label: '推薦牆' },
   { to: '/admin/users', label: '使用者' },
   { to: '/admin/keys', label: '鑰匙管理' },
   { to: '/admin/guest-codes', label: '訪客碼' },
@@ -189,7 +189,7 @@ export function AdminLayout() {
         <MobileNavLink to="/admin/today" label="今日" icon="today" />
         <MobileNavLink to="/admin/calendar" label="行事曆" icon="calendar" />
         <MobileNavLink to="/admin/bookings" label="預約" icon="bookings" />
-        <MobileNavLink to="/admin/messages" label="留言" icon="messages" />
+        <MobileNavLink to="/admin/messages" label="推薦牆" icon="messages" />
         <button
           type="button"
           className={`admin-mobile-nav-item${moreActive || moreOpen ? ' active' : ''}`}

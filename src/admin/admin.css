@@ -1009,6 +1009,10 @@
 .admin-message-thread .message-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-soft); font-size: 10px; }
 .admin-message-thread .message-meta strong { color: var(--gold-light); font-size: 11px; }
 .admin-message-thread .message-bubble p { margin: 5px 0 0; color: var(--text); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.admin-community-thread { width: min(820px, 100%); min-height: min(680px, calc(100dvh - 130px)); }
+.admin-message-delete { display: block; margin: 8px 0 0 auto; padding: 3px 0; border: 0; background: transparent; color: var(--text-soft); font-size: 11px; }
+.admin-message-delete:hover:not(:disabled) { color: var(--vermilion); }
+.admin-message-delete:disabled { cursor: wait; opacity: 0.6; }
 .admin-message-thread .message-compose { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 10px; padding-top: 14px; border-top: 1px solid var(--border-card); }
 .admin-message-thread .message-compose label { grid-column: 1 / -1; color: var(--text-mid); font-size: 12px; font-weight: 600; }
 .admin-message-thread .message-compose textarea { width: 100%; min-width: 0; min-height: 82px; resize: vertical; padding: 11px 12px; border: 1px solid var(--border-card); border-radius: 12px; outline: none; background: var(--bg); color: var(--text); font: inherit; line-height: 1.5; }

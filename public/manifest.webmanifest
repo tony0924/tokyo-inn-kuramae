@@ -42,8 +42,8 @@
       "url": "/admin/calendar"
     },
     {
-      "name": "房客留言",
-      "short_name": "留言",
+      "name": "推薦牆管理",
+      "short_name": "推薦牆",
       "url": "/admin/messages"
     }
   ]

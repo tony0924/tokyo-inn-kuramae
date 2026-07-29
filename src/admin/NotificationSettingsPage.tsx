@@ -306,7 +306,7 @@ function PushSettingsCard({
         <button type="button" className={currentEnabled ? 'btn-ghost' : 'btn-gold'} disabled={disabled} onClick={onToggle}>
           {busy ? '處理中…' : currentEnabled ? '關閉這台裝置通知' : '開啟這台裝置通知'}
         </button>
-        <p>開啟後，訪客碼每日首次登入、房客留言、預約異動、入住與退房等事件會顯示在鎖定畫面。</p>
+        <p>開啟後，訪客碼每日首次登入、推薦牆新留言、預約異動、入住與退房等事件會顯示在鎖定畫面。</p>
       </div>
 
       {message && <p className="push-settings-message">{message}</p>}

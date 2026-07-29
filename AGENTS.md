@@ -7,8 +7,8 @@
 這是一套單房源民宿營運系統，包含三個使用介面：
 
 - Preview：公開介紹頁，不得洩漏完整地址、房號、門鎖或訪客碼。
-- Guest：核准的 Google 房客或持有效訪客碼者可查看完整住宿指南、地圖與留言板。
-- Admin：管理預約、收入、行事曆、使用者、鑰匙、訪客碼、推薦地點、留言、Email／手機通知與通知紀錄。
+- Guest：核准的 Google 房客或持有效訪客碼者可查看完整住宿指南、地圖與共享推薦牆。
+- Admin：管理預約、收入、行事曆、使用者、鑰匙、訪客碼、推薦地點、共享推薦牆、Email／手機通知與通知紀錄。
 
 正式環境：
 
@@ -122,7 +122,6 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `recommendations/{id}` | Guest 地圖推薦 | 公開讀；Admin 寫 |
 | `settings/notifications` | Email 寄件者與範本 | Admin |
 | `guestPageViews/{id}` | page view / code login 分析 | 驗證身分後新增；Admin 讀 |
-| `guestMessageBoards/{code}/messages/{id}` | 房客與管理員留言 | 該預約／有效碼成員與 Admin |
 | `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |
@@ -144,7 +143,6 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 - `sendBookingCreatedReminder`
 - `sendPendingUserApprovalReminder`
-- `sendGuestMessagePush`
 - `sendFirstDailyGuestCodeLoginPush`
 - `sendBookingUpdatedPush`
 - `sendBookingDeletedPush`

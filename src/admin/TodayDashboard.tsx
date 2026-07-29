@@ -5,10 +5,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useBookings } from './useBookings';
 import { BookingForm } from './BookingForm';
 import { Modal } from './Modal';
-import { watchAllGuestMessages } from '@/lib/guestMessages';
+import { watchGuestCommunityMessages } from '@/lib/guestMessages';
 import { setAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
 import { getStayStatus, selectOperationalBooking, type StayStage } from '@/lib/stayStatus';
-import type { Booking, GuestMessage } from '@/types';
+import type { Booking, GuestCommunityMessage } from '@/types';
 
 const PAYMENT_LABEL = {
   unpaid: '未付款',
@@ -18,11 +18,11 @@ const PAYMENT_LABEL = {
 
 export function TodayDashboard() {
   const { bookings, loading } = useBookings();
-  const [messages, setMessages] = useState<GuestMessage[]>([]);
+  const [messages, setMessages] = useState<GuestCommunityMessage[]>([]);
   const [creating, setCreating] = useState(false);
   const now = new Date();
 
-  useEffect(() => watchAllGuestMessages(setMessages, undefined, 100), []);
+  useEffect(() => watchGuestCommunityMessages(setMessages, undefined, 100), []);
 
   const summary = useMemo(() => {
     const startToday = new Date(now);
@@ -68,16 +68,9 @@ export function TodayDashboard() {
     () => selectOperationalBooking(bookings, now),
     [bookings]
   );
-  const operationalMessageCount = useMemo(
-    () =>
-      operationalBooking
-        ? messages.filter(
-            (message) =>
-              message.authorType === 'guest' &&
-              message.guestAccessCode === operationalBooking.guestAccessCode
-          ).length
-        : 0,
-    [messages, operationalBooking]
+  const guestRecommendationCount = useMemo(
+    () => messages.filter((message) => message.authorType === 'guest').length,
+    [messages]
   );
 
   return (
@@ -102,14 +95,14 @@ export function TodayDashboard() {
           {operationalBooking ? (
             <OperationsCard
               booking={operationalBooking}
-              guestMessageCount={operationalMessageCount}
+              guestRecommendationCount={guestRecommendationCount}
             />
           ) : (
             <section className="operations-card empty">
               <div>
                 <p className="today-eyebrow">住宿狀態</p>
                 <h2>目前沒有進行中或即將入住的預約</h2>
-                <span>新增預約後，這裡會集中顯示房客、款項、鑰匙與留言狀態。</span>
+                <span>新增預約後，這裡會集中顯示房客、款項、鑰匙與訪客碼狀態。</span>
               </div>
             </section>
           )}
@@ -188,21 +181,21 @@ export function TodayDashboard() {
               <div className="today-section-heading">
                 <div>
                   <p className="today-eyebrow">最新動態</p>
-                  <h2>房客留言</h2>
+                  <h2>推薦牆留言</h2>
                 </div>
-                <Link to="/admin/messages">全部留言</Link>
+                <Link to="/admin/messages">管理推薦牆</Link>
               </div>
               {recentGuestMessages.length === 0 ? (
-                <EmptyTodayState>目前沒有房客留言。</EmptyTodayState>
+                <EmptyTodayState>目前沒有新的訪客推薦。</EmptyTodayState>
               ) : (
                 <div className="today-message-list">
                   {recentGuestMessages.map((message) => (
                     <Link to="/admin/messages" className="today-message-row" key={message.id}>
                       <span className="today-message-avatar" aria-hidden="true">
-                        {(message.guestName || '訪').slice(0, 1)}
+                        {(message.authorName || '訪').slice(0, 1)}
                       </span>
                       <span>
-                        <strong>{message.guestName || '訪客'}</strong>
+                        <strong>{message.authorName || '訪客'}</strong>
                         <small>{message.body}</small>
                       </span>
                       <time>{formatMessageTime(message)}</time>
@@ -224,10 +217,10 @@ export function TodayDashboard() {
 
 function OperationsCard({
   booking,
-  guestMessageCount,
+  guestRecommendationCount,
 }: {
   booking: Booking;
-  guestMessageCount: number;
+  guestRecommendationCount: number;
 }) {
   const navigate = useNavigate();
   const status = getStayStatus(booking);
@@ -268,15 +261,15 @@ function OperationsCard({
           attention={!booking.guestAccessCode}
         />
         <OperationSignal
-          label="房客留言"
-          value={guestMessageCount > 0 ? `${guestMessageCount} 則` : '目前沒有'}
-          attention={guestMessageCount > 0}
+          label="推薦牆"
+          value={guestRecommendationCount > 0 ? `${guestRecommendationCount} 則` : '目前沒有'}
+          attention={false}
         />
       </div>
 
       <div className="operations-actions">
         <Link to={`/admin/bookings?booking=${booking.id}`} className="btn-gold">開啟這筆預約</Link>
-        <Link to="/admin/messages" className="operations-secondary-action">查看留言</Link>
+        <Link to="/admin/messages" className="operations-secondary-action">管理推薦牆</Link>
         <button
           type="button"
           className="operations-secondary-action"
@@ -380,7 +373,7 @@ function paymentDetail(bookings: Booking[]): string {
   ].filter(Boolean).join('・');
 }
 
-function formatMessageTime(message: GuestMessage): string {
+function formatMessageTime(message: GuestCommunityMessage): string {
   const date = message.createdAt?.toDate?.();
   if (!date) return '剛剛';
   if (isSameDay(date, new Date())) return format(date, 'HH:mm');

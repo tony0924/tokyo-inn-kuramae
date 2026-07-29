@@ -132,25 +132,6 @@ export const sendPendingUserApprovalReminder = onDocumentCreated(
   }
 );
 
-export const sendGuestMessagePush = onDocumentCreated(
-  {
-    document: "guestMessageBoards/{code}/messages/{messageId}",
-    database: "default",
-    region: REGION,
-  },
-  async (event) => {
-    const message = event.data?.data();
-    if (!message || message.authorType !== "guest") return;
-
-    await sendAdminPush({
-      title: `${message.guestName || "房客"} 有新留言`,
-      body: message.body || "請開啟管理後台查看留言。",
-      url: `${WEBSITE_URL}/admin/messages`,
-      tag: `guest-message-${event.params.code}`,
-    });
-  }
-);
-
 export const createGuestCommunityMessage = onCall(
   {
     region: REGION,
@@ -174,12 +155,14 @@ export const createGuestCommunityMessage = onCall(
       createdAt: Timestamp.now(),
     });
 
-    await sendAdminPush({
-      title: `${author.authorName} 分享了新推薦`,
-      body,
-      url: `${WEBSITE_URL}/guest/messages`,
-      tag: `guest-community-message-${message.id}`,
-    });
+    if (author.authorType === "guest") {
+      await sendAdminPush({
+        title: `${author.authorName} 在推薦牆留言`,
+        body,
+        url: `${WEBSITE_URL}/admin/messages`,
+        tag: `guest-community-message-${message.id}`,
+      });
+    }
 
     return { id: message.id };
   }
