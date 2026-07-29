@@ -388,6 +388,11 @@ When changing email templates:
 
 Revenue overview exists in admin and uses booking `amount` and `paymentStatus`.
 
+The overview also includes a responsive donut chart that breaks the selected stays'
+accommodation value into received, outstanding, and non-revenue portions. Cash received
+within the selected calendar period remains a separate metric because it uses payment date
+rather than check-in date.
+
 Important distinction:
 
 - Admin pages can show and calculate revenue.

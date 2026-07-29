@@ -134,11 +134,19 @@ export function RevenueOverview() {
       const received = getBookingReceived(booking, paymentsByBooking.get(booking.id) ?? []);
       return total + Math.max(getExpectedRevenue(booking) - received, 0);
     }, 0);
+    const receivedForSelectedStays = filteredBookings.reduce((total, booking) => {
+      const expected = getExpectedRevenue(booking);
+      const received = getBookingReceived(booking, paymentsByBooking.get(booking.id) ?? []);
+      return total + Math.min(Math.max(received, 0), expected);
+    }, 0);
+    const outstandingForSelectedStays = expectedRevenue - receivedForSelectedStays;
 
     return {
       accommodationValue,
       expectedRevenue,
       actualCash: recordedCash + legacyCash,
+      receivedForSelectedStays,
+      outstandingForSelectedStays,
       nonCashValue,
       outstanding,
     };
@@ -257,6 +265,15 @@ export function RevenueOverview() {
             <StatCard label="尚待收款" value={summary.outstanding} tone="amber" />
             <StatCard label="未收費住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
+
+          <RevenueCompositionChart
+            scopeLabel={scopeLabel}
+            bookingCount={detailBookings.length}
+            accommodationValue={summary.accommodationValue}
+            received={summary.receivedForSelectedStays}
+            outstanding={summary.outstandingForSelectedStays}
+            nonCash={summary.nonCashValue}
+          />
 
           <div className="revenue-definition-note">
             <span>住宿價值依入住日期統計</span>
@@ -468,5 +485,110 @@ function StatCard({
       <div className="stat-label">{label}</div>
       <div className="stat-value">TWD {value.toLocaleString()}</div>
     </div>
+  );
+}
+
+type RevenueCompositionSegment = {
+  label: string;
+  value: number;
+  tone: 'received' | 'outstanding' | 'non-cash';
+};
+
+function RevenueCompositionChart({
+  scopeLabel,
+  bookingCount,
+  accommodationValue,
+  received,
+  outstanding,
+  nonCash,
+}: {
+  scopeLabel: string;
+  bookingCount: number;
+  accommodationValue: number;
+  received: number;
+  outstanding: number;
+  nonCash: number;
+}) {
+  const segments: RevenueCompositionSegment[] = [
+    { label: '已收款', value: received, tone: 'received' },
+    { label: '尚待收款', value: outstanding, tone: 'outstanding' },
+    { label: '未收費住宿', value: nonCash, tone: 'non-cash' },
+  ];
+  const chartTotal = segments.reduce((total, segment) => total + segment.value, 0);
+  const expectedRevenue = received + outstanding;
+  const collectionRate = expectedRevenue > 0
+    ? Math.round((received / expectedRevenue) * 100)
+    : null;
+  const radius = 46;
+  const circumference = 2 * Math.PI * radius;
+  let accumulatedRatio = 0;
+
+  return (
+    <section className="admin-table revenue-composition" aria-labelledby="revenue-composition-title">
+      <div className="revenue-composition-copy">
+        <span className="revenue-composition-eyebrow">{scopeLabel}</span>
+        <h2 id="revenue-composition-title" className="admin-section-title">住宿價值組成</h2>
+        <p>查看所選期間的住宿價值，分別已收回多少、仍待收多少，以及未收費的住宿價值。</p>
+        <div className="revenue-collection-rate">
+          <strong>{collectionRate === null ? '—' : `${collectionRate}%`}</strong>
+          <span>已收率</span>
+          <small>僅計算應收住宿</small>
+        </div>
+      </div>
+
+      <div className="revenue-donut-wrap">
+        <svg
+          className="revenue-donut"
+          viewBox="0 0 120 120"
+          role="img"
+          aria-labelledby="revenue-donut-title revenue-donut-description"
+        >
+          <title id="revenue-donut-title">{scopeLabel}住宿價值組成</title>
+          <desc id="revenue-donut-description">
+            已收款 TWD {received.toLocaleString()}，尚待收款 TWD {outstanding.toLocaleString()}，
+            未收費住宿 TWD {nonCash.toLocaleString()}。
+          </desc>
+          <circle className="revenue-donut-track" cx="60" cy="60" r={radius} />
+          {chartTotal > 0 && segments.map((segment) => {
+            const ratio = segment.value / chartTotal;
+            const dashLength = ratio * circumference;
+            const dashOffset = -accumulatedRatio * circumference;
+            accumulatedRatio += ratio;
+            return (
+              <circle
+                key={segment.tone}
+                className={`revenue-donut-segment ${segment.tone}`}
+                cx="60"
+                cy="60"
+                r={radius}
+                strokeDasharray={`${dashLength} ${circumference - dashLength}`}
+                strokeDashoffset={dashOffset}
+              />
+            );
+          })}
+        </svg>
+        <div className="revenue-donut-center" aria-hidden="true">
+          <span>TWD</span>
+          <strong>{accommodationValue.toLocaleString()}</strong>
+          <small>{bookingCount} 筆住宿</small>
+        </div>
+      </div>
+
+      <div className="revenue-composition-legend">
+        {segments.map((segment) => {
+          const percentage = chartTotal > 0 ? Math.round((segment.value / chartTotal) * 100) : 0;
+          return (
+            <div key={segment.tone} className={`revenue-legend-item ${segment.tone}`}>
+              <span className="revenue-legend-dot" aria-hidden="true" />
+              <div>
+                <span>{segment.label}</span>
+                <strong>TWD {segment.value.toLocaleString()}</strong>
+              </div>
+              <span className="revenue-legend-percentage">{percentage}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
