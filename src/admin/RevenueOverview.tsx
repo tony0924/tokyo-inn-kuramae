@@ -531,8 +531,10 @@ function RevenueCompositionChart({
         <p>查看所選期間的住宿價值，分別已收回多少、仍待收多少，以及未收費的住宿價值。</p>
         <div className="revenue-collection-rate">
           <strong>{collectionRate === null ? '—' : `${collectionRate}%`}</strong>
-          <span>已收率</span>
-          <small>僅計算應收住宿</small>
+          <div>
+            <span>已收率</span>
+            <small>僅計算應收住宿</small>
+          </div>
         </div>
       </div>
 
