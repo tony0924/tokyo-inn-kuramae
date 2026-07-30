@@ -70,16 +70,24 @@ export function AirportTransitTab() {
           <div className="card-icon">🚇</div>
           <div className="card-title">淺草線・藏前站出口（行李旅客）</div>
         </div>
-        <ul className="bullet-list">
+        <ul className="bullet-list airport-station-list">
           <li>
-            <strong>羽田機場方向抵達／前往成田機場方向</strong>
-            <br />
-            請使用 <strong>A0 電梯出口</strong>。
+            <div className="airport-station-copy">
+              <strong>羽田機場方向抵達／前往成田機場方向</strong>
+              <div className="airport-station-exit">
+                <span>請使用</span>
+                <strong>A0 電梯出口</strong>
+              </div>
+            </div>
           </li>
           <li>
-            <strong>成田機場方向抵達／前往羽田機場方向</strong>
-            <br />
-            請使用 <strong>A5 電梯出口</strong>。
+            <div className="airport-station-copy">
+              <strong>成田機場方向抵達／前往羽田機場方向</strong>
+              <div className="airport-station-exit">
+                <span>請使用</span>
+                <strong>A5 電梯出口</strong>
+              </div>
+            </div>
           </li>
         </ul>
         <a
