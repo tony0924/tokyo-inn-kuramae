@@ -44,6 +44,9 @@ export function CheckinTab() {
                 <div className="instruction-row" role="row">
                   <div className="instruction-label" role="cell">方式 B｜布製</div>
                   <div className="instruction-content" role="cell">
+                    <p className="instruction-summary">
+                      換上櫃內乾淨的床單與枕頭套，並將床上原有的床單與枕頭套洗淨。
+                    </p>
                     <ol className="instruction-steps">
                       <li>取下床上原有的床單與枕頭套，放入洗衣機清洗。</li>
                       <li>從櫃子取出乾淨的床單與枕頭套，換到床和枕頭上。</li>

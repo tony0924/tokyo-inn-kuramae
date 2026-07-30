@@ -1953,6 +1953,12 @@
       padding-left: 1.25rem;
     }
 
+    .instruction-summary {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
     .instruction-steps li + li {
       margin-top: 4px;
     }
