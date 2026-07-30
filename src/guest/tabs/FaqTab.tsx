@@ -26,7 +26,7 @@ export function FaqTab() {
 
       <Accordion icon="🛏️" title="床單和枕頭套怎麼處理？">
         <p className="faq-answer">
-          可二選一：使用拋棄式床單組，或清洗現有床單枕頭套後，換上櫃內乾淨的床單與枕頭套。
+          選一種方式即可：套上壁櫃內的拋棄式床單組；或將床上原有的床單與枕頭套清洗，並換上櫃內的乾淨備品。
           <button type="button" className="inline-button-link" onClick={() => jumpTo('checkin', 'anchor-checkin')}>
             查看 Check-In 說明 →
           </button>

@@ -28,21 +28,27 @@ export function CheckinTab() {
           <li>
             <div className="instruction-card">
               <div className="instruction-card-header">
-                <div className="instruction-card-title">床單／枕頭套使用說明</div>
-                <span className="instruction-choice-badge">二擇一</span>
+                <div className="instruction-card-title">床單與枕頭套：請選一種方式</div>
+                <span className="instruction-choice-badge">選一種即可</span>
               </div>
               <div className="instruction-table" role="table" aria-label="床單枕頭套使用說明">
                 <div className="instruction-row" role="row">
-                  <div className="instruction-label" role="cell">不用洗</div>
+                  <div className="instruction-label" role="cell">方式 A｜拋棄式</div>
                   <div className="instruction-content" role="cell">
-                    取出客廳壁櫃右側的拋棄式床單組，並套在床與枕頭上。
+                    <ol className="instruction-steps">
+                      <li>從客廳壁櫃右側取出拋棄式床單組。</li>
+                      <li>將床單套在床上、枕頭套套在枕頭上。</li>
+                    </ol>
                   </div>
                 </div>
                 <div className="instruction-row" role="row">
-                  <div className="instruction-label" role="cell">需要洗</div>
+                  <div className="instruction-label" role="cell">方式 B｜布製</div>
                   <div className="instruction-content" role="cell">
-                    將現有的床單和枕頭套放入洗衣機清洗，從櫃子中拿出乾淨的床單和枕頭套使用。
-                    洗完的床單與枕頭套晾乾後，請整理好放回櫃子。
+                    <ol className="instruction-steps">
+                      <li>取下床上原有的床單與枕頭套，放入洗衣機清洗。</li>
+                      <li>從櫃子取出乾淨的床單與枕頭套，換到床和枕頭上。</li>
+                      <li>洗好的床單與枕頭套晾乾後，摺好放回櫃子。</li>
+                    </ol>
                   </div>
                 </div>
               </div>
