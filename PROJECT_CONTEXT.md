@@ -48,6 +48,8 @@ Known deploy note: `firebase deploy --only functions` may end with exit code `1`
 - `/pending`: user is signed in but waiting for admin approval.
 - `/guest/*`: guest-facing pages. Allowed roles: `guest`, `admin`.
 - `/admin/*`: admin backend. Allowed role: `admin`; `/admin` defaults to `/admin/today`.
+- When an Admin previews `/guest/*`, a safe-area-aware fixed return bar remains
+  visible above the sticky Guest header so the Admin can always return to `/admin`.
 
 Routing entry point: `src/App.tsx`.
 

@@ -80,6 +80,7 @@ export function GuestLayout() {
 
   const isSearching = query.trim().length > 0;
   const guideActive = location.pathname.startsWith('/guest/guide');
+  const isAdminPreview = user?.role === 'admin';
 
   const toggleMobileGuide = () => {
     setQuery('');
@@ -170,16 +171,18 @@ export function GuestLayout() {
         onDismissToday={dismissWelcomeGuideToday}
       />
       <div className="top-bar" />
-      <header className="site-header">
+      {isAdminPreview && (
+        <aside className="admin-preview-dock" aria-label="管理員預覽模式">
+          <div className="admin-preview-dock-inner">
+            <span>管理員預覽房客頁面</span>
+            <NavLink to="/admin" className="admin-preview-back">
+              回管理後台
+            </NavLink>
+          </div>
+        </aside>
+      )}
+      <header className={`site-header${isAdminPreview ? ' admin-preview-active' : ''}`}>
         <div className="header-inner">
-          {user?.role === 'admin' && (
-            <div className="admin-preview-bar">
-              <span>正在以管理員身份預覽房客頁面</span>
-              <NavLink to="/admin" className="admin-preview-back">
-                回管理後台
-              </NavLink>
-            </div>
-          )}
           {guestCode && (
             <div className="admin-preview-bar">
               <span>正在使用訪客碼 {formatGuestCode(guestCode)} 查看房客頁面</span>
