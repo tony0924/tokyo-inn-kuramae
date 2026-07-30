@@ -35,6 +35,9 @@ export function CheckinTab() {
                 <div className="instruction-row" role="row">
                   <div className="instruction-label" role="cell">方式 A｜拋棄式</div>
                   <div className="instruction-content" role="cell">
+                    <p className="instruction-summary">
+                      套上櫃內的拋棄式床單與枕頭套，使用完畢後直接丟棄即可。
+                    </p>
                     <ol className="instruction-steps">
                       <li>從客廳壁櫃右側取出拋棄式床單組。</li>
                       <li>將床單套在床上、枕頭套套在枕頭上。</li>
