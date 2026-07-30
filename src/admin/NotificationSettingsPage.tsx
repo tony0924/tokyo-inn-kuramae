@@ -286,7 +286,7 @@ function PushSettingsCard({
 
   let status = '正在檢查這台裝置…';
   if (capability && !capability.supported) status = '此裝置或瀏覽器不支援 Web Push。';
-  else if (capability?.requiresHomeScreen) status = '請從 iPhone 主畫面的「藏前管理」開啟後再設定。';
+  else if (capability?.requiresHomeScreen) status = '請從 iPhone 主畫面的「KURACHEN 管理」開啟後再設定。';
   else if (capability && !capability.configured) status = 'Firebase Web Push 公鑰尚未設定。';
   else if (currentEnabled) status = '這台裝置已開啟管理推播。';
   else if (capability) status = '這台裝置尚未開啟管理推播。';

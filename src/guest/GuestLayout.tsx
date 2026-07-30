@@ -199,7 +199,7 @@ export function GuestLayout() {
             <div className="header-brand">
               <div className="brand-icon">🏯</div>
               <div className="brand-text">
-                <div className="title">藏前 NEXT</div>
+                <div className="title">KURACHEN Stay</div>
                 <div className="subtitle">Guest Guide · Room 204</div>
               </div>
             </div>
@@ -336,7 +336,7 @@ export function GuestLayout() {
             <div className="guest-mobile-more-handle" aria-hidden="true" />
             <div className="guest-mobile-more-heading">
               <div>
-                <p>藏前 NEXT</p>
+                <p>KURACHEN Stay</p>
                 <h2 id="guest-mobile-more-title">住宿資訊</h2>
               </div>
               <button

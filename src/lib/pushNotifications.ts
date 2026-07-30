@@ -60,7 +60,7 @@ export async function getPushCapability(): Promise<PushCapability> {
 export async function registerAdminPushDevice(uid: string): Promise<string> {
   const capability = await getPushCapability();
   if (!capability.supported) throw new Error('此裝置或瀏覽器不支援推播通知。');
-  if (capability.requiresHomeScreen) throw new Error('請先將藏前管理加入 iPhone 主畫面，再從主畫面開啟。');
+  if (capability.requiresHomeScreen) throw new Error('請先將 KURACHEN 管理加入 iPhone 主畫面，再從主畫面開啟。');
   if (!capability.configured) throw new Error('Web Push 尚未設定完成，請先加入 Firebase VAPID 公鑰。');
 
   const permission = await Notification.requestPermission();

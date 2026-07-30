@@ -12,7 +12,7 @@ const SETTINGS_COLLECTION = 'settings';
 const SETTINGS_ID = 'notifications';
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
-  senderName: 'Kuramae NEXT',
+  senderName: 'KURACHEN Stay',
   senderEmail: 'ttoonnyy8024@gmail.com',
   bookingCreatedReminder: {
     subject: '預約完成通知｜{{guestName}} 您好',
@@ -40,6 +40,9 @@ export function watchNotificationSettings(
       cb({
         ...DEFAULT_NOTIFICATION_SETTINGS,
         ...data,
+        senderName: data.senderName === 'Kuramae NEXT'
+          ? DEFAULT_NOTIFICATION_SETTINGS.senderName
+          : data.senderName || DEFAULT_NOTIFICATION_SETTINGS.senderName,
         bookingCreatedReminder: {
           ...DEFAULT_NOTIFICATION_SETTINGS.bookingCreatedReminder,
           ...data.bookingCreatedReminder,

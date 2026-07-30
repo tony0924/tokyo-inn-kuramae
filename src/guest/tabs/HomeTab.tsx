@@ -27,7 +27,7 @@ export function HomeTab() {
       <div className="hero">
         <div className="hero-badge">✦ Welcome · 歡迎入住</div>
         <h1>
-          藏前 NEXT
+          KURACHEN Stay
           <br />
           房客指南
         </h1>

@@ -1,8 +1,8 @@
 {
   "id": "/admin/",
-  "name": "藏前管理",
-  "short_name": "藏前管理",
-  "description": "藏前 NEXT 民宿預約與營運管理",
+  "name": "KURACHEN 管理",
+  "short_name": "KURACHEN",
+  "description": "KURACHEN Stay 預約與營運管理",
   "lang": "zh-TW",
   "dir": "ltr",
   "start_url": "/admin/",

@@ -98,7 +98,7 @@ export function PwaStatus() {
       )}
       {waitingWorker && (
         <div className="pwa-status pwa-status-update" role="status">
-          <span>藏前管理有新版本。</span>
+          <span>KURACHEN 管理有新版本。</span>
           <button type="button" onClick={applyUpdate}>
             立即更新
           </button>

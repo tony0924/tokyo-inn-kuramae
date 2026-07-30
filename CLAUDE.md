@@ -1,4 +1,4 @@
-# 藏前NEXT 民宿管理系統 — 專案說明
+# KURACHEN Stay 民宿管理系統 — 專案說明
 
 React + Vite + TypeScript 前端，後端用 Firebase（Auth + Firestore + Hosting + Cloud Functions v2）。
 管理一間位於東京蔵前的單一房間民宿（Room 204），提供三種使用者體驗：

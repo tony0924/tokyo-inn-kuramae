@@ -7,7 +7,7 @@ export function PushForegroundBridge() {
       window.dispatchEvent(
         new CustomEvent('admin-push-received', {
           detail: {
-            title: payload.data?.title || payload.notification?.title || '藏前管理',
+            title: payload.data?.title || payload.notification?.title || 'KURACHEN 管理',
             body: payload.data?.body || payload.notification?.body || '有新的管理通知',
           },
         })

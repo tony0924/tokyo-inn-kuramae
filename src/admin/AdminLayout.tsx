@@ -214,7 +214,7 @@ export function AdminLayout() {
             <div className="admin-more-handle" aria-hidden="true" />
             <div className="admin-more-heading">
               <div>
-                <p>藏前管理</p>
+                <p>KURACHEN 管理</p>
                 <h2 id="admin-more-title">更多功能</h2>
               </div>
               <button type="button" onClick={() => setMoreOpen(false)} aria-label="關閉更多選單">×</button>

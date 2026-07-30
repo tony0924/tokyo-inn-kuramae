@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'tokyo-admin-v3';
+const CACHE_VERSION = 'kurachen-admin-v1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const STATIC_ASSETS = [
   '/offline.html',
@@ -19,7 +19,10 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith('tokyo-admin-') && key !== STATIC_CACHE)
+            .filter((key) =>
+              (key.startsWith('tokyo-admin-') || key.startsWith('kurachen-admin-'))
+              && key !== STATIC_CACHE
+            )
             .map((key) => caches.delete(key))
         )
       )
@@ -42,7 +45,7 @@ self.addEventListener('push', (event) => {
   }
 
   const data = payload.data || {};
-  const title = data.title || payload.notification?.title || '藏前管理';
+  const title = data.title || payload.notification?.title || 'KURACHEN 管理';
   const body = data.body || payload.notification?.body || '有新的管理通知';
   const targetUrl = safeNotificationUrl(data.url);
 
@@ -51,7 +54,7 @@ self.addEventListener('push', (event) => {
       body,
       icon: '/icons/admin-icon-192.png',
       badge: '/icons/admin-icon-192.png',
-      tag: data.tag || 'tokyo-admin-notification',
+      tag: data.tag || 'kurachen-admin-notification',
       renotify: true,
       data: { url: targetUrl },
     }),

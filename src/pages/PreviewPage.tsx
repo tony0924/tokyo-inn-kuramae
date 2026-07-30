@@ -35,7 +35,7 @@ export default function PreviewPage() {
         <header className="preview-hero">
           <span className="preview-eyebrow">Tokyo · Kuramae</span>
           <h1 className="preview-title">
-            藏前 <span className="accent">NEXT</span>
+            KURACHEN <span className="accent">Stay</span>
           </h1>
           <p className="preview-subtitle">東京下町的靜謐住處</p>
 

@@ -55,7 +55,7 @@ function PageTitle() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    document.title = `${ROUTE_TITLES[pathname] || '住宿資訊'}｜藏前 NEXT`;
+    document.title = `${ROUTE_TITLES[pathname] || '住宿資訊'}｜KURACHEN Stay`;
   }, [pathname]);
 
   return null;

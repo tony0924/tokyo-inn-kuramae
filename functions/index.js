@@ -25,7 +25,7 @@ const WEBSITE_URL = "https://tokyo-inn-kuramae.web.app";
 const GUEST_CODE_LOGIN_URL = `${WEBSITE_URL}/code-login`;
 
 const DEFAULT_SETTINGS = {
-  senderName: "Kuramae NEXT",
+  senderName: "KURACHEN Stay",
   senderEmail: "ttoonnyy8024@gmail.com",
   bookingCreatedReminder: {
     subject: "預約完成通知｜{{guestName}} 您好",
@@ -292,7 +292,7 @@ export const sendUserApprovalCompletedNotice = onDocumentUpdated(
     await sendEmail({
       to: [after.email],
       cc: adminEmails,
-      subject: "帳號審核完成｜藏前 NEXT",
+      subject: "帳號審核完成｜KURACHEN Stay",
       text:
         `您好 ${after.displayName || ""}，\n\n` +
         `您的帳號已完成審核，現在可以使用 Gmail 登入入住資訊網站。\n\n` +
@@ -619,20 +619,24 @@ export const normalizeRecommendationCategorySortOrders = onRequest(
 async function getNotificationSettings() {
   const snap = await db.collection("settings").doc("notifications").get();
   if (!snap.exists) return DEFAULT_SETTINGS;
+  const stored = snap.data();
   return {
     ...DEFAULT_SETTINGS,
-    ...snap.data(),
+    ...stored,
+    senderName: stored?.senderName === "Kuramae NEXT"
+      ? DEFAULT_SETTINGS.senderName
+      : stored?.senderName || DEFAULT_SETTINGS.senderName,
     bookingCreatedReminder: {
       ...DEFAULT_SETTINGS.bookingCreatedReminder,
-      ...(snap.data()?.bookingCreatedReminder || {}),
+      ...(stored?.bookingCreatedReminder || {}),
     },
     checkInReminder: {
       ...DEFAULT_SETTINGS.checkInReminder,
-      ...(snap.data()?.checkInReminder || {}),
+      ...(stored?.checkInReminder || {}),
     },
     checkoutAdminReminder: {
       ...DEFAULT_SETTINGS.checkoutAdminReminder,
-      ...(snap.data()?.checkoutAdminReminder || {}),
+      ...(stored?.checkoutAdminReminder || {}),
     },
   };
 }
