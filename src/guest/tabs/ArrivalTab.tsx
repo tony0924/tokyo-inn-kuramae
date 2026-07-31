@@ -2,9 +2,11 @@ import { Accordion } from '@/guest/shared/Accordion';
 import { arrivalPhotos } from '@/guest/assets/photos';
 import { ZoomableImg } from '@/guest/shared/Lightbox';
 import { useJumpAnchor } from '@/guest/shared/useJumpAnchor';
+import { useGuestGuide } from '@/guest/GuestGuideProvider';
 
 export function ArrivalTab() {
   useJumpAnchor();
+  const { guide } = useGuestGuide();
 
   return (
     <div className="section active">
@@ -26,12 +28,12 @@ export function ArrivalTab() {
             marginBottom: 14,
           }}
         >
-          〒111-0051 東京都台東区蔵前 4丁目23−7
+          {guide?.accommodation.address}
           <br />
-          日神デュオステージ蔵前ＮＥＸＴ
+          {guide?.accommodation.buildingName}
         </p>
         <a
-          href="https://maps.app.goo.gl/fdn49QNQ2yPVje9F7"
+          href={guide?.accommodation.mapUrl}
           target="_blank"
           rel="noreferrer"
           className="map-btn"
@@ -46,61 +48,17 @@ export function ArrivalTab() {
           <div className="card-title">抵達當天流程</div>
         </div>
         <ol className="step-list compact">
-          <li>抵達藏前站後，優先走有電梯或手扶梯的出口，拖行李會比較輕鬆。</li>
-          <li>步行到日神デュオステージ蔵前ＮＥＸＴ，確認地址為蔵前 4丁目23−7。</li>
-          <li>第一扇玻璃門可直接進入；第二扇玻璃門使用鑰匙上的磁扣感應右側黑色區域。</li>
-          <li>搭電梯到二樓，出電梯左轉，第一間即為 204 室。</li>
-          <li>使用電子鎖密碼或鑰匙開門，下方門鎖請保持開啟狀態。</li>
+          {guide?.arrival.steps.map((step) => <li key={step}>{step}</li>)}
         </ol>
       </div>
 
       <Accordion id="anchor-building" icon="🏢" title="建築進入方式" defaultOpen>
         <ul className="bullet-list">
-          <li>第一扇玻璃門 — 直接進入</li>
-          <li>
-            第二扇玻璃門 —{' '}
-            <strong>需用鑰匙上的磁扣，感應右側牆上黑色感應區</strong>
-          </li>
-          <li>右側樓梯跟後門皆可使用鑰匙開門</li>
-          <li>進入後搭電梯到二樓</li>
-          <li>
-            出電梯左轉，第一間房即為 <strong>204 室</strong>（門上有數字電子鎖）
-          </li>
-          <li>
-            可使用數字密碼或用鑰匙轉動「上方」門鎖進入（下方門鎖請保留開啟狀態）
-          </li>
+          {guide?.arrival.buildingAccess.map((item) => <li key={item}>{item}</li>)}
         </ul>
-        <div className="img-single">
-          <ZoomableImg src={arrivalPhotos.building} alt="建築外觀" />
-        </div>
-        <div className="img-single">
-          <ZoomableImg
-            src={arrivalPhotos.doorLock}
-            alt="門鎖說明"
-            style={{ maxWidth: '100%' }}
-          />
-        </div>
       </Accordion>
 
       <Accordion icon="🛋️" title="屋內照片">
-        <div style={{ marginBottom: 14 }}>
-          <ZoomableImg
-            src={arrivalPhotos.floorPlan}
-            alt="室內平面圖"
-            style={{ maxWidth: '100%', borderRadius: 10 }}
-          />
-          <div
-            style={{
-              fontSize: '0.72rem',
-              color: 'var(--text-soft)',
-              textAlign: 'center',
-              marginTop: 5,
-            }}
-          >
-            室內平面圖
-          </div>
-        </div>
-
         <PhotoGroup label="廚房" hint="找 IH 爐、冰箱與備品位置" srcs={arrivalPhotos.kitchen} />
         <PhotoGroup label="客廳" hint="找沙發床、壁櫃與餐桌位置" srcs={arrivalPhotos.livingRoom} />
         <PhotoGroup label="臥室" hint="確認床、枕頭、棉被與冷氣位置" srcs={arrivalPhotos.bedroom} />
@@ -121,7 +79,7 @@ export function ArrivalTab() {
         <div className="callout info">
           <span className="callout-icon">📍</span>
           <div>
-            <strong>位置：</strong>面對一樓電梯右手邊
+            <strong>位置：</strong>{guide?.garbageLocation}
           </div>
         </div>
         <ul className="bullet-list">

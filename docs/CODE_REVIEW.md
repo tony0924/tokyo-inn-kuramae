@@ -22,7 +22,7 @@ Outlet context 提供歷史頁使用，降低重複讀取與狀態不一致。
 
 重寫根 `AGENTS.md`，並新增 Admin、Guest、data layer、Functions、docs 的局部規範，移除過時的頁數、路由與通知描述。
 
-## P0 — 優先處理
+## P0 — 已完成
 
 ### Guest 敏感內容被編譯進公開靜態 bundle
 
@@ -37,14 +37,15 @@ Outlet context 提供歷史頁使用，降低重複讀取與狀態不一致。
 - 未授權者可從靜態資產或 Git 歷史取得敏感住宿資訊。
 - 更換 UI route guard 或檔名不能解決問題。
 
-**建議**
+**完成方式（2026-07-31）**
 
-1. 建立由 Functions callable 或具權限 Firestore 文件提供的 `guestGuideContent`。
-2. Google guest 依 booking 授權；訪客碼改由 callable 驗證後回傳短效內容，或換成 Firebase custom token session。
-3. Guest bundle 只保留非敏感版面與 placeholder。
-4. 完成遷移後旋轉 Wi-Fi／進房憑證，並評估 Git 歷史清理。
+1. 敏感文字遷移至 `guestGuideContent/private`。
+2. Google guest 由 Firestore Rules 授權；訪客碼改由 `getGuestPortalData` Callable 驗證。
+3. 公開 client 不再直接讀 `guestAccessCodes` 或透過訪客碼讀 `bookings`。
+4. 搜尋索引在授權後合併私密內容；敏感圖片不再進 Hosting bundle。
+5. 新增 Functions 訪客碼有效期測試與 Firestore Rules emulator 測試。
 
-這是架構級變更，必須先做資料與授權設計，不應在沒有完整回歸測試時直接熱修。
+仍需由營運者旋轉 Wi-Fi／進房憑證，並視風險評估 Git 歷史清理。
 
 ## P1 — 下一輪
 

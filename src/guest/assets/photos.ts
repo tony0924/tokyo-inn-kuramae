@@ -1,7 +1,4 @@
 export const arrivalPhotos = {
-  building: new URL('./arrival/IMG_3357.jpg', import.meta.url).href,
-  doorLock: new URL('./arrival/door-lock.jpg', import.meta.url).href,
-  floorPlan: new URL('../../../pic/arrival/image.png', import.meta.url).href,
   kitchen: [new URL('./arrival/IMG_3354.jpg', import.meta.url).href],
   livingRoom: [
     new URL('./arrival/IMG_3351.jpg', import.meta.url).href,
@@ -27,8 +24,6 @@ export const arrivalPhotos = {
 };
 
 export const facilityPhotos = {
-  doorOpen: new URL('./facilities/1f164cc3-3760-4954-b86c-d88c7751e33d.jpg', import.meta.url).href,
-  doorLock: new URL('./facilities/28ef3eae-cc20-437c-94a4-9a2124e150e0.jpg', import.meta.url).href,
   lightRemote: new URL('./facilities/79f66e50-5737-4573-b396-0a88ce5e5fd8.jpg', import.meta.url).href,
   sofaOpen: new URL('./facilities/image.jpg', import.meta.url).href,
   sofaClosed: new URL('./facilities/image 1.jpg', import.meta.url).href,

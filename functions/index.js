@@ -12,6 +12,10 @@ import {
 } from "firebase-functions/v2/firestore";
 import nodemailer from "nodemailer";
 import { InvalidGoogleMapsUrlError, resolveGoogleMapsUrl } from "./googleMapsUrl.js";
+import {
+  isGuestAccessCurrentlyValid,
+  normalizeGuestAccessCode,
+} from "./guestPortalAccess.js";
 
 initializeApp();
 
@@ -23,6 +27,7 @@ const REGION = "asia-east1";
 const TIME_ZONE = "Asia/Taipei";
 const WEBSITE_URL = "https://tokyo-inn-kuramae.web.app";
 const GUEST_CODE_LOGIN_URL = `${WEBSITE_URL}/code-login`;
+const PRIVATE_GUEST_GUIDE_PATH = "guestGuideContent/private";
 
 const DEFAULT_SETTINGS = {
   senderName: "KURACHEN Stay",
@@ -165,6 +170,57 @@ export const createGuestCommunityMessage = onCall(
     }
 
     return { id: message.id };
+  }
+);
+
+export const getGuestPortalData = onCall(
+  {
+    region: REGION,
+    enforceAppCheck: false,
+  },
+  async (request) => {
+    const code = normalizeGuestAccessCode(request.data?.guestAccessCode);
+    if (!code) {
+      throw new HttpsError("invalid-argument", "訪客碼格式不正確。");
+    }
+
+    const accessSnapshot = await db.collection("guestAccessCodes").doc(code).get();
+    const access = accessSnapshot.data();
+    if (!isGuestAccessCurrentlyValid(access)) {
+      throw new HttpsError("permission-denied", "訪客碼不存在、尚未生效或已過期。");
+    }
+
+    const [guideSnapshot, bookingSnapshot] = await Promise.all([
+      db.doc(PRIVATE_GUEST_GUIDE_PATH).get(),
+      access.bookingId
+        ? db.collection("bookings").doc(access.bookingId).get()
+        : Promise.resolve(null),
+    ]);
+    if (!guideSnapshot.exists) {
+      logger.error("Private guest guide is missing.");
+      throw new HttpsError("failed-precondition", "房客指南尚未設定完成。");
+    }
+
+    const booking = bookingSnapshot?.exists ? bookingSnapshot.data() : null;
+    return {
+      access: {
+        code,
+        bookingId: typeof access.bookingId === "string" ? access.bookingId : null,
+        guestName: cleanCommunityAuthorName(access.guestName),
+        startsAt: access.startsAt.toMillis(),
+        expiresAt: access.expiresAt.toMillis(),
+      },
+      booking: bookingSnapshot?.exists
+        ? {
+            id: bookingSnapshot.id,
+            guestName: String(booking?.guestName || access.guestName || "訪客").slice(0, 80),
+            partySize: Number.isInteger(booking?.partySize) ? booking.partySize : 0,
+            checkIn: booking?.checkIn?.toMillis?.() || access.startsAt.toMillis(),
+            checkOut: booking?.checkOut?.toMillis?.() || access.expiresAt.toMillis(),
+          }
+        : null,
+      guide: guideSnapshot.data(),
+    };
   }
 );
 

@@ -1,4 +1,4 @@
-const STAY_ADDRESS = '東京都台東区蔵前4丁目23-7 日神デュオステージ蔵前NEXT';
+import { useGuestGuide } from '@/guest/GuestGuideProvider';
 const NARITA_AIRPORT = 'Narita International Airport';
 const HANEDA_AIRPORT = 'Haneda Airport';
 
@@ -14,6 +14,10 @@ const googleMapsTransitUrl = (origin: string, destination: string) => {
 };
 
 export function AirportTransitTab() {
+  const { guide } = useGuestGuide();
+  const stayAddress = guide
+    ? `${guide.accommodation.address} ${guide.accommodation.buildingName}`
+    : '';
   return (
     <div className="section active">
       <div className="page-header">
@@ -31,7 +35,7 @@ export function AirportTransitTab() {
         </p>
         <div className="airport-map-actions">
           <a
-            href={googleMapsTransitUrl(NARITA_AIRPORT, STAY_ADDRESS)}
+            href={googleMapsTransitUrl(NARITA_AIRPORT, stayAddress)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -39,7 +43,7 @@ export function AirportTransitTab() {
             🛫 成田機場 → 住宿
           </a>
           <a
-            href={googleMapsTransitUrl(HANEDA_AIRPORT, STAY_ADDRESS)}
+            href={googleMapsTransitUrl(HANEDA_AIRPORT, stayAddress)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -47,7 +51,7 @@ export function AirportTransitTab() {
             🛫 羽田機場 → 住宿
           </a>
           <a
-            href={googleMapsTransitUrl(STAY_ADDRESS, NARITA_AIRPORT)}
+            href={googleMapsTransitUrl(stayAddress, NARITA_AIRPORT)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -55,7 +59,7 @@ export function AirportTransitTab() {
             🧳 住宿 → 成田機場
           </a>
           <a
-            href={googleMapsTransitUrl(STAY_ADDRESS, HANEDA_AIRPORT)}
+            href={googleMapsTransitUrl(stayAddress, HANEDA_AIRPORT)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -180,7 +184,7 @@ export function AirportTransitTab() {
           </ul>
 
           <a
-            href={googleMapsTransitUrl(NARITA_AIRPORT, STAY_ADDRESS)}
+            href={googleMapsTransitUrl(NARITA_AIRPORT, stayAddress)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -188,7 +192,7 @@ export function AirportTransitTab() {
             📍 用 Google Maps 查看成田路線
           </a>
           <a
-            href={googleMapsTransitUrl(STAY_ADDRESS, NARITA_AIRPORT)}
+            href={googleMapsTransitUrl(stayAddress, NARITA_AIRPORT)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -239,7 +243,7 @@ export function AirportTransitTab() {
           </ul>
 
           <a
-            href={googleMapsTransitUrl(HANEDA_AIRPORT, STAY_ADDRESS)}
+            href={googleMapsTransitUrl(HANEDA_AIRPORT, stayAddress)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"
@@ -247,7 +251,7 @@ export function AirportTransitTab() {
             📍 用 Google Maps 查看羽田路線
           </a>
           <a
-            href={googleMapsTransitUrl(STAY_ADDRESS, HANEDA_AIRPORT)}
+            href={googleMapsTransitUrl(stayAddress, HANEDA_AIRPORT)}
             target="_blank"
             rel="noreferrer"
             className="map-btn"

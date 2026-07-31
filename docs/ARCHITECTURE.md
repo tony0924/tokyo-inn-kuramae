@@ -38,11 +38,13 @@ Google 使用者
   └─ admin → Admin + Guest preview
 
 訪客碼使用者
-  └─ 有效碼驗證 → Guest Guide
+  └─ Callable 驗證有效碼 → Sanitized booking + private Guest Guide
 ```
 
-Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。訪客碼由
-`guestAccessCodes/{code}` 的 `active`、`startsAt`、`expiresAt` 決定。
+Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。已啟用且綁定
+預約的 Google guest 可由 Rules 讀取 `guestGuideContent/private`。訪客碼不再允許
+client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗證
+`active`、`startsAt`、`expiresAt` 後，只回傳私密指南與經過清理的住宿摘要。
 
 ## 核心營運流程
 
@@ -56,8 +58,8 @@ Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。�
 
 ### 訪客登入
 
-1. Google guest 或訪客碼通過 `ProtectedRoute`。
-2. Guest Layout 載入完整指南並寫入 `guestPageViews`。
+1. Google guest 由 Auth／Rules 驗證；訪客碼由 `getGuestPortalData` 驗證。
+2. Guest Layout 在授權後載入 `guestGuideContent/private` 並寫入 `guestPageViews`。
 3. 訪客碼每日首次 `code_login` 由 Function 以
    `guestCodeDailyLogins/{code_date}` 去重。
 4. Admin 收到 push，事件同時寫入 `adminNotifications`。
@@ -85,4 +87,6 @@ Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。�
 - Admin data 由 Firebase Auth + Firestore role rules 保護。
 - Functions 系統 collection 只允許 Admin 讀或完全禁止 client。
 - Secrets 使用 Firebase Secret Manager，不進 Git 或 client bundle。
-- 目前 Guest 敏感內容仍編譯在靜態 bundle；這是 Review 中最高優先技術債，詳見 `CODE_REVIEW.md`。
+- 地址、房號、Wi-Fi、入口與門鎖文字只存在 `guestGuideContent/private`，不編譯進公開 bundle。
+- 訪客碼 client 只能透過 Callable 取得經過清理的資料，不能直接讀訪客碼或 booking 文件。
+- 含入口、門鎖與平面圖的敏感圖片不進 Hosting bundle；未來若重新提供，必須使用受保護媒體端點。

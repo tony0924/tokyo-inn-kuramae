@@ -135,6 +135,18 @@ Relevant files:
 - `src/admin/TodayDashboard.tsx`
 - `firestore.rules`
 
+## Protected Guest Guide Content
+
+- Address, room, Wi-Fi, entry, door-lock, garbage-location, and private search
+  entries live in `guestGuideContent/private` instead of the Hosting bundle.
+- Active Google guests and Admins read the document through Firestore Rules.
+- Guest-code users call `getGuestPortalData`; the Function validates the code
+  window and returns the private guide plus a sanitized booking summary.
+- Public clients cannot directly read `guestAccessCodes` or use a code to read
+  `bookings`.
+- Entry, lock, and floor-plan images are intentionally excluded from Hosting.
+  Protected media delivery must be designed before those images are restored.
+
 ## Frontend Performance
 
 - The public Preview route is intentionally outside the authenticated Firebase

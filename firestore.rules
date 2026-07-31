@@ -29,6 +29,19 @@ service cloud.firestore {
         && getUserDoc(request.auth.uid).role == 'admin';
     }
 
+    function isActiveGuest() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && getUserDoc(request.auth.uid).role == 'guest'
+        && getUserDoc(request.auth.uid).active == true
+        && getUserDoc(request.auth.uid).bookingId is string;
+    }
+
+    match /guestGuideContent/{id} {
+      allow read: if isAdmin() || isActiveGuest();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
 
@@ -168,12 +181,7 @@ service cloud.firestore {
     }
 
     match /guestAccessCodes/{code} {
-      allow get: if isAdmin()
-        || (
-          resource.data.active == true
-          && resource.data.startsAt <= request.time
-          && resource.data.expiresAt > request.time
-        );
+      allow get: if isAdmin();
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
@@ -219,8 +227,7 @@ service cloud.firestore {
     match /bookings/{id} {
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.guestUid == request.auth.uid)
-        || isAssignedBookingGuest(id)
-        || isValidGuestAccessCode(resource.data.guestAccessCode);
+        || isAssignedBookingGuest(id);
       allow create, update, delete: if isAdmin();
     }
 

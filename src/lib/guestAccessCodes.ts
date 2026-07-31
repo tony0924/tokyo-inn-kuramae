@@ -2,7 +2,6 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -13,16 +12,12 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { getGuestPortalData, clearGuestPortalCache } from './guestGuide';
 import type { GuestAccessCode, GuestAccessCodeDoc } from '@/types';
 
 const COLLECTION = 'guestAccessCodes';
 const SESSION_KEY = 'tokyoInnGuestAccessCode';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const VALIDATION_CACHE_MS = 30_000;
-const validCodeCache = new Map<
-  string,
-  { access: GuestAccessCode; checkedAt: number }
->();
 
 export function normalizeGuestCode(code: string): string {
   return code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -119,34 +114,9 @@ export async function validateGuestAccessCode(
 ): Promise<GuestAccessCode | null> {
   const normalized = normalizeGuestCode(code);
   if (!normalized) return null;
-
-  const now = Date.now();
-  const cached = validCodeCache.get(normalized);
-  if (
-    cached &&
-    now - cached.checkedAt < VALIDATION_CACHE_MS &&
-    cached.access.active &&
-    cached.access.startsAt.toDate().getTime() <= now &&
-    cached.access.expiresAt.toDate().getTime() > now
-  ) {
-    return cached.access;
-  }
-
-  const snap = await getDoc(doc(db, COLLECTION, normalized));
-  if (!snap.exists()) return null;
-
-  const data = snap.data() as GuestAccessCodeDoc;
-  const startsAt = data.startsAt.toDate().getTime();
-  const expiresAt = data.expiresAt.toDate().getTime();
-
-  if (!data.active || startsAt > now || expiresAt <= now) return null;
-
-  const access = {
-    id: snap.id,
-    ...data,
-  };
-  validCodeCache.set(normalized, { access, checkedAt: now });
-  return access;
+  return getGuestPortalData(normalized)
+    .then((data) => data.access)
+    .catch(() => null);
 }
 
 export function saveGuestAccessSession(code: string): void {
@@ -159,6 +129,6 @@ export function getStoredGuestAccessCode(): string | null {
 
 export function clearGuestAccessSession(): void {
   const storedCode = getStoredGuestAccessCode();
-  if (storedCode) validCodeCache.delete(normalizeGuestCode(storedCode));
+  clearGuestPortalCache(storedCode);
   localStorage.removeItem(SESSION_KEY);
 }

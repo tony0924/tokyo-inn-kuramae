@@ -23,16 +23,12 @@ export interface SearchEntry {
 
 export const searchIndex: SearchEntry[] = [
   { section: '使用指南', tab: 'guide', title: '網站使用指南', content: '如何使用網站 新手教學 搜尋 功能 導覽 使用說明 help guide' },
-  { section: '首頁', tab: 'home', title: 'Wi-Fi 密碼', content: 'wifi chen204 12345678 網路 密碼 wireless' },
-  { section: '首頁', tab: 'home', title: '住宿地址', content: '台東区 蔵前 4丁目23 Room 204 地址 address 房間號碼' },
   { section: '入退房', tab: 'checkin', title: 'Check-In 注意事項', content: '入住 冰箱 床單 枕頭套 禁菸 熱水機 checkin 入房', anchor: 'anchor-checkin' },
   { section: '入退房', tab: 'checkin', title: 'Check-Out 注意事項', content: '退房 遙控器 吸塵器 清潔 冰箱 垃圾 關燈 checkout', anchor: 'anchor-checkout' },
   { section: '地鐵／公車', tab: 'transit', title: '附近地鐵與公車', content: '大江戶線 淺草線 銀座線 藏前站 田原町站 電梯 車站 地鐵 捷運 都營公車 都02 東42 東京站 錦糸町 Google Maps 地圖' },
   { section: '機場交通', tab: 'airport', title: '成田機場交通', content: '成田機場 sky access skyliner 淺草線 機場 交通 narita airport google maps 住宿到機場 回程' },
   { section: '機場交通', tab: 'airport', title: '羽田機場交通', content: '羽田機場 京急 淺草線 機場 交通 haneda airport google maps 住宿到機場 回程' },
   { section: '訪客推薦牆', tab: 'messages', title: '查看與分享訪客推薦', content: '留言 推薦 分享 餐廳 咖啡 景點 旅遊情報 message' },
-  { section: '抵達', tab: 'arrival', title: '抵達當天流程', content: '藏前站 大樓 磁扣 電梯 204 電子鎖 入房', anchor: 'anchor-arrival-flow' },
-  { section: '抵達', tab: 'arrival', title: '建築進入方式', content: '玻璃門 磁扣 鑰匙 感應 電梯 204室 門鎖 入口 building entrance', anchor: 'anchor-building' },
   { section: '抵達', tab: 'arrival', title: '垃圾分類', content: '垃圾 一般垃圾 廚餘 寶特瓶 塑膠 紙板 資源回收 trash garbage', anchor: 'anchor-garbage' },
   { section: '設施', tab: 'facilities', title: '門鎖使用', content: '門鎖 開門 鎖門 順時針 逆時針 open lock door', anchor: 'anchor-door-lock' },
   { section: '設施', tab: 'facilities', title: '燈具遙控器', content: '燈 遙控器 全室燈光 一鍵 關燈 開燈 light remote' },

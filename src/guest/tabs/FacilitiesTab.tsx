@@ -2,9 +2,11 @@ import { Accordion } from '@/guest/shared/Accordion';
 import { facilityPhotos } from '@/guest/assets/photos';
 import { ZoomableImg } from '@/guest/shared/Lightbox';
 import { useJumpAnchor } from '@/guest/shared/useJumpAnchor';
+import { useGuestGuide } from '@/guest/GuestGuideProvider';
 
 export function FacilitiesTab() {
   useJumpAnchor();
+  const { guide } = useGuestGuide();
 
   return (
     <div className="section active">
@@ -15,25 +17,8 @@ export function FacilitiesTab() {
 
       <Accordion id="anchor-door-lock" icon="🚪" title="玄關 — 門鎖" defaultOpen>
         <ul className="bullet-list">
-          <li>
-            Open：往<strong>逆時針</strong>轉 → 鎖起
-          </li>
-          <li>
-            Lock：往<strong>順時針</strong>轉 → 打開
-          </li>
+          {guide?.doorLock.instructions.map((item) => <li key={item}>{item}</li>)}
         </ul>
-        <div className="img-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-          <ZoomableImg
-            src={facilityPhotos.doorOpen}
-            alt="Open"
-            style={{ width: '100%', borderRadius: 8 }}
-          />
-          <ZoomableImg
-            src={facilityPhotos.doorLock}
-            alt="Lock"
-            style={{ width: '100%', borderRadius: 8 }}
-          />
-        </div>
       </Accordion>
 
       <Accordion icon="💡" title="燈具遙控器">
@@ -177,7 +162,7 @@ export function FacilitiesTab() {
         <div className="callout info">
           <span className="callout-icon">📍</span>
           <div>
-            <strong>位置：</strong>面對一樓電梯右手邊
+            <strong>位置：</strong>{guide?.garbageLocation}
           </div>
         </div>
         <ul className="bullet-list">

@@ -4,8 +4,8 @@ import { watchBooking } from '@/lib/bookings';
 import { resolveAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
 import {
   getStoredGuestAccessCode,
-  validateGuestAccessCode,
 } from '@/lib/guestAccessCodes';
+import { getGuestPortalData } from '@/lib/guestGuide';
 import type { Booking } from '@/types';
 
 interface GuestBookingState {
@@ -41,8 +41,13 @@ export function useGuestBooking(): GuestBookingState {
       if (!user) {
         const code = getStoredGuestAccessCode();
         if (code) {
-          const access = await validateGuestAccessCode(code).catch(() => null);
-          bookingId = access?.bookingId ?? null;
+          const portal = await getGuestPortalData(code).catch(() => null);
+          if (!cancelled) {
+            setBooking(portal?.booking ?? null);
+            setLoading(false);
+            setError(!portal);
+          }
+          return;
         }
       }
 

@@ -3,18 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
 import { useGuestBooking } from '@/guest/useGuestBooking';
 import { useAuth } from '@/auth/AuthProvider';
-
-const WIFI_PASSWORD = '12345678';
+import { useGuestGuide } from '@/guest/GuestGuideProvider';
 
 export function HomeTab() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { guide } = useGuestGuide();
   const [copied, setCopied] = useState(false);
   const { booking, loading: bookingLoading, error: bookingError } = useGuestBooking();
 
   const copyWifi = async () => {
     try {
-      await navigator.clipboard.writeText(WIFI_PASSWORD);
+      if (!guide) return;
+      await navigator.clipboard.writeText(guide.wifi.password);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
@@ -35,13 +36,13 @@ export function HomeTab() {
         </h1>
         <div className="hero-divider"></div>
         <p className="hero-sub">
-          日神デュオステージ蔵前ＮＥＸＴ · Room 204
+          {guide?.accommodation.buildingName} · {guide?.accommodation.roomLabel}
           <br />
-          台東区蔵前 4丁目23−7 · Tokyo
+          {guide?.accommodation.address}
         </p>
         <div className="hero-actions">
           <a
-            href="https://maps.app.goo.gl/oK5pP3odKRNFN2oi7"
+            href={guide?.accommodation.mapUrl}
             target="_blank"
             rel="noreferrer"
             className="btn-primary"
@@ -68,22 +69,22 @@ export function HomeTab() {
         </div>
       ) : null}
 
-      <div className="wifi-card">
+      {guide && <div className="wifi-card">
         <div className="wifi-icon-wrap">📶</div>
         <div className="wifi-info">
           <div className="wifi-row">
             <span className="wifi-label">名稱</span>
-            <span className="wifi-val">chen204</span>
+            <span className="wifi-val">{guide.wifi.ssid}</span>
           </div>
           <div className="wifi-row">
             <span className="wifi-label">密碼</span>
-            <span className="wifi-val">{WIFI_PASSWORD}</span>
+            <span className="wifi-val">{guide.wifi.password}</span>
           </div>
         </div>
         <button className="copy-btn" onClick={copyWifi}>
           {copied ? '已複製 ✓' : '複製密碼'}
         </button>
-      </div>
+      </div>}
 
       <div className="glass-card must-see-card">
         <div className="card-header">
@@ -99,7 +100,7 @@ export function HomeTab() {
           <button type="button" className="must-see-item" onClick={() => navTo('arrival')}>
             <span>02</span>
             <strong>抵達與進房</strong>
-            <small>磁扣、電梯、204 室</small>
+            <small>入口、電梯、房門位置</small>
           </button>
           <button type="button" className="must-see-item" onClick={() => navTo('facilities')}>
             <span>03</span>
@@ -172,21 +173,23 @@ export function HomeTab() {
           <span className="info-label">地址</span>
           <span className="info-value">
             <a
-              href="https://maps.app.goo.gl/oK5pP3odKRNFN2oi7"
+              href={guide?.accommodation.mapUrl}
               target="_blank"
               rel="noreferrer"
             >
-              〒111-0051 東京都台東区蔵前 4丁目23−7
+              {guide?.accommodation.address}
             </a>
           </span>
         </div>
         <div className="info-row">
           <span className="info-label">建物</span>
-          <span className="info-value">日神デュオステージ蔵前ＮＥＸＴ</span>
+          <span className="info-value">{guide?.accommodation.buildingName}</span>
         </div>
         <div className="info-row">
           <span className="info-label">房號</span>
-          <span className="info-value">204（二樓，出電梯左轉第一間）</span>
+          <span className="info-value">
+            {guide?.accommodation.roomLabel}（{guide?.accommodation.roomDirections}）
+          </span>
         </div>
       </div>
 

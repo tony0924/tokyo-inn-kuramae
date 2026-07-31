@@ -114,6 +114,38 @@ export interface GuestAccessCode extends GuestAccessCodeDoc {
   id: string;
 }
 
+export interface GuestGuideSearchEntry {
+  section: string;
+  tab: string;
+  title: string;
+  content: string;
+  anchor?: string;
+}
+
+export interface GuestGuidePrivateContent {
+  accommodation: {
+    buildingName: string;
+    address: string;
+    roomLabel: string;
+    roomDirections: string;
+    mapUrl: string;
+  };
+  wifi: {
+    ssid: string;
+    password: string;
+  };
+  arrival: {
+    steps: string[];
+    buildingAccess: string[];
+  };
+  doorLock: {
+    instructions: string[];
+  };
+  garbageLocation: string;
+  searchEntries: GuestGuideSearchEntry[];
+  updatedAt?: Timestamp;
+}
+
 export type GuestPageViewEventType = 'page_view' | 'code_login';
 export type GuestPageViewVisitorType = 'gmail' | 'guest_code' | 'admin_preview';
 

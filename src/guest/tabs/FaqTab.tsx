@@ -1,8 +1,10 @@
 import { Accordion } from '@/guest/shared/Accordion';
 import { useJumpTo } from '@/guest/shared/useJumpAnchor';
+import { useGuestGuide } from '@/guest/GuestGuideProvider';
 
 export function FaqTab() {
   const jumpTo = useJumpTo();
+  const { guide } = useGuestGuide();
 
   return (
     <div className="section active">
@@ -12,7 +14,9 @@ export function FaqTab() {
       </div>
 
       <Accordion icon="📶" title="Wi-Fi 怎麼連？" defaultOpen>
-        <p className="faq-answer">Wi-Fi 名稱是 chen204，密碼是 12345678。首頁也可以一鍵複製密碼。</p>
+        <p className="faq-answer">
+          Wi-Fi 名稱是 {guide?.wifi.ssid}，密碼是 {guide?.wifi.password}。首頁也可以一鍵複製密碼。
+        </p>
       </Accordion>
 
       <Accordion icon="🚿" title="沒有熱水怎麼辦？" defaultOpen>
@@ -35,7 +39,7 @@ export function FaqTab() {
 
       <Accordion icon="🗑️" title="垃圾要丟哪裡？">
         <p className="faq-answer">
-          垃圾區在一樓，面對電梯右手邊。一般垃圾裝袋後放右側檯面，資源回收依現場分類放置。
+          垃圾區位置：{guide?.garbageLocation}。一般垃圾裝袋後放右側檯面，資源回收依現場分類放置。
           <button type="button" className="inline-button-link" onClick={() => jumpTo('arrival', 'anchor-garbage')}>
             查看垃圾分類 →
           </button>
@@ -44,7 +48,7 @@ export function FaqTab() {
 
       <Accordion icon="🔑" title="鑰匙和門鎖怎麼用？">
         <p className="faq-answer">
-          第二扇玻璃門需用鑰匙上的磁扣感應，房門可使用電子鎖密碼或鑰匙開門。
+          請依抵達頁中安全載入的建築入口與房門操作步驟進房。
           <button type="button" className="inline-button-link" onClick={() => jumpTo('arrival', 'anchor-building')}>
             查看進房流程 →
           </button>

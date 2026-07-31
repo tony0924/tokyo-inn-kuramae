@@ -10,6 +10,7 @@ import {
 import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 import { searchIndex, type GuestTabId, type SearchEntry } from './data/searchIndex';
 import { WelcomeGuideModal } from './shared/WelcomeGuideModal';
+import { GuestGuideProvider, useGuestGuide } from './GuestGuideProvider';
 import './legacy.css';
 
 const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
@@ -53,6 +54,14 @@ function getTodayKey() {
 }
 
 export function GuestLayout() {
+  return (
+    <GuestGuideProvider>
+      <GuestLayoutContent />
+    </GuestGuideProvider>
+  );
+}
+
+function GuestLayoutContent() {
   const { user } = useAuth();
   const guestCode = !user ? getStoredGuestAccessCode() : null;
   const [query, setQuery] = useState('');
@@ -61,6 +70,7 @@ export function GuestLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { guide, loading: guideLoading, error: guideError } = useGuestGuide();
   const visitorKey = guestCode
     ? `code:${guestCode}`
     : user && user.role !== 'admin'
@@ -70,13 +80,16 @@ export function GuestLayout() {
   const matches: SearchEntry[] = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return searchIndex.filter(
+    const privateEntries: SearchEntry[] = (guide?.searchEntries ?? [])
+      .filter((entry) => TABS.some((tab) => tab.id === entry.tab))
+      .map((entry) => ({ ...entry, tab: entry.tab as GuestTabId }));
+    return [...searchIndex, ...privateEntries].filter(
       (i) =>
         i.title.toLowerCase().includes(q) ||
         i.content.toLowerCase().includes(q) ||
         i.section.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [guide, query]);
 
   const isSearching = query.trim().length > 0;
   const guideActive = location.pathname.startsWith('/guest/guide');
@@ -203,7 +216,9 @@ export function GuestLayout() {
               <div className="brand-icon">🏯</div>
               <div className="brand-text">
                 <div className="title">KURACHEN Stay</div>
-                <div className="subtitle">Guest Guide · Room 204</div>
+                <div className="subtitle">
+                  Guest Guide{guide?.accommodation.roomLabel ? ` · ${guide.accommodation.roomLabel}` : ''}
+                </div>
               </div>
             </div>
             <div className="search-wrap">
@@ -247,6 +262,13 @@ export function GuestLayout() {
       </header>
 
       <main>
+        {guideLoading ? (
+          <div className="stay-overview-loading" role="status">正在安全載入房客指南…</div>
+        ) : guideError ? (
+          <div className="stay-overview-unavailable" role="alert">
+            房客指南暫時無法載入，請重新整理或重新登入。
+          </div>
+        ) : null}
         {isSearching ? (
           <div id="search-results" className="active">
             <div className="page-header">

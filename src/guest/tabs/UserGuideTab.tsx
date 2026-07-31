@@ -81,7 +81,7 @@ export function UserGuideTab() {
             <span className="guide-step-number">2</span>
             <div>
               <strong>抵達時開啟進房流程</strong>
-              <p>跟著照片找到入口、感應磁扣，並前往二樓 204 室。</p>
+              <p>跟著照片找到入口，並依照安全載入的指示前往房間。</p>
             </div>
           </li>
           <li>
