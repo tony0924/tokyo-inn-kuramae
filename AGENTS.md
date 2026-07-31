@@ -123,7 +123,6 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `settings/notifications` | Email 寄件者與範本 | Admin |
 | `guestPageViews/{id}` | page view / code login 分析 | 驗證身分後新增；Admin 讀 |
 | `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
-| `guestFlightPlans/{bookingId_direction}` | 每筆預約的抵達／回程航班與交通快照 | Callable 驗證房客後讀寫；Admin 可直接讀 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |
 | `adminNotificationReads/{uid}` | 每位 Admin 最後已讀時間 | Admin 只讀寫自己 |
@@ -138,7 +137,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 ## 6. Cloud Functions
 
-入口目前為 `functions/index.js`，共 17 個 exports：
+入口目前為 `functions/index.js`，共 14 個 exports：
 
 事件觸發：
 
@@ -161,9 +160,6 @@ HTTP / callable：
 
 - `lookupGoogleMapPlace`：Admin callable，解析允許的 Google Maps URL。
 - `normalizeRecommendationCategorySortOrders`：帶 maintenance token 的維護端點。
-- `getGuestFlightPlans`：驗證 Google guest、訪客碼或 Admin preview 後讀取航班。
-- `saveGuestFlightPlan`：保存航班並嘗試以 Google Routes 計算機場交通。
-- `deleteGuestFlightPlan`：移除指定方向的航班資料。
 
 共同不變條件：
 

@@ -50,42 +50,6 @@ export interface Booking extends BookingDoc {
   id: string;
 }
 
-export type GuestFlightDirection = 'arrival' | 'departure';
-export type GuestFlightAirport = 'NRT' | 'HND';
-
-export interface GuestFlightTransitStep {
-  lineName: string;
-  headsign: string;
-  departureStop: string;
-  arrivalStop: string;
-  departureTime: string | null;
-  arrivalTime: string | null;
-}
-
-export interface GuestFlightRoute {
-  departureTime: string;
-  arrivalTime: string;
-  durationMinutes: number | null;
-  transitSteps: GuestFlightTransitStep[];
-}
-
-export interface GuestFlightPlan {
-  id: string;
-  bookingId: string;
-  direction: GuestFlightDirection;
-  flightNumber: string;
-  flightDate: string;
-  scheduledTime: string;
-  scheduledAt: string | null;
-  airport: GuestFlightAirport;
-  airportName: string;
-  terminal: string | null;
-  routeStatus: 'available' | 'unavailable';
-  route: GuestFlightRoute | null;
-  mapsUrl: string;
-  updatedAt: string | null;
-}
-
 export interface BookingPaymentDoc {
   bookingId: string;
   guestName: string;

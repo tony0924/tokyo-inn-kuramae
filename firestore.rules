@@ -224,13 +224,6 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // 房客航班由 Callable Functions 驗證 Google 帳號或訪客碼後讀寫；
-    // Client 僅開放管理員直接讀取，避免可預測文件 ID 洩漏行程。
-    match /guestFlightPlans/{id} {
-      allow read: if isAdmin();
-      allow create, update, delete: if false;
-    }
-
     match /bookingPayments/{id} {
       allow read, create, update, delete: if isAdmin();
     }
