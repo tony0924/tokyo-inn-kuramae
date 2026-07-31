@@ -23,7 +23,7 @@
 | Web / PWA | React、TypeScript、Vite、React Router | Preview、Guest、Admin UI |
 | Client services | Firebase Web SDK | Auth、Firestore listeners、Callable、FCM |
 | Data | Firestore `default` | 營運資料、權限、通知歷史、留言 |
-| Backend | Cloud Functions v2 / Node 24 | 事件、排程、Email、push、Maps |
+| Backend | Cloud Functions v2 / Node 24 | 事件、排程、Email、push、Maps／交通路線 |
 | Delivery | Firebase Hosting / FCM / Gmail SMTP | 網站、手機通知、Email |
 
 ## 使用者與存取
@@ -68,6 +68,14 @@ Google 使用者的權限由 `users/{uid}` 與 `emailAccess/{email}` 決定。�
 2. 訪客送出推薦時呼叫 `createGuestCommunityMessage`；Function 驗證登入帳號或有效訪客碼。
 3. Function 僅保存顯示名稱、內容、作者類型與時間，不保存訪客碼或 Email；訪客發文時發送 Admin push。
 4. Admin 從同一面推薦牆公開回覆，也能刪除不適當內容；系統不再提供私人客服留言。
+
+### 訪客航班與機場交通
+
+1. Google guest、有效訪客碼或 Admin preview 從首頁送出抵達／回程航班。
+2. `saveGuestFlightPlan` 再次驗證該身分是否可存取指定 booking，client 不直接寫入航班 collection。
+3. 航班以 `guestFlightPlans/{bookingId_direction}` 保存，同一方向再次儲存會更新原資料，因此跨裝置登入不需重填。
+4. Function 依抵達後 105 分鐘或起飛前 180 分鐘呼叫 Google Routes，保存建議交通快照；超出班表範圍時仍保存航班。
+5. 首頁透過 `getGuestFlightPlans` 載入資料；移除則經 `deleteGuestFlightPlan` 驗證後執行。
 
 ## 部署單位
 
