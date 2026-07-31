@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
 import { GuestFlightCard } from '@/guest/shared/GuestFlightCard';
 import { useGuestBooking } from '@/guest/useGuestBooking';
+import { useAuth } from '@/auth/AuthProvider';
 
 const WIFI_PASSWORD = '12345678';
 
 export function HomeTab() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const { booking, loading: bookingLoading, error: bookingError } = useGuestBooking();
 
@@ -63,6 +65,10 @@ export function HomeTab() {
       ) : bookingError ? (
         <div className="stay-overview-unavailable" role="status">
           暫時無法載入住宿資訊，其他房客指南仍可正常使用。
+        </div>
+      ) : user?.role === 'admin' ? (
+        <div className="stay-overview-unavailable" role="status">
+          目前沒有可供管理員預覽的預約，建立預約後即可查看個人住宿與航班小卡。
         </div>
       ) : null}
 

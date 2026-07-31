@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
 import { watchBooking } from '@/lib/bookings';
-import { getAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
+import { resolveAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
 import {
   getStoredGuestAccessCode,
   validateGuestAccessCode,
@@ -32,9 +32,11 @@ export function useGuestBooking(): GuestBookingState {
       let bookingId =
         user?.role === 'guest'
           ? user.bookingId
-          : user?.role === 'admin'
-            ? getAdminGuestPreviewBookingId()
-            : null;
+          : null;
+
+      if (user?.role === 'admin') {
+        bookingId = await resolveAdminGuestPreviewBookingId().catch(() => null);
+      }
 
       if (!user) {
         const code = getStoredGuestAccessCode();
