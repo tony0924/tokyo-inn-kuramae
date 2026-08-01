@@ -16,6 +16,13 @@ import {
   isGuestAccessCurrentlyValid,
   normalizeGuestAccessCode,
 } from "./guestPortalAccess.js";
+import {
+  JMA_TOKYO_STATION_CODE,
+  WEATHER_CACHE_TTL_MS,
+  WEATHER_STALE_TTL_MS,
+  normalizeJmaWeather,
+  weatherAdvice,
+} from "./guestWeather.js";
 
 initializeApp();
 
@@ -601,6 +608,61 @@ export const lookupGoogleMapPlace = onCall(
   }
 );
 
+export const getGuestWeather = onCall(
+  {
+    region: REGION,
+  },
+  async (request) => {
+    if (request.auth?.uid) {
+      await getCommunityAuthorFromAccount(request.auth.uid);
+    } else {
+      await getCommunityAuthorFromGuestCode(request.data?.guestAccessCode);
+    }
+
+    const cacheRef = db.collection("systemCache").doc("kuramaeWeather");
+    const cacheSnapshot = await cacheRef.get();
+    const cached = cacheSnapshot.data();
+    const cachedAt = cached?.updatedAt?.toMillis?.() || 0;
+    const cacheAge = Date.now() - cachedAt;
+
+    if (cached?.weather && cacheAge >= 0 && cacheAge < WEATHER_CACHE_TTL_MS) {
+      return serializeGuestWeather(cached, false);
+    }
+
+    try {
+      const latestTime = await fetchJmaText(
+        "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt"
+      );
+      const observationStamp = formatJmaObservationStamp(latestTime);
+      const [observations, forecast] = await Promise.all([
+        fetchJmaJson(
+          `https://www.jma.go.jp/bosai/amedas/data/map/${observationStamp}.json`
+        ),
+        fetchJmaJson(
+          "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json"
+        ),
+      ]);
+      const weather = normalizeJmaWeather(
+        observations?.[JMA_TOKYO_STATION_CODE],
+        forecast
+      );
+      const result = {
+        weather,
+        advice: weatherAdvice(weather),
+        updatedAt: Timestamp.now(),
+      };
+      await cacheRef.set(result);
+      return serializeGuestWeather(result, false);
+    } catch (error) {
+      logger.error("Guest weather refresh failed.", {
+        status: error?.status || null,
+        message: error instanceof Error ? error.message : "UNKNOWN_WEATHER_ERROR",
+      });
+      return weatherFallbackOrThrow(cached, cacheAge);
+    }
+  }
+);
+
 export const normalizeRecommendationCategorySortOrders = onRequest(
   {
     region: REGION,
@@ -959,6 +1021,59 @@ async function getCommunityAuthorFromGuestCode(rawCode) {
   return {
     authorType: "guest",
     authorName: cleanCommunityAuthorName(access?.guestName),
+  };
+}
+
+async function fetchJmaJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const error = new Error(`JMA_WEATHER_${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  return response.json();
+}
+
+async function fetchJmaText(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const error = new Error(`JMA_WEATHER_${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  return response.text();
+}
+
+function formatJmaObservationStamp(value) {
+  const date = new Date(String(value).trim());
+  if (Number.isNaN(date.getTime())) throw new Error("INVALID_JMA_LATEST_TIME");
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type) => parts.find((item) => item.type === type)?.value || "";
+  const minute = String(Math.floor(Number(part("minute")) / 10) * 10).padStart(2, "0");
+  return `${part("year")}${part("month")}${part("day")}${part("hour")}${minute}00`;
+}
+
+function weatherFallbackOrThrow(cached, cacheAge) {
+  if (cached?.weather && cacheAge >= 0 && cacheAge < WEATHER_STALE_TTL_MS) {
+    return serializeGuestWeather(cached, true);
+  }
+  throw new HttpsError("unavailable", "天氣資訊暫時無法載入。");
+}
+
+function serializeGuestWeather(cached, stale) {
+  return {
+    ...cached.weather,
+    advice: cached.advice || weatherAdvice(cached.weather),
+    updatedAt: cached.updatedAt?.toDate?.().toISOString() || new Date().toISOString(),
+    stale,
   };
 }
 

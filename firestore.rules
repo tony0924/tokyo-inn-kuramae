@@ -176,6 +176,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /systemCache/{id} {
+      // 共用快取只允許 Cloud Functions 透過 Admin SDK 存取。
+      allow read, create, update, delete: if false;
+    }
+
     match /keys/{code} {
       allow read, create, update, delete: if isAdmin();
     }

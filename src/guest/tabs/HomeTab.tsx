@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
+import { GuestWeatherCard } from '@/guest/shared/GuestWeatherCard';
 import { useAuth } from '@/auth/AuthProvider';
 import { useGuestGuide } from '@/guest/GuestGuideProvider';
 import type { GuestOutletContext } from '@/guest/GuestLayout';
@@ -81,6 +82,8 @@ export function HomeTab() {
           目前沒有可供管理員預覽的預約，建立預約後即可查看個人住宿與航班小卡。
         </div>
       ) : null}
+
+      <GuestWeatherCard />
 
       {guide && <div className="wifi-card">
         <div className="wifi-icon-wrap">📶</div>

@@ -22,8 +22,8 @@
 |---|---|---|
 | Web / PWA | React、TypeScript、Vite、React Router | Preview、Guest、Admin UI |
 | Client services | Firebase Web SDK | Auth、Firestore listeners、Callable、FCM |
-| Data | Firestore `default` | 營運資料、權限、通知歷史、留言 |
-| Backend | Cloud Functions v2 / Node 24 | 事件、排程、Email、push、Maps |
+| Data | Firestore `default` | 營運資料、權限、通知歷史、留言、天氣快取 |
+| Backend | Cloud Functions v2 / Node 24 | 事件、排程、Email、push、Maps、Weather |
 | Delivery | Firebase Hosting / FCM / Gmail SMTP | 網站、手機通知、Email |
 
 ## 使用者與存取
@@ -83,13 +83,20 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 3. Function 僅保存顯示名稱、內容、作者類型與時間，不保存訪客碼或 Email；訪客發文時發送 Admin push。
 4. Admin 從同一面推薦牆公開回覆，也能刪除不適當內容；系統不再提供私人客服留言。
 
+### 首頁天氣
+
+1. Guest 首頁呼叫 `getGuestWeather`；Function 驗證 Google 帳號或有效訪客碼。
+2. 一小時內優先回傳 `systemCache/kuramaeWeather`，避免每位房客重複呼叫外部服務。
+3. 快取到期後由 Function 讀取日本氣象廳的東京觀測資料與預報，再更新共用快取；畫面標示資料來源與本站整理。
+4. 氣象廳暫時無法回應時可顯示十二小時內的最近資料，並在畫面標示為較早資料；完全沒有可用資料時只隱藏天氣內容，不影響其他房客指南。
+
 ## 部署單位
 
 | 改動 | Firebase surface |
 |---|---|
 | React、CSS、PWA、圖片 | Hosting |
 | Firestore 欄位權限、query | Rules / indexes |
-| trigger、排程、Email、push | Functions |
+| trigger、排程、Email、push、Weather | Functions |
 
 跨層改動依 Rules → Functions → Hosting 順序部署，避免新版 client 先遇到舊權限或舊後端。
 

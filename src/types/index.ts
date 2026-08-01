@@ -270,3 +270,33 @@ export interface RecommendationDoc {
 export interface Recommendation extends RecommendationDoc {
   id: string;
 }
+
+export interface GuestWeatherCondition {
+  type: string;
+  description: string;
+  emoji: string;
+}
+
+export interface GuestWeatherDay {
+  date: string;
+  condition: GuestWeatherCondition;
+  maxTemperature: number | null;
+  minTemperature: number | null;
+  precipitationProbability: number | null;
+}
+
+export interface GuestWeatherData {
+  locationName: string;
+  sourceName: string;
+  sourceUrl: string;
+  current: {
+    temperature: number;
+    feelsLikeTemperature: number | null;
+    condition: GuestWeatherCondition;
+    humidity: number | null;
+  };
+  days: GuestWeatherDay[];
+  advice: string;
+  updatedAt: string;
+  stale: boolean;
+}

@@ -32,13 +32,14 @@ Browser / installed PWA
           ├─ Firebase Auth
           ├─ Firestore realtime data
           ├─ Firebase Cloud Messaging / service worker
-          └─ Callable Function: Google Maps lookup
+          └─ Callable Functions: private guide / weather / Google Maps lookup
 
 Firestore events / Cloud Scheduler
   └─ Cloud Functions v2 (asia-east1)
       ├─ Gmail SMTP email
       ├─ Admin FCM push + notification history
       ├─ booking / user / guest-message event handling
+      ├─ Japan Meteorological Agency data + shared Firestore cache
       └─ daily check-in / checkout reminders
 ```
 
@@ -127,6 +128,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |
 | `adminNotificationReads/{uid}` | 每位 Admin 最後已讀時間 | Admin 只讀寫自己 |
 | `guestCodeDailyLogins/{code_date}` | 每日首次訪客碼登入去重 | Functions only |
+| `systemCache/kuramaeWeather` | 藏前天氣的一小時共用快取 | Functions only |
 
 規則：
 
@@ -137,7 +139,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 ## 6. Cloud Functions
 
-入口目前為 `functions/index.js`，共 14 個 exports：
+入口目前為 `functions/index.js`，共 16 個 exports：
 
 事件觸發：
 
@@ -158,7 +160,10 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 HTTP / callable：
 
+- `createGuestCommunityMessage`：驗證 Guest 身分後寫入共享推薦牆。
+- `getGuestPortalData`：驗證訪客碼後回傳私密指南與清理過的住宿摘要。
 - `lookupGoogleMapPlace`：Admin callable，解析允許的 Google Maps URL。
+- `getGuestWeather`：驗證 Guest 身分後讀取日本氣象廳資料，並共用快取一小時。
 - `normalizeRecommendationCategorySortOrders`：帶 maintenance token 的維護端點。
 
 共同不變條件：
