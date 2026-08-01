@@ -575,6 +575,176 @@
   margin-bottom: 28px;
 }
 
+.admin-weather-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 1.4fr);
+  align-items: center;
+  gap: 18px 26px;
+  border: 1px solid rgba(115, 174, 213, 0.28);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(92, 163, 210, 0.18), transparent 38%),
+    linear-gradient(145deg, #17212a, var(--bg-high) 70%);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-weather-current {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-weather-current .today-eyebrow {
+  color: #8ec7ea;
+}
+
+.admin-weather-icon {
+  flex: 0 0 auto;
+  font-size: 2.9rem;
+  filter: drop-shadow(0 7px 14px rgba(0, 0, 0, 0.25));
+}
+
+.admin-weather-temperature {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.admin-weather-temperature > strong {
+  color: #fff;
+  font-size: 2.55rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.admin-weather-temperature > span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-weather-temperature b {
+  overflow: hidden;
+  color: #eaf2f6;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-weather-temperature small {
+  color: #8fa2ad;
+  font-size: 10px;
+}
+
+.admin-weather-forecast {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-weather-forecast > div {
+  min-width: 0;
+  padding: 10px 11px;
+  display: grid;
+  grid-template-columns: minmax(32px, 1fr) auto minmax(62px, 1fr);
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.admin-weather-forecast span,
+.admin-weather-forecast small,
+.admin-weather-forecast em {
+  font-size: 10px;
+  font-style: normal;
+}
+
+.admin-weather-forecast span {
+  color: #b6c5cd;
+}
+
+.admin-weather-forecast strong {
+  font-size: 1rem;
+}
+
+.admin-weather-forecast small {
+  color: #eef5f8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-weather-forecast em {
+  grid-column: 1 / -1;
+  color: #8095a1;
+  text-align: right;
+}
+
+.admin-weather-advice {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(142, 199, 234, 0.12);
+}
+
+.admin-weather-advice p {
+  margin: 0;
+  color: #cbdce5;
+  font-size: 11px;
+}
+
+.admin-weather-advice a {
+  flex: 0 0 auto;
+  color: #84adca;
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-weather-status {
+  min-height: 88px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.admin-weather-status > span {
+  font-size: 1.8rem;
+}
+
+.admin-weather-status > div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-weather-status strong {
+  color: #eaf2f6;
+  font-size: 13px;
+}
+
+.admin-weather-status small {
+  color: #8fa2ad;
+  font-size: 10px;
+}
+
+.admin-weather-status button {
+  padding: 8px 11px;
+  border: 1px solid rgba(142, 199, 234, 0.25);
+  border-radius: 9px;
+  background: rgba(142, 199, 234, 0.09);
+  color: #b9daf0;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .operations-card {
   position: relative;
   overflow: hidden;
@@ -1942,6 +2112,12 @@
   .today-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .admin-weather-card {
+    grid-template-columns: 1fr;
+  }
+  .admin-weather-advice {
+    grid-column: auto;
+  }
   .admin-page-header {
     flex-direction: column;
     align-items: stretch;
@@ -2785,6 +2961,34 @@
   }
   .operations-card {
     padding: 18px 15px;
+  }
+  .admin-weather-card {
+    padding: 17px 15px;
+    gap: 15px;
+  }
+  .admin-weather-current {
+    align-items: flex-start;
+  }
+  .admin-weather-icon {
+    font-size: 2.4rem;
+  }
+  .admin-weather-forecast {
+    gap: 6px;
+  }
+  .admin-weather-forecast > div {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 9px 5px;
+    text-align: center;
+  }
+  .admin-weather-forecast small,
+  .admin-weather-forecast em {
+    text-align: center;
+  }
+  .admin-weather-advice {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
   }
   .operations-card-main {
     align-items: flex-start;

@@ -4,6 +4,7 @@ import { zhTW } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBookings } from './useBookings';
 import { BookingForm } from './BookingForm';
+import { AdminWeatherCard } from './AdminWeatherCard';
 import { Modal } from './Modal';
 import { watchGuestCommunityMessages } from '@/lib/guestMessages';
 import { setAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
@@ -87,6 +88,8 @@ export function TodayDashboard() {
           ＋ 新增預約
         </button>
       </header>
+
+      <AdminWeatherCard />
 
       {loading ? (
         <div className="today-loading">載入今日營運資料…</div>
