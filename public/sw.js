@@ -1,8 +1,9 @@
-const CACHE_VERSION = 'kurachen-admin-v1';
+const CACHE_VERSION = 'kurachen-app-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
+  '/guest-manifest.webmanifest',
   '/icons/admin-icon-192.png',
   '/icons/admin-icon-512.png',
   '/icons/admin-apple-touch-icon.png',

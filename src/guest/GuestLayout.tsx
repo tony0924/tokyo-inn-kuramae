@@ -11,6 +11,8 @@ import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 import { searchIndex, type GuestTabId, type SearchEntry } from './data/searchIndex';
 import { WelcomeGuideModal } from './shared/WelcomeGuideModal';
 import { GuestGuideProvider, useGuestGuide } from './GuestGuideProvider';
+import { PwaInstallGuide } from './shared/PwaInstallGuide';
+import { applyGuestPwaMetadata, usePwaInstall } from '@/pwa/guestInstall';
 import './legacy.css';
 
 const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
@@ -66,11 +68,13 @@ function GuestLayoutContent() {
   const guestCode = !user ? getStoredGuestAccessCode() : null;
   const [query, setQuery] = useState('');
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+  const [showPwaGuide, setShowPwaGuide] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const { guide, loading: guideLoading, error: guideError } = useGuestGuide();
+  const { installed: pwaInstalled } = usePwaInstall();
   const visitorKey = guestCode
     ? `code:${guestCode}`
     : user && user.role !== 'admin'
@@ -113,6 +117,11 @@ function GuestLayoutContent() {
       state: { guideReturnTo: location.pathname },
     });
   };
+
+  // Apply Guest-specific install metadata while the visitor portal is active.
+  useEffect(() => {
+    return applyGuestPwaMetadata();
+  }, []);
 
   // Scroll to top on tab change
   useEffect(() => {
@@ -182,7 +191,13 @@ function GuestLayoutContent() {
         open={showWelcomeGuide}
         onClose={() => setShowWelcomeGuide(false)}
         onDismissToday={dismissWelcomeGuideToday}
+        pwaInstalled={pwaInstalled}
+        onOpenPwaGuide={() => {
+          setShowWelcomeGuide(false);
+          setShowPwaGuide(true);
+        }}
       />
+      <PwaInstallGuide open={showPwaGuide} onClose={() => setShowPwaGuide(false)} />
       <div className="top-bar" />
       {isAdminPreview && (
         <aside className="admin-preview-dock" aria-label="管理員預覽模式">

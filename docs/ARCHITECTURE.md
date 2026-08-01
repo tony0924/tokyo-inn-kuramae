@@ -64,6 +64,16 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
    `guestCodeDailyLogins/{code_date}` 去重。
 4. Admin 收到 push，事件同時寫入 `adminNotifications`。
 
+### 訪客 PWA 安裝
+
+1. Guest Layout 載入後切換到 `guest-manifest.webmanifest`，並監聽瀏覽器的
+   `beforeinstallprompt` 與 `appinstalled` 事件。
+2. 每日歡迎視窗提供安裝介紹；「使用說明」頁保留固定入口。
+3. iPhone／iPad 顯示 Safari「分享 → 加入主畫面」步驟；Android 優先呼叫
+   瀏覽器原生安裝提示，無提示時顯示 Chrome 手動步驟。
+4. 已在 standalone 模式開啟時顯示完成狀態。這個階段只改善安裝引導，
+   不快取 Firestore 私密指南，也不承諾離線瀏覽。
+
 ### 訪客推薦牆
 
 1. 訪客頁的「推薦牆」讀取 `guestCommunityMessages`，所有訪客看到相同內容。

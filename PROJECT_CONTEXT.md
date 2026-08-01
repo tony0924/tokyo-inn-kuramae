@@ -147,6 +147,21 @@ Relevant files:
 - Entry, lock, and floor-plan images are intentionally excluded from Hosting.
   Protected media delivery must be designed before those images are restored.
 
+## Guest PWA Install Guide
+
+- The authenticated Guest shell switches the page metadata to
+  `public/guest-manifest.webmanifest`; Admin keeps the existing Admin manifest.
+- The daily welcome modal includes a PWA entry point, and the Guest user-guide
+  tab keeps a permanent entry so visitors can reopen the instructions later.
+- iPhone/iPad visitors receive Safari-specific Add to Home Screen steps.
+  Android visitors use the browser install prompt when available, with manual
+  Chrome steps as a fallback.
+- Standalone mode is detected through the display-mode media query and iOS
+  `navigator.standalone`; installed visitors see a completion state instead of
+  repeated install instructions.
+- Guest PWA installation improves access and recall, but does not imply that
+  private Firestore content is available offline.
+
 ## Frontend Performance
 
 - The public Preview route is intentionally outside the authenticated Firebase

@@ -1,0 +1,50 @@
+{
+  "id": "/guest/",
+  "name": "KURACHEN Stay 房客指南",
+  "short_name": "KURACHEN",
+  "description": "KURACHEN Stay 東京住宿房客指南",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "start_url": "/guest/home",
+  "scope": "/guest/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
+  "categories": ["travel", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/admin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/admin-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/admin-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "入住與退房",
+      "short_name": "入退房",
+      "url": "/guest/checkin"
+    },
+    {
+      "name": "抵達指南",
+      "short_name": "抵達",
+      "url": "/guest/arrival"
+    },
+    {
+      "name": "使用指南",
+      "short_name": "指南",
+      "url": "/guest/guide"
+    }
+  ]
+}

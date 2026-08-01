@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PwaInstallGuide } from '@/guest/shared/PwaInstallGuide';
+import { usePwaInstall } from '@/pwa/guestInstall';
 
 const GUIDE_SECTIONS = [
   {
@@ -47,6 +50,8 @@ const GUIDE_SECTIONS = [
 
 export function UserGuideTab() {
   const navigate = useNavigate();
+  const [showPwaGuide, setShowPwaGuide] = useState(false);
+  const { installed, device } = usePwaInstall();
 
   return (
     <div className="section active user-guide">
@@ -139,6 +144,28 @@ export function UserGuideTab() {
         </div>
       </section>
 
+      <section className="guide-pwa-card" aria-labelledby="guide-pwa-title">
+        <div className="guide-pwa-icon" aria-hidden="true">藏前</div>
+        <div className="guide-pwa-copy">
+          <span>QUICK ACCESS · 快速開啟</span>
+          <h2 id="guide-pwa-title">
+            {installed ? '已加入手機主畫面' : '把房客指南加入主畫面'}
+          </h2>
+          <p>
+            {installed
+              ? '你目前正以 App 模式使用，可以直接從主畫面開啟。'
+              : device === 'ios'
+                ? '使用 iPhone 的 Safari 分享選單，幾個步驟就能像 App 一樣開啟。'
+                : device === 'android'
+                  ? '在 Android 上安裝後，可直接從主畫面開啟，不必重新找網址。'
+                  : '可將網站安裝成應用程式，之後從裝置直接開啟。'}
+          </p>
+        </div>
+        <button type="button" onClick={() => setShowPwaGuide(true)}>
+          {installed ? '查看狀態' : '查看安裝方式'}
+        </button>
+      </section>
+
       <div className="guide-help-card">
         <div>
           <span>旅人交流</span>
@@ -147,6 +174,7 @@ export function UserGuideTab() {
         </div>
         <button type="button" onClick={() => navigate('/guest/messages')}>前往推薦牆</button>
       </div>
+      <PwaInstallGuide open={showPwaGuide} onClose={() => setShowPwaGuide(false)} />
     </div>
   );
 }

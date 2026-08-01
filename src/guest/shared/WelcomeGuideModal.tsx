@@ -4,6 +4,8 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onDismissToday: () => void;
+  onOpenPwaGuide: () => void;
+  pwaInstalled: boolean;
 };
 
 const QUICK_GUIDE = [
@@ -29,7 +31,13 @@ const QUICK_GUIDE = [
   },
 ];
 
-export function WelcomeGuideModal({ open, onClose, onDismissToday }: Props) {
+export function WelcomeGuideModal({
+  open,
+  onClose,
+  onDismissToday,
+  onOpenPwaGuide,
+  pwaInstalled,
+}: Props) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -89,6 +97,25 @@ export function WelcomeGuideModal({ open, onClose, onDismissToday }: Props) {
             </div>
           ))}
         </div>
+
+        <button
+          type="button"
+          className={`welcome-guide-pwa${pwaInstalled ? ' installed' : ''}`}
+          onClick={onOpenPwaGuide}
+        >
+          <span className="welcome-guide-pwa-icon" aria-hidden="true">
+            {pwaInstalled ? '✓' : '＋'}
+          </span>
+          <span>
+            <strong>{pwaInstalled ? '已加入手機主畫面' : '加入手機主畫面'}</strong>
+            <small>
+              {pwaInstalled
+                ? '你已經能像 App 一樣快速開啟房客指南。'
+                : 'iPhone 與 Android 都能安裝，入住期間更容易找到。'}
+            </small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
 
         <p className="welcome-guide-note">
           之後也能從上方的「使用指南」再次查看完整說明。
