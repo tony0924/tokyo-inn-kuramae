@@ -13,9 +13,14 @@ import { WelcomeGuideModal } from './shared/WelcomeGuideModal';
 import { GuestGuideProvider, useGuestGuide } from './GuestGuideProvider';
 import { PwaInstallGuide } from './shared/PwaInstallGuide';
 import { applyGuestPwaMetadata, usePwaInstall } from '@/pwa/guestInstall';
+import { useGuestBooking, type GuestBookingState } from './useGuestBooking';
 import './legacy.css';
 
 const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
+
+export interface GuestOutletContext extends GuestBookingState {
+  greetingName: string | null;
+}
 
 const TABS: { id: GuestTabId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: '首頁' },
@@ -75,6 +80,10 @@ function GuestLayoutContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { guide, loading: guideLoading, error: guideError } = useGuestGuide();
   const { installed: pwaInstalled } = usePwaInstall();
+  const guestBooking = useGuestBooking();
+  const greetingName =
+    guestBooking.guestName
+    || (user?.role === 'guest' ? user.displayName.trim() || null : null);
   const visitorKey = guestCode
     ? `code:${guestCode}`
     : user && user.role !== 'admin'
@@ -162,6 +171,7 @@ function GuestLayoutContent() {
       setShowWelcomeGuide(false);
       return;
     }
+    if (guestCode && guestBooking.loading) return;
 
     try {
       const storageKey = `${WELCOME_GUIDE_STORAGE_PREFIX}:${visitorKey}`;
@@ -169,7 +179,7 @@ function GuestLayoutContent() {
     } catch {
       setShowWelcomeGuide(true);
     }
-  }, [visitorKey]);
+  }, [guestBooking.loading, guestCode, visitorKey]);
 
   const dismissWelcomeGuideToday = () => {
     if (visitorKey) {
@@ -191,6 +201,7 @@ function GuestLayoutContent() {
         open={showWelcomeGuide}
         onClose={() => setShowWelcomeGuide(false)}
         onDismissToday={dismissWelcomeGuideToday}
+        guestName={greetingName}
         pwaInstalled={pwaInstalled}
         onOpenPwaGuide={() => {
           setShowWelcomeGuide(false);
@@ -232,7 +243,8 @@ function GuestLayoutContent() {
               <div className="brand-text">
                 <div className="title">KURACHEN Stay</div>
                 <div className="subtitle">
-                  Guest Guide{guide?.accommodation.roomLabel ? ` · ${guide.accommodation.roomLabel}` : ''}
+                  {greetingName ? `Hi, ${greetingName}` : 'Guest Guide'}
+                  {guide?.accommodation.roomLabel ? ` · ${guide.accommodation.roomLabel}` : ''}
                 </div>
               </div>
             </div>
@@ -324,7 +336,12 @@ function GuestLayoutContent() {
             )}
           </div>
         ) : (
-          <Outlet />
+          <Outlet
+            context={{
+              ...guestBooking,
+              greetingName,
+            } satisfies GuestOutletContext}
+          />
         )}
       </main>
 

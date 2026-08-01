@@ -1,16 +1,21 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
-import { useGuestBooking } from '@/guest/useGuestBooking';
 import { useAuth } from '@/auth/AuthProvider';
 import { useGuestGuide } from '@/guest/GuestGuideProvider';
+import type { GuestOutletContext } from '@/guest/GuestLayout';
 
 export function HomeTab() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { guide } = useGuestGuide();
   const [copied, setCopied] = useState(false);
-  const { booking, loading: bookingLoading, error: bookingError } = useGuestBooking();
+  const {
+    booking,
+    greetingName,
+    loading: bookingLoading,
+    error: bookingError,
+  } = useOutletContext<GuestOutletContext>();
 
   const copyWifi = async () => {
     try {
@@ -28,7 +33,15 @@ export function HomeTab() {
   return (
     <div className="section active">
       <div className="hero">
-        <div className="hero-badge">✦ Welcome · 歡迎入住</div>
+        {greetingName && (
+          <div className="hero-personal-greeting" aria-live="polite">
+            <span>Hi,</span>
+            <strong>{greetingName}</strong>
+          </div>
+        )}
+        <div className="hero-badge">
+          ✦ {greetingName ? 'Welcome to your stay · 歡迎入住' : 'Welcome · 歡迎入住'}
+        </div>
         <h1>
           KURACHEN Stay
           <br />

@@ -192,6 +192,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      min-width: 0;
     }
 
     .brand-icon {
@@ -207,6 +208,10 @@
       box-shadow: 0 2px 8px rgba(201,168,76,0.4);
     }
 
+    .brand-text {
+      min-width: 0;
+    }
+
     .brand-text .title {
       font-family: 'Noto Serif TC', serif;
       font-size: 1rem;
@@ -217,12 +222,16 @@
     }
 
     .brand-text .subtitle {
+      overflow: hidden;
+      max-width: min(34vw, 280px);
       font-size: 0.68rem;
       color: var(--gold);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       font-weight: 500;
       opacity: 0.8;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* Search */
@@ -1312,6 +1321,30 @@
       padding: 5px 14px;
       border-radius: 50px;
       margin-bottom: 20px;
+    }
+
+    .hero-personal-greeting {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-family: 'Noto Serif TC', serif;
+      font-size: clamp(1.45rem, 5vw, 2rem);
+      line-height: 1.2;
+    }
+
+    .hero-personal-greeting span {
+      color: var(--gold-light);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72em;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-personal-greeting strong {
+      overflow-wrap: anywhere;
     }
 
     .hero h1 {

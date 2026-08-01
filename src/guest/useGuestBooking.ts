@@ -8,8 +8,9 @@ import {
 import { getGuestPortalData } from '@/lib/guestGuide';
 import type { Booking } from '@/types';
 
-interface GuestBookingState {
+export interface GuestBookingState {
   booking: Booking | null;
+  guestName: string | null;
   loading: boolean;
   error: boolean;
 }
@@ -17,6 +18,7 @@ interface GuestBookingState {
 export function useGuestBooking(): GuestBookingState {
   const { user } = useAuth();
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [guestName, setGuestName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -28,6 +30,7 @@ export function useGuestBooking(): GuestBookingState {
       setLoading(true);
       setError(false);
       setBooking(null);
+      setGuestName(null);
 
       let bookingId =
         user?.role === 'guest'
@@ -44,6 +47,11 @@ export function useGuestBooking(): GuestBookingState {
           const portal = await getGuestPortalData(code).catch(() => null);
           if (!cancelled) {
             setBooking(portal?.booking ?? null);
+            setGuestName(
+              portal?.booking?.guestName?.trim()
+              || portal?.access.guestName?.trim()
+              || null
+            );
             setLoading(false);
             setError(!portal);
           }
@@ -62,6 +70,7 @@ export function useGuestBooking(): GuestBookingState {
         (next) => {
           if (cancelled) return;
           setBooking(next);
+          setGuestName(next?.guestName?.trim() || null);
           setLoading(false);
           setError(false);
         },
@@ -80,5 +89,5 @@ export function useGuestBooking(): GuestBookingState {
     };
   }, [user]);
 
-  return { booking, loading, error };
+  return { booking, guestName, loading, error };
 }

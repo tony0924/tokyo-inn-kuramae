@@ -63,6 +63,8 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 3. 訪客碼每日首次 `code_login` 由 Function 以
    `guestCodeDailyLogins/{code_date}` 去重。
 4. Admin 收到 push，事件同時寫入 `adminNotifications`。
+5. Guest Layout 集中載入當次預約姓名，供首次網站介紹、所有分頁頂部與首頁
+   顯示 `Hi, {guestName}`；只有預約姓名尚未載入時才退回 Google 顯示名稱。
 
 ### 訪客 PWA 安裝
 

@@ -111,6 +111,11 @@ Guest code helpers: `src/lib/guestAccessCodes.ts`.
 The Guest home page loads the booking assigned to the signed-in Gmail guest or
 the active guest code and shows a date-aware stay card:
 
+- Guest name personalization appears in the daily welcome guide, the Guest
+  header on every tab, and the Home hero.
+- The booking `guestName` is authoritative. Google `displayName` is used only
+  while no booking name is available; email addresses are never used as a
+  greeting.
 - Before check-in: arrival countdown and arrival guidance.
 - Check-in day: check-in time and entry guidance.
 - During the stay: checkout countdown and facilities shortcuts.

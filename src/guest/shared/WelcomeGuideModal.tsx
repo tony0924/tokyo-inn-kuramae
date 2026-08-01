@@ -5,6 +5,7 @@ type Props = {
   onClose: () => void;
   onDismissToday: () => void;
   onOpenPwaGuide: () => void;
+  guestName: string | null;
   pwaInstalled: boolean;
 };
 
@@ -36,6 +37,7 @@ export function WelcomeGuideModal({
   onClose,
   onDismissToday,
   onOpenPwaGuide,
+  guestName,
   pwaInstalled,
 }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -82,8 +84,12 @@ export function WelcomeGuideModal({
         <div className="welcome-guide-heading">
           <span className="welcome-guide-mark" aria-hidden="true">🏯</span>
           <p>WELCOME · 歡迎入住</p>
-          <h2 id="welcome-guide-title">30 秒認識這個網站</h2>
-          <span>住宿期間需要的資訊，都可以在這裡快速找到。</span>
+          <h2 id="welcome-guide-title">
+            {guestName ? `Hi, ${guestName}` : '歡迎來到 KURACHEN Stay'}
+          </h2>
+          <span>
+            30 秒認識房客網站，住宿期間需要的資訊都可以在這裡快速找到。
+          </span>
         </div>
 
         <div className="welcome-guide-list">
