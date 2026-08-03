@@ -11,10 +11,12 @@ export interface StayStatus {
   stage: StayStage;
   daysUntilCheckIn: number;
   daysUntilCheckOut: number;
+  stayDay: number | null;
+  totalStayDays: number;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const APP_TIME_ZONE = 'Asia/Taipei';
+const APP_TIME_ZONE = 'Asia/Tokyo';
 const DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: APP_TIME_ZONE,
   year: 'numeric',
@@ -42,6 +44,7 @@ export function getStayStatus(
   const checkOut = booking.checkOut.toDate();
   const daysUntilCheckIn = calendarDayDifference(checkIn, now);
   const daysUntilCheckOut = calendarDayDifference(checkOut, now);
+  const totalStayDays = Math.max(1, calendarDayDifference(checkOut, checkIn));
 
   let stage: StayStage;
   if (daysUntilCheckIn > 0) {
@@ -56,7 +59,18 @@ export function getStayStatus(
     stage = 'completed';
   }
 
-  return { stage, daysUntilCheckIn, daysUntilCheckOut };
+  const stayDay =
+    stage === 'checkin_today' || stage === 'staying'
+      ? Math.min(totalStayDays, calendarDayDifference(now, checkIn) + 1)
+      : null;
+
+  return {
+    stage,
+    daysUntilCheckIn,
+    daysUntilCheckOut,
+    stayDay,
+    totalStayDays,
+  };
 }
 
 export function selectOperationalBooking(

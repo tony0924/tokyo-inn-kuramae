@@ -1475,6 +1475,93 @@
         linear-gradient(145deg, #1d1514, #121214 72%);
     }
 
+    .prestay-guide-card {
+      margin-bottom: 16px;
+      padding: 22px 24px;
+      border: 1px solid rgba(201, 168, 76, 0.22);
+      border-radius: var(--radius-lg);
+      background:
+        radial-gradient(circle at 92% 0%, rgba(201, 168, 76, 0.12), transparent 36%),
+        var(--bg-high);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .prestay-guide-heading,
+    .daily-recommendations-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 17px;
+    }
+
+    .prestay-guide-heading p,
+    .daily-recommendations-heading p {
+      margin-bottom: 4px;
+      color: var(--gold);
+      font-size: 0.67rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+    }
+
+    .prestay-guide-heading h2,
+    .daily-recommendations-heading h2 {
+      color: #fff;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1.12rem;
+    }
+
+    .prestay-guide-heading > span {
+      font-size: 1.65rem;
+    }
+
+    .prestay-guide-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .prestay-guide-grid button {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 2px 10px;
+      align-items: center;
+      min-width: 0;
+      padding: 13px;
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .prestay-guide-grid button:hover {
+      border-color: rgba(201, 168, 76, 0.38);
+      background: var(--gold-pale);
+      transform: translateY(-1px);
+    }
+
+    .prestay-guide-grid button > span {
+      grid-row: 1 / 3;
+      font-size: 1.35rem;
+      text-align: center;
+    }
+
+    .prestay-guide-grid strong {
+      font-size: 0.8rem;
+    }
+
+    .prestay-guide-grid small {
+      overflow: hidden;
+      color: var(--text-soft);
+      font-size: 0.66rem;
+      line-height: 1.45;
+      text-overflow: ellipsis;
+    }
+
     /* Homepage weather */
     .guest-weather-card {
       position: relative;
@@ -1701,6 +1788,149 @@
       font-size: 0.72rem;
       cursor: pointer;
       white-space: nowrap;
+    }
+
+    /* Daily stay recommendations */
+    .daily-recommendations-card {
+      margin-bottom: 16px;
+      padding: 22px 24px;
+      border: 1px solid rgba(126, 212, 160, 0.24);
+      border-radius: var(--radius-lg);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(86, 212, 176, 0.14), transparent 38%),
+        linear-gradient(145deg, #15201c, #121514 72%);
+      box-shadow: var(--shadow-md);
+    }
+
+    .daily-recommendations-heading > span {
+      padding: 5px 9px;
+      border: 1px solid rgba(126, 212, 160, 0.22);
+      border-radius: 999px;
+      color: #9adbb4;
+      font-size: 0.66rem;
+      white-space: nowrap;
+    }
+
+    .daily-recommendations-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .daily-place-card {
+      display: flex;
+      min-width: 0;
+      min-height: 174px;
+      flex-direction: column;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.035);
+      color: inherit;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .daily-place-card:hover {
+      border-color: rgba(126, 212, 160, 0.32);
+      background: rgba(126, 212, 160, 0.07);
+      transform: translateY(-2px);
+    }
+
+    .daily-place-topline {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: #8fc9a6;
+    }
+
+    .daily-place-topline > span {
+      font-size: 1rem;
+    }
+
+    .daily-place-topline small {
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .daily-place-card h3 {
+      overflow-wrap: anywhere;
+      color: #fff;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .daily-place-card > p {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 7px 0 14px;
+      color: var(--text-soft);
+      font-size: 0.7rem;
+      line-height: 1.6;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }
+
+    .daily-place-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .daily-place-footer span {
+      color: var(--gold);
+      font-size: 0.64rem;
+      letter-spacing: 0.03em;
+    }
+
+    .daily-place-footer strong {
+      color: #9adbb4;
+      font-size: 0.64rem;
+      white-space: nowrap;
+    }
+
+    .daily-recommendations-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .daily-recommendations-actions button {
+      padding: 8px 11px;
+      border: 1px solid rgba(126, 212, 160, 0.2);
+      border-radius: 9px;
+      background: rgba(126, 212, 160, 0.06);
+      color: #a9daba;
+      font: inherit;
+      font-size: 0.69rem;
+      cursor: pointer;
+    }
+
+    .daily-recommendations-loading {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 92px;
+    }
+
+    .daily-recommendations-loading > span {
+      font-size: 1.8rem;
+    }
+
+    .daily-recommendations-loading strong {
+      color: #d9efe1;
+      font-size: 0.82rem;
+    }
+
+    .daily-recommendations-loading p {
+      margin-top: 4px;
+      color: var(--text-soft);
+      font-size: 0.7rem;
     }
 
     .stay-overview-heading {
@@ -3729,7 +3959,9 @@
       .place-card { flex-direction: column; align-items: flex-start; }
       .search-wrap { max-width: unset; flex: 1; }
       .stay-overview-card,
-      .checkout-widget { padding: 19px 17px; }
+      .checkout-widget,
+      .prestay-guide-card,
+      .daily-recommendations-card { padding: 19px 17px; }
       .stay-overview-heading {
         grid-template-columns: 42px minmax(0, 1fr);
       }
@@ -3743,6 +3975,13 @@
       .stay-date-grid > div:last-child {
         grid-column: 1 / -1;
         border-top: 1px solid var(--border-card);
+      }
+      .prestay-guide-grid,
+      .daily-recommendations-grid {
+        grid-template-columns: 1fr;
+      }
+      .daily-place-card {
+        min-height: 150px;
       }
       .guest-weather-card { padding: 19px 17px; }
       .weather-current {

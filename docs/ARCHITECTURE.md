@@ -85,10 +85,21 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 
 ### 首頁天氣
 
-1. Guest 首頁呼叫 `getGuestWeather`；Function 驗證 Google 帳號或有效訪客碼。
+1. Guest 首頁只在入住日與住宿期間呼叫 `getGuestWeather`；Function 驗證
+   Google 帳號或有效訪客碼。
 2. 一小時內優先回傳 `systemCache/kuramaeWeather`，避免每位房客重複呼叫外部服務。
 3. 快取到期後由 Function 讀取日本氣象廳的東京觀測資料與預報，再更新共用快取；畫面標示資料來源與本站整理。
 4. 氣象廳暫時無法回應時可顯示十二小時內的最近資料，並在畫面標示為較早資料；完全沒有可用資料時只隱藏天氣內容，不影響其他房客指南。
+
+### 三階段房客首頁
+
+1. `getStayStatus` 以 `Asia/Tokyo` 日曆日判斷首頁階段；入住日為第 1 天，
+   退房日不再計入住天數。
+2. 入住前顯示入住倒數，以及機場交通、抵達進房與入住須知入口。
+3. 入住日到住宿期間顯示「入住第 N 天」、藏前天氣，並從 Firestore
+   `recommendations`／預設地點按住宿日輪替餐廳、咖啡與景點。
+4. 退房日隱藏一般準備與每日旅遊內容，改為顯示「今天退房」及儲存在瀏覽器
+   localStorage 的可勾選退房清單。
 
 ## 部署單位
 

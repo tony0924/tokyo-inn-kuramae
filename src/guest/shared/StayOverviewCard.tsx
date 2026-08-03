@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { getStayStatus, type StayStage } from '@/lib/stayStatus';
+import type { StayStage, StayStatus } from '@/lib/stayStatus';
 import type { Booking } from '@/types';
 
 const CHECKOUT_ITEMS = [
@@ -26,15 +26,15 @@ const STAGE_COPY: Record<
     icon: '🧳',
   },
   checkin_today: {
-    eyebrow: '今日入住',
-    title: '歡迎來到藏前',
-    description: '抵達後依進房教學使用磁扣、電梯與電子鎖。',
+    eyebrow: '住宿進行中',
+    title: '今天是入住第 1 天',
+    description: '歡迎來到藏前，抵達後可從進房教學確認入口、電梯與電子鎖。',
     icon: '🔑',
   },
   staying: {
     eyebrow: '住宿中',
-    title: '祝你在東京玩得開心',
-    description: '需要設備說明、附近餐廳或交通資訊，都能從這裡快速前往。',
+    title: '今天的東京行程開始了',
+    description: '下方整理今天的天氣與每日推薦，祝你在東京玩得開心。',
     icon: '🏠',
   },
   checkout_today: {
@@ -64,12 +64,23 @@ function loadCheckedItems(bookingId: string): string[] {
   }
 }
 
-export function StayOverviewCard({ booking }: { booking: Booking }) {
+export function StayOverviewCard({
+  booking,
+  status,
+}: {
+  booking: Booking;
+  status: StayStatus;
+}) {
   const navigate = useNavigate();
-  const status = useMemo(() => getStayStatus(booking), [booking]);
-  const copy = STAGE_COPY[status.stage];
+  const baseCopy = STAGE_COPY[status.stage];
+  const copy =
+    status.stage === 'staying' && status.stayDay
+      ? { ...baseCopy, title: `今天是入住第 ${status.stayDay} 天` }
+      : baseCopy;
   const checkIn = booking.checkIn.toDate();
   const checkOut = booking.checkOut.toDate();
+  const primary = primaryAction(status.stage);
+  const secondary = secondaryAction(status.stage);
   const [checked, setChecked] = useState<string[]>(() => loadCheckedItems(booking.id));
 
   useEffect(() => {
@@ -91,7 +102,7 @@ export function StayOverviewCard({ booking }: { booking: Booking }) {
   };
 
   const completedCount = CHECKOUT_ITEMS.filter((item) => checked.includes(item.id)).length;
-  const showChecklist = status.stage !== 'completed';
+  const showChecklist = status.stage === 'checkout_today';
 
   return (
     <>
@@ -123,14 +134,51 @@ export function StayOverviewCard({ booking }: { booking: Booking }) {
           </div>
         </div>
         <div className="stay-overview-actions">
-          <button type="button" className="btn-primary" onClick={() => navigate(primaryAction(status.stage).path)}>
-            {primaryAction(status.stage).label}
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => navigate(primary.path, primary.state ? { state: primary.state } : undefined)}
+          >
+            {primary.label}
           </button>
-          <button type="button" className="btn-ghost" onClick={() => navigate('/guest/messages')}>
-            💬 查看推薦牆
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => navigate(secondary.path, secondary.state ? { state: secondary.state } : undefined)}
+          >
+            {secondary.label}
           </button>
         </div>
       </section>
+
+      {status.stage === 'before_checkin' && (
+        <section className="prestay-guide-card" aria-labelledby="prestay-guide-title">
+          <div className="prestay-guide-heading">
+            <div>
+              <p>BEFORE YOUR STAY · 入住前準備</p>
+              <h2 id="prestay-guide-title">先確認抵達與入住方式</h2>
+            </div>
+            <span aria-hidden="true">🧳</span>
+          </div>
+          <div className="prestay-guide-grid">
+            <button type="button" onClick={() => navigate('/guest/airport')}>
+              <span aria-hidden="true">✈️</span>
+              <strong>機場到住宿</strong>
+              <small>成田、羽田交通與藏前站出口</small>
+            </button>
+            <button type="button" onClick={() => navigate('/guest/arrival')}>
+              <span aria-hidden="true">🚃</span>
+              <strong>抵達與進房</strong>
+              <small>建築入口、電梯與房門位置</small>
+            </button>
+            <button type="button" onClick={() => navigate('/guest/checkin')}>
+              <span aria-hidden="true">📋</span>
+              <strong>入住須知</strong>
+              <small>床單、室內規則與設備準備</small>
+            </button>
+          </div>
+        </section>
+      )}
 
       {showChecklist && (
         <section className={`checkout-widget ${status.stage === 'checkout_today' ? 'urgent' : ''}`} aria-labelledby="checkout-widget-title">
@@ -176,14 +224,14 @@ export function StayOverviewCard({ booking }: { booking: Booking }) {
   );
 }
 
-function countdownLabel(status: ReturnType<typeof getStayStatus>): string {
+function countdownLabel(status: StayStatus): string {
   switch (status.stage) {
     case 'before_checkin':
       return status.daysUntilCheckIn === 1 ? '明天入住' : `${status.daysUntilCheckIn} 天後入住`;
     case 'checkin_today':
-      return '今天 15:00';
+      return '入住第 1 天';
     case 'staying':
-      return status.daysUntilCheckOut === 1 ? '明天退房' : `${status.daysUntilCheckOut} 天後退房`;
+      return `入住第 ${status.stayDay} 天`;
     case 'checkout_today':
       return '今天 11:00 前';
     case 'completed':
@@ -191,17 +239,42 @@ function countdownLabel(status: ReturnType<typeof getStayStatus>): string {
   }
 }
 
-function primaryAction(stage: StayStage): { label: string; path: string } {
+interface StayAction {
+  label: string;
+  path: string;
+  state?: { anchor: string };
+}
+
+function primaryAction(stage: StayStage): StayAction {
   switch (stage) {
     case 'before_checkin':
       return { label: '🚃 查看抵達方式', path: '/guest/arrival' };
     case 'checkin_today':
       return { label: '🔑 開啟進房教學', path: '/guest/arrival' };
     case 'staying':
-      return { label: '🔧 查看設施說明', path: '/guest/facilities' };
+      return { label: '🍜 查看今日推薦', path: '/guest/restaurant' };
     case 'checkout_today':
       return { label: '🏁 查看退房須知', path: '/guest/checkin' };
     case 'completed':
       return { label: '🗺️ 查看東京推薦', path: '/guest/cityguide' };
+  }
+}
+
+function secondaryAction(stage: StayStage): StayAction {
+  switch (stage) {
+    case 'before_checkin':
+      return { label: '✈️ 查看機場交通', path: '/guest/airport' };
+    case 'checkin_today':
+      return { label: '📋 查看入住須知', path: '/guest/checkin' };
+    case 'staying':
+      return { label: '🗺️ 查看東京景點', path: '/guest/cityguide' };
+    case 'checkout_today':
+      return {
+        label: '🗑️ 查看垃圾位置',
+        path: '/guest/arrival',
+        state: { anchor: 'anchor-garbage' },
+      };
+    case 'completed':
+      return { label: '💬 查看推薦牆', path: '/guest/messages' };
   }
 }

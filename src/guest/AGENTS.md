@@ -20,6 +20,7 @@
 
 - Firestore `recommendations` 是主要管理來源。
 - `data/mapPlaces.ts` 只作尚未匯入 Firestore 預設資料時的 fallback。
+- 首頁每日推薦以東京住宿日輪替餐廳、咖啡與景點，不使用隨機排序，避免重新整理後跳動。
 - 地址、座標與外部連結在顯示前保持現有驗證與分類。
 - 地圖共用 `shared/PlaceMap.tsx`，不要在各 tab 重建 Leaflet 邏輯。
 

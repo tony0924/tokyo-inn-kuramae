@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
 import { GuestWeatherCard } from '@/guest/shared/GuestWeatherCard';
+import { DailyRecommendationsCard } from '@/guest/shared/DailyRecommendationsCard';
 import { useAuth } from '@/auth/AuthProvider';
 import { useGuestGuide } from '@/guest/GuestGuideProvider';
+import { getStayStatus } from '@/lib/stayStatus';
 import type { GuestOutletContext } from '@/guest/GuestLayout';
 
 export function HomeTab() {
@@ -11,12 +13,39 @@ export function HomeTab() {
   const { user } = useAuth();
   const { guide } = useGuestGuide();
   const [copied, setCopied] = useState(false);
+  const [statusNow, setStatusNow] = useState(() => new Date());
   const {
     booking,
     greetingName,
     loading: bookingLoading,
     error: bookingError,
   } = useOutletContext<GuestOutletContext>();
+
+  useEffect(() => {
+    if (!booking) return;
+    const timer = window.setInterval(() => setStatusNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, [booking]);
+
+  const stayStatus = useMemo(
+    () => (booking ? getStayStatus(booking, statusNow) : null),
+    [booking, statusNow]
+  );
+  const showDailyStay =
+    stayStatus?.stage === 'checkin_today' || stayStatus?.stage === 'staying';
+  const showWifi =
+    showDailyStay || stayStatus?.stage === 'checkout_today';
+  const showPreparationContent =
+    !stayStatus || stayStatus.stage === 'before_checkin';
+  const heroBadge = stayStatus
+    ? stayStatus.stage === 'before_checkin'
+      ? '✦ Upcoming stay · 準備入住'
+      : showDailyStay
+        ? `✦ Day ${stayStatus.stayDay} in Tokyo · 入住第 ${stayStatus.stayDay} 天`
+        : stayStatus.stage === 'checkout_today'
+          ? '✦ Check-out day · 今天退房'
+          : '✦ Thank you · 謝謝入住'
+    : `✦ ${greetingName ? 'Welcome to your stay · 歡迎入住' : 'Welcome · 歡迎入住'}`;
 
   const copyWifi = async () => {
     try {
@@ -40,9 +69,7 @@ export function HomeTab() {
             <strong>{greetingName}</strong>
           </div>
         )}
-        <div className="hero-badge">
-          ✦ {greetingName ? 'Welcome to your stay · 歡迎入住' : 'Welcome · 歡迎入住'}
-        </div>
+        <div className="hero-badge">{heroBadge}</div>
         <h1>
           KURACHEN Stay
           <br />
@@ -72,7 +99,7 @@ export function HomeTab() {
       {bookingLoading ? (
         <div className="stay-overview-loading">正在整理你的住宿資訊…</div>
       ) : booking ? (
-        <StayOverviewCard booking={booking} />
+        <StayOverviewCard booking={booking} status={stayStatus!} />
       ) : bookingError ? (
         <div className="stay-overview-unavailable" role="status">
           暫時無法載入住宿資訊，其他房客指南仍可正常使用。
@@ -83,9 +110,14 @@ export function HomeTab() {
         </div>
       ) : null}
 
-      <GuestWeatherCard />
+      {showDailyStay && (
+        <>
+          <GuestWeatherCard />
+          <DailyRecommendationsCard stayDay={stayStatus.stayDay ?? 1} />
+        </>
+      )}
 
-      {guide && <div className="wifi-card">
+      {guide && showWifi && <div className="wifi-card">
         <div className="wifi-icon-wrap">📶</div>
         <div className="wifi-info">
           <div className="wifi-row">
@@ -102,7 +134,7 @@ export function HomeTab() {
         </button>
       </div>}
 
-      <div className="glass-card must-see-card">
+      {stayStatus?.stage === 'checkin_today' && <div className="glass-card must-see-card">
         <div className="card-header">
           <div className="card-icon">✨</div>
           <div className="card-title">第一次入住先看</div>
@@ -124,9 +156,9 @@ export function HomeTab() {
             <small>門鎖、IH 爐、熱水機</small>
           </button>
         </div>
-      </div>
+      </div>}
 
-      <div className="glass-card welcome-note-card">
+      {showPreparationContent && <div className="glass-card welcome-note-card">
         <div className="card-header">
           <div className="card-icon">🥳</div>
           <div className="card-title">歡迎來玩</div>
@@ -178,7 +210,7 @@ export function HomeTab() {
             </button>
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="glass-card">
         <div className="card-header">

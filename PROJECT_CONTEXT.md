@@ -10,7 +10,8 @@ This file is the handoff note for future Codex/terminal sessions. Read this firs
 - Firestore database ID: `default` (not `(default)`).
 - Firebase Hosting URL: `https://tokyo-inn-kuramae.web.app`.
 - Cloud Functions region: `asia-east1`.
-- App timezone: `Asia/Taipei`.
+- Scheduled operations timezone: `Asia/Taipei`.
+- Guest stay-day and homepage stage timezone: `Asia/Tokyo`.
 - Main app folder: `/Users/chenweian/Documents/git/tokyo-inn-kurama/tokyo_inn`.
 - Current production deployment uses Firebase Hosting + Firestore + Cloud Functions v2 scheduled functions.
 
@@ -116,11 +117,14 @@ the active guest code and shows a date-aware stay card:
 - The booking `guestName` is authoritative. Google `displayName` is used only
   while no booking name is available; email addresses are never used as a
   greeting.
-- Before check-in: arrival countdown and arrival guidance.
-- Check-in day: check-in time and entry guidance.
-- During the stay: checkout countdown and facilities shortcuts.
-- Checkout day: urgent checkout state.
+- Before check-in: arrival countdown plus airport, arrival, and check-in guidance.
+- Check-in day through the final overnight day: Tokyo-local stay day number,
+  current Kuramae weather, and deterministic daily restaurant/cafe/sight picks.
+- Checkout day: urgent checkout state and the interactive checkout checklist;
+  general preparation and daily-tour content is hidden.
 - After checkout: completed-stay message.
+- The checkout day is not counted as another stay day. A three-night booking
+  displays days 1–3, then switches to checkout mode.
 
 The same status calculation is shared with the Admin today dashboard. The Admin
 operations card brings the next operational booking, payment, key, guest-code,
@@ -137,6 +141,7 @@ Relevant files:
 - `src/lib/bookingPreview.ts`
 - `src/guest/useGuestBooking.ts`
 - `src/guest/shared/StayOverviewCard.tsx`
+- `src/guest/shared/DailyRecommendationsCard.tsx`
 - `src/admin/TodayDashboard.tsx`
 - `firestore.rules`
 
