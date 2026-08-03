@@ -294,6 +294,7 @@ Shared types: `src/types/index.ts`.
 
 - `senderName`
 - `senderEmail`
+- `reminderTemplateVersion`
 - `bookingCreatedReminder.subject`
 - `bookingCreatedReminder.body`
 - `checkInReminder.subject`
@@ -363,14 +364,18 @@ Functions:
   - Finds bookings where `checkIn` is tomorrow.
   - Sends to guest email.
   - CCs all active admin users.
-  - Email includes website URL and guest access code.
+  - Email includes a concise Narita/Haneda arrival guide, website URL, and guest access code.
+  - Missing Admin recipients do not block delivery to the guest.
   - Email intentionally does not show room price.
 
 - `sendCheckoutAdminReminders`
   - Schedule: `0 12 * * *`
   - Timezone: `Asia/Taipei`
   - Finds bookings where `checkOut` is today.
-  - Sends to all active admin users.
+  - The legacy Function/setting name is retained for deployment compatibility.
+  - Sends a concise checkout checklist to the guest and CCs all active admin users.
+  - Email includes the website URL and guest access code for complete instructions.
+  - Missing Admin recipients do not block delivery to the guest.
   - Email intentionally does not show room price.
 
 ## Admin Mobile Push Notifications
@@ -494,6 +499,8 @@ If exact email recipient acceptance is needed, add explicit success logging arou
 - Email content should not show room price.
 - Booking completion email should send immediately after booking creation and CC admin.
 - Check-in reminder email must CC admin.
+- Check-in reminder email should summarize both Narita and Haneda arrival routes, then link to the guest website for details.
+- Checkout-day email should send the guest a short checklist, CC admin, and link to the guest website for details.
 - Guest code should be created per booking.
 - Guest code validity starts when the booking is created and runs through the day after checkout.
 - Check-in notification should include website link and guest code.

@@ -91,6 +91,7 @@ export interface NotificationTemplate {
 export interface NotificationSettings {
   senderName: string;
   senderEmail: string;
+  reminderTemplateVersion: number;
   bookingCreatedReminder: NotificationTemplate;
   checkInReminder: NotificationTemplate;
   checkoutAdminReminder: NotificationTemplate;

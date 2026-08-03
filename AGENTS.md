@@ -156,7 +156,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 - `sendUpcomingCheckInReminders`：09:00，入住前一天 Email
 - `sendTodayCheckInAdminPushes`：09:00，入住日／缺訪客碼
 - `sendTodayCheckoutAdminPushes`：11:00，退房／未還鑰匙
-- `sendCheckoutAdminReminders`：12:00，Admin Email
+- `sendCheckoutAdminReminders`：12:00，房客退房清單 Email、CC Admin（名稱為相容既有排程而保留）
 
 HTTP / callable：
 

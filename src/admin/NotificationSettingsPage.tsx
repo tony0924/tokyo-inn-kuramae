@@ -211,9 +211,10 @@ export function NotificationSettingsPage() {
       </div>
 
       <div className="admin-table" style={{ padding: 18, marginBottom: 24 }}>
-        <h2 style={sectionTitleStyle}>退房後提醒管理員</h2>
+        <h2 style={sectionTitleStyle}>退房當天提醒</h2>
         <p style={helperStyle}>
-          寄給所有管理員。可用變數：
+          退房當天 12:00 寄給房客，並副本寄送所有管理員。Email 提供簡短退房清單，
+          完整說明引導至房客網站。可用變數：
           <code> {'{{guestName}} {{guestEmail}} {{checkInDate}} {{checkOutDate}} {{partySize}} {{keyCode}} {{guestAccessCode}} {{websiteUrl}} {{guestCodeLoginUrl}} {{senderName}}'} </code>
         </p>
         <div className="form-field" style={{ marginBottom: 14 }}>
