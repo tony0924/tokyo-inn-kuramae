@@ -7,9 +7,11 @@ import {
   watchAdminNotifications,
 } from '@/lib/adminNotifications';
 import { clearAppBadge } from '@/lib/pushNotifications';
+import { setAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
 import type { AdminNotification } from '@/types';
 import { PwaStatus } from '@/pwa/PwaStatus';
 import { PushForegroundBridge } from '@/pwa/PushForegroundBridge';
+import { GuestPreviewPicker } from './GuestPreviewPicker';
 import './admin.css';
 
 const navItems = [
@@ -37,6 +39,7 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [guestPreviewOpen, setGuestPreviewOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [notificationsError, setNotificationsError] = useState<string | null>(null);
@@ -98,6 +101,17 @@ export function AdminLayout() {
     '/admin/recommendations',
     '/admin/notifications',
   ].some((path) => location.pathname.startsWith(path));
+
+  function openGuestPreviewPicker() {
+    setMoreOpen(false);
+    setGuestPreviewOpen(true);
+  }
+
+  function previewGuest(bookingId: string | null) {
+    setAdminGuestPreviewBookingId(bookingId);
+    setGuestPreviewOpen(false);
+    navigate('/guest/home');
+  }
 
   return (
     <div className="admin-shell">
@@ -162,9 +176,13 @@ export function AdminLayout() {
               {item.label}
             </NavLink>
           ))}
-          <Link to="/guest/home" className="admin-nav-link admin-preview-link">
+          <button
+            type="button"
+            className="admin-nav-link admin-preview-link"
+            onClick={openGuestPreviewPicker}
+          >
             查看房客頁面
-          </Link>
+          </button>
         </nav>
 
         <div className="admin-user-card">
@@ -228,13 +246,22 @@ export function AdminLayout() {
               <MoreLink to="/admin/notifications" label="通知設定" icon="notifications" />
             </div>
             <div className="admin-more-actions">
-              <Link to="/guest/home" className="btn-ghost">查看房客頁面</Link>
+              <button type="button" className="btn-ghost" onClick={openGuestPreviewPicker}>
+                查看房客頁面
+              </button>
               <button type="button" className="admin-more-signout" onClick={() => signOut().catch(() => {})}>
                 登出 {user?.email}
               </button>
             </div>
           </section>
         </div>
+      )}
+      {guestPreviewOpen && (
+        <GuestPreviewPicker
+          open
+          onClose={() => setGuestPreviewOpen(false)}
+          onSelect={previewGuest}
+        />
       )}
     </div>
   );

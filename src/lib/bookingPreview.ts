@@ -4,10 +4,14 @@ import { selectOperationalBooking } from './stayStatus';
 import type { Booking, BookingDoc } from '@/types';
 
 const ADMIN_GUEST_PREVIEW_BOOKING_KEY = 'admin-guest-preview-booking-id';
+const ADMIN_GUEST_PREVIEW_EMPTY_VALUE = '__no_guest__';
 
-export function setAdminGuestPreviewBookingId(bookingId: string): void {
+export function setAdminGuestPreviewBookingId(bookingId: string | null): void {
   try {
-    sessionStorage.setItem(ADMIN_GUEST_PREVIEW_BOOKING_KEY, bookingId);
+    sessionStorage.setItem(
+      ADMIN_GUEST_PREVIEW_BOOKING_KEY,
+      bookingId ?? ADMIN_GUEST_PREVIEW_EMPTY_VALUE
+    );
   } catch {
     // Preview remains available without personalization when storage is unavailable.
   }
@@ -15,14 +19,24 @@ export function setAdminGuestPreviewBookingId(bookingId: string): void {
 
 export function getAdminGuestPreviewBookingId(): string | null {
   try {
-    return sessionStorage.getItem(ADMIN_GUEST_PREVIEW_BOOKING_KEY);
+    const stored = sessionStorage.getItem(ADMIN_GUEST_PREVIEW_BOOKING_KEY);
+    return stored === ADMIN_GUEST_PREVIEW_EMPTY_VALUE ? null : stored;
   } catch {
     return null;
   }
 }
 
 export async function resolveAdminGuestPreviewBookingId(): Promise<string | null> {
-  const storedBookingId = getAdminGuestPreviewBookingId();
+  let storedValue: string | null = null;
+  try {
+    storedValue = sessionStorage.getItem(ADMIN_GUEST_PREVIEW_BOOKING_KEY);
+  } catch {
+    // Fall through to the automatic preview selection.
+  }
+
+  if (storedValue === ADMIN_GUEST_PREVIEW_EMPTY_VALUE) return null;
+
+  const storedBookingId = storedValue;
   if (storedBookingId) {
     const storedBooking = await getDoc(doc(db, 'bookings', storedBookingId));
     if (storedBooking.exists()) return storedBookingId;

@@ -213,7 +213,11 @@ function GuestLayoutContent() {
       {isAdminPreview && (
         <aside className="admin-preview-dock" aria-label="管理員預覽模式">
           <div className="admin-preview-dock-inner">
-            <span>管理員預覽房客頁面</span>
+            <span>
+              {greetingName
+                ? `管理員預覽：${greetingName} 的房客頁面`
+                : '管理員預覽：無住客狀態'}
+            </span>
             <NavLink to="/admin" className="admin-preview-back">
               回管理後台
             </NavLink>

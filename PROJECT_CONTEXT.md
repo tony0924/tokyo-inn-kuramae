@@ -87,6 +87,11 @@ Admin backend currently includes:
 - Mobile bottom navigation and installable PWA shell.
 - Per-admin-device Web Push registration and App icon badge support.
 - Button/link flow to preview guest-facing page as admin.
+- The Admin guest-preview entry opens a picker containing every current or
+  upcoming booking in check-in order. Selecting a booking stores its ID in
+  session storage and renders the Guest portal with that booking's name and
+  date-aware stay stage. When there are no current/upcoming bookings, Admin can
+  explicitly preview the generic no-guest state.
 
 Admin app entry: `src/pages/AdminApp.tsx`.
 

@@ -106,7 +106,7 @@ export function HomeTab() {
         </div>
       ) : user?.role === 'admin' ? (
         <div className="stay-overview-unavailable" role="status">
-          目前沒有可供管理員預覽的預約，建立預約後即可查看個人住宿與航班小卡。
+          目前沒有住客。這是房客尚未綁定預約時看到的通用指南畫面。
         </div>
       ) : null}
 

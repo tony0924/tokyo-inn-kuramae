@@ -66,6 +66,17 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 5. Guest Layout 集中載入當次預約姓名，供首次網站介紹、所有分頁頂部與首頁
    顯示 `Hi, {guestName}`；只有預約姓名尚未載入時才退回 Google 顯示名稱。
 
+### Admin 房客視角預覽
+
+1. Admin 點擊「查看房客頁面」後，系統即時讀取 booking，列出住宿中與尚未入住的
+   住客，並依入住日期排序及標示目前住宿階段。
+2. 選擇住客後，booking ID 僅儲存在 Admin 該分頁的 sessionStorage；Guest portal
+   仍以 Admin 權限讀取 booking，不建立或冒用住客登入狀態。
+3. Guest 首頁、姓名問候、入住倒數、住宿第幾天與退房狀態都使用選定 booking。
+   頁面頂端會持續標示目前預覽的住客，並提供返回管理後台的入口。
+4. 若沒有住宿中或未來預約，選擇器改為提供「無住客狀態」，呈現未綁定預約時的
+   通用房客指南畫面。
+
 ### 訪客 PWA 安裝
 
 1. Guest Layout 載入後切換到 `guest-manifest.webmanifest`，並監聽瀏覽器的
