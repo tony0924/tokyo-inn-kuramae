@@ -264,6 +264,8 @@ export interface RecommendationDoc {
   rating?: number;
   active: boolean;
   sortOrder: number;
+  archivedAt?: Timestamp | null;
+  updatedBy?: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

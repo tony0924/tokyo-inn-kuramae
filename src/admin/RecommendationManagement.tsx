@@ -1,7 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type FormEvent,
+  type Ref,
+} from 'react';
+import { useAuth } from '@/auth/AuthProvider';
+import {
+  activateAndReorderRecommendations,
+  archiveRecommendations,
+  bulkSetRecommendationActive,
   createRecommendation,
   deleteRecommendation,
+  reorderRecommendations,
   setRecommendationActive,
   updateRecommendation,
   type RecommendationInput,
@@ -9,12 +22,16 @@ import {
 import { lookupGoogleMapPlace } from '@/lib/googleMaps';
 import { useRecommendations } from './useRecommendations';
 import { mapPlaces, type MapKey, type Place } from '@/guest/data/mapPlaces';
-import type { Recommendation, RecommendationCategory, RecommendationSection } from '@/types';
+import type {
+  Recommendation,
+  RecommendationCategory,
+  RecommendationSection,
+} from '@/types';
 
 type FormState = RecommendationInput & { active: boolean };
-type SortKey = 'section' | 'category' | 'name' | 'source' | 'note' | 'rating' | 'sortOrder' | 'status';
-type SortDirection = 'asc' | 'desc';
-type FilterKey = 'all' | RecommendationCategory;
+type CategoryFilter = 'all' | RecommendationCategory;
+type StatusFilter = 'all' | 'active' | 'inactive' | 'archived';
+type MoveDirection = 'up' | 'down' | 'first' | 'last';
 
 const SECTION_LABELS: Record<RecommendationSection, string> = {
   services: '超市 / 便利商店',
@@ -28,6 +45,14 @@ const CATEGORY_LABELS: Record<RecommendationCategory, string> = {
   restaurant: '餐廳',
   cafe: '咖啡廳 / 甜點',
   sight: '景點',
+};
+
+const CATEGORY_ICONS: Record<RecommendationCategory, string> = {
+  convenience: '🏪',
+  supermarket: '🛒',
+  restaurant: '🍜',
+  cafe: '☕',
+  sight: '🗺️',
 };
 
 const SECTION_CATEGORIES: Record<RecommendationSection, RecommendationCategory[]> = {
@@ -52,187 +77,90 @@ const EMPTY_FORM: FormState = {
 };
 
 export function RecommendationManagement() {
+  const { user } = useAuth();
   const { recommendations, loading } = useRecommendations();
+  const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [initialForm, setInitialForm] = useState<FormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [importingDefaults, setImportingDefaults] = useState(false);
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [lookingUpPlace, setLookingUpPlace] = useState(false);
+  const [importingDefaults, setImportingDefaults] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('status');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterKey, setFilterKey] = useState<FilterKey>('all');
-  const formRef = useRef<HTMLFormElement | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
-  const filteredRecommendations = useMemo(
+  const actorUid = user?.uid ?? null;
+
+  const counts = useMemo(() => {
+    const archived = recommendations.filter(isArchived).length;
+    const active = recommendations.filter((item) => item.active && !isArchived(item)).length;
+    const inactive = recommendations.length - active - archived;
+    return { total: recommendations.length, active, inactive, archived };
+  }, [recommendations]);
+
+  const filteredRecommendations = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase('zh-Hant');
+    return recommendations.filter((item) => {
+      if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
+      if (statusFilter === 'all' && isArchived(item)) return false;
+      if (statusFilter === 'active' && (!item.active || isArchived(item))) return false;
+      if (statusFilter === 'inactive' && (item.active || isArchived(item))) return false;
+      if (statusFilter === 'archived' && !isArchived(item)) return false;
+      if (!normalizedQuery) return true;
+      return [item.name, item.note, item.address, CATEGORY_LABELS[item.category]]
+        .some((value) => value?.toLocaleLowerCase('zh-Hant').includes(normalizedQuery));
+    });
+  }, [categoryFilter, query, recommendations, statusFilter]);
+
+  const groupedRecommendations = useMemo(
     () =>
-      filterKey === 'all'
-        ? recommendations
-        : recommendations.filter((item) => item.category === filterKey),
-    [filterKey, recommendations]
-  );
-  const sortedRecommendations = useMemo(
-    () =>
-      [...filteredRecommendations].sort((a, b) => {
-        const direction = sortDirection === 'asc' ? 1 : -1;
-        const primary = compareRecommendations(a, b, sortKey) * direction;
-        if (primary !== 0) return primary;
-        return a.name.localeCompare(b.name, 'zh-Hant') * direction;
-      }),
-    [filteredRecommendations, sortDirection, sortKey]
+      (Object.keys(CATEGORY_LABELS) as RecommendationCategory[])
+        .map((category) => ({
+          category,
+          items: filteredRecommendations
+            .filter((item) => item.category === category)
+            .sort(compareRecommendationOrder),
+        }))
+        .filter((group) => group.items.length > 0),
+    [filteredRecommendations]
   );
 
-  useEffect(() => {
-    if (!editingId) return;
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(() => {
-      nameInputRef.current?.focus();
-      nameInputRef.current?.select();
-    }, 220);
-  }, [editingId]);
+  const drawerDirty = serializeForm(form) !== serializeForm(initialForm);
 
-  useEffect(() => {
-    if (editingId) return;
-    setForm((current) => ({
-      ...current,
-      sortOrder: getNextAvailableSortOrder(current.category, recommendations),
-    }));
-  }, [editingId, form.category, form.section, recommendations]);
-
-  function toggleSort(nextKey: SortKey) {
-    if (sortKey === nextKey) {
-      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-    setSortKey(nextKey);
-    setSortDirection('asc');
-  }
-
-  function renderSortHeader(label: string, key: SortKey) {
-    const active = sortKey === key;
-    const arrow = active ? (sortDirection === 'asc' ? '↑' : '↓') : '';
-    return (
-      <button
-        type="button"
-        className={`table-sort-button${active ? ' active' : ''}`}
-        onClick={() => toggleSort(key)}
-      >
-        <span>{label}</span>
-        <span className="table-sort-indicator" aria-hidden="true">{arrow}</span>
-      </button>
-    );
-  }
-
-  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    if (key === 'section') {
-      const section = value as RecommendationSection;
-      setForm((current) => ({
-        ...current,
-        section,
-        category: SECTION_CATEGORIES[section][0],
-      }));
-      return;
-    }
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+  function clearFeedback() {
     setMessage(null);
     setError(null);
-    try {
-      const editingItem = editingId
-        ? recommendations.find((item) => item.id === editingId) ?? null
-        : null;
-      const conflict = recommendations.find(
-        (item) =>
-          item.category === form.category &&
-          item.sortOrder === form.sortOrder &&
-          item.id !== editingId
-      );
-      if (conflict && !editingId) {
-        throw new Error(
-          `「${CATEGORY_LABELS[form.category]}」分類內的排序 ${form.sortOrder} 已被「${conflict.name}」使用，請改成其他數字。`
-        );
-      }
-
-      if (editingId) {
-        if (!editingItem) {
-          throw new Error('找不到要編輯的推薦地點，請重新整理後再試一次');
-        }
-        if (conflict && conflict.sortOrder !== editingItem.sortOrder) {
-          await updateRecommendation(conflict.id, {
-            section: conflict.section,
-            category: conflict.category,
-            placeId: conflict.placeId ?? '',
-            address: conflict.address ?? '',
-            name: conflict.name,
-            lat: conflict.lat,
-            lng: conflict.lng,
-            url: conflict.url,
-            note: conflict.note,
-            rating: conflict.rating ?? 3,
-            sortOrder: editingItem.sortOrder,
-            active: conflict.active,
-          });
-        }
-        await updateRecommendation(editingId, form);
-        setMessage(`已更新「${form.name}」`);
-      } else {
-        await createRecommendation(form);
-        setMessage(`已新增「${form.name}」`);
-      }
-      setForm(EMPTY_FORM);
-      setEditingId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '儲存推薦地點失敗');
-    } finally {
-      setSaving(false);
-    }
   }
 
-  async function handleLookupPlace() {
-    if (!form.url.trim()) {
-      setError('請先貼上 Google Maps 商家連結');
-      return;
-    }
-
-    setLookingUpPlace(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const place = await lookupGoogleMapPlace(form.url);
-      if (place.lat == null || place.lng == null || !place.name) {
-        throw new Error('Google Maps 回傳的資料不完整，請改用手動輸入。');
-      }
-      const lat = place.lat;
-      const lng = place.lng;
-
-      setForm((current) => ({
-        ...current,
-        placeId: place.placeId || current.placeId,
-        address: place.address || current.address,
-        name: place.name || current.name,
-        lat,
-        lng,
-        url: current.url.trim(),
-      }));
-      setMessage(`已自動帶入「${place.name}」的基本資料`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google Maps 自動帶入失敗');
-    } finally {
-      setLookingUpPlace(false);
-    }
+  function openCreate() {
+    const category = categoryFilter === 'all' ? 'restaurant' : categoryFilter;
+    const section = sectionForCategory(category);
+    const next = {
+      ...EMPTY_FORM,
+      section,
+      category,
+      sortOrder: nextSortOrder(category, recommendations),
+    };
+    setEditingId(null);
+    setForm(next);
+    setInitialForm(next);
+    setDrawerOpen(true);
+    clearFeedback();
+    window.setTimeout(() => nameInputRef.current?.focus(), 120);
   }
 
-  function startEdit(item: Recommendation) {
-    setEditingId(item.id);
-    setForm({
+  function openEdit(item: Recommendation) {
+    const next: FormState = {
       section: item.section,
       category: item.category,
+      source: item.source,
+      defaultKey: item.defaultKey,
       placeId: item.placeId ?? '',
       address: item.address ?? '',
       name: item.name,
@@ -243,30 +171,267 @@ export function RecommendationManagement() {
       rating: item.rating ?? 1,
       sortOrder: item.sortOrder,
       active: item.active,
-    });
-    setMessage(null);
+    };
+    setEditingId(item.id);
+    setForm(next);
+    setInitialForm(next);
+    setDrawerOpen(true);
+    clearFeedback();
+    window.setTimeout(() => {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }, 120);
+  }
+
+  function closeDrawer(force = false) {
+    if (!force && drawerDirty && !confirm('尚有未儲存的修改，確定要關閉嗎？')) return;
+    setDrawerOpen(false);
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setInitialForm(EMPTY_FORM);
     setError(null);
   }
 
-  async function handleDelete(item: Recommendation) {
-    if (!confirm(`確定刪除「${item.name}」嗎？`)) return;
-    setError(null);
+  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    if (key === 'section') {
+      const section = value as RecommendationSection;
+      const category = SECTION_CATEGORIES[section][0];
+      setForm((current) => ({
+        ...current,
+        section,
+        category,
+        sortOrder: nextSortOrder(category, recommendations),
+      }));
+      return;
+    }
+    if (key === 'category') {
+      const category = value as RecommendationCategory;
+      setForm((current) => ({
+        ...current,
+        category,
+        section: sectionForCategory(category),
+        sortOrder:
+          category === initialForm.category
+            ? initialForm.sortOrder
+            : nextSortOrder(category, recommendations),
+      }));
+      return;
+    }
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleLookupPlace() {
+    if (!form.url.trim()) {
+      setError('請先貼上 Google Maps 商家連結');
+      return;
+    }
+    setLookingUpPlace(true);
+    clearFeedback();
     try {
-      await deleteRecommendation(item.id);
-      setMessage(`已刪除「${item.name}」`);
-      if (editingId === item.id) {
-        setEditingId(null);
-        setForm(EMPTY_FORM);
+      const place = await lookupGoogleMapPlace(form.url);
+      if (place.lat == null || place.lng == null || !place.name) {
+        throw new Error('Google Maps 回傳的資料不完整，請展開進階設定手動輸入。');
+      }
+      setForm((current) => ({
+        ...current,
+        placeId: place.placeId || current.placeId,
+        address: place.address || current.address,
+        name: place.name || current.name,
+        lat: place.lat!,
+        lng: place.lng!,
+        url: current.url.trim(),
+      }));
+      setMessage(`已自動帶入「${place.name}」的基本資料`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google Maps 自動帶入失敗');
+    } finally {
+      setLookingUpPlace(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    clearFeedback();
+    try {
+      const duplicate = findDuplicate(form, recommendations, editingId);
+      if (duplicate) {
+        throw new Error(`這個 Google Maps 地點可能已存在：「${duplicate.name}」`);
+      }
+      if (!isGoogleMapsUrl(form.url)) {
+        throw new Error('請使用有效的 Google Maps 連結');
+      }
+
+      if (editingId) {
+        await updateRecommendation(editingId, form, { updatedBy: actorUid });
+        if (initialForm.category !== form.category) {
+          await normalizeCategory(initialForm.category, recommendations, actorUid, editingId);
+        }
+        setMessage(`已更新「${form.name}」`);
+      } else {
+        await createRecommendation(form, { updatedBy: actorUid });
+        setMessage(`已新增「${form.name}」`);
+      }
+      closeDrawer(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '儲存推薦地點失敗');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggle(item: Recommendation) {
+    setBusy(item.id, true);
+    clearFeedback();
+    try {
+      if (isArchived(item)) {
+        await activateItems([item.id]);
+        setMessage(`已恢復並顯示「${item.name}」`);
+      } else if (!item.active) {
+        await activateItems([item.id]);
+        setMessage(`已顯示「${item.name}」`);
+      } else {
+        await setRecommendationActive(item.id, false, { updatedBy: actorUid });
+        await normalizeCategoriesAfterRemoval([item.id]);
+        setMessage(`已停用「${item.name}」`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '刪除推薦地點失敗');
+      setError(err instanceof Error ? err.message : '更新狀態失敗');
+    } finally {
+      setBusy(item.id, false);
+    }
+  }
+
+  async function handleArchive(item: Recommendation) {
+    if (!confirm(`要將「${item.name}」移到封存區嗎？之後仍可恢復。`)) return;
+    setBusy(item.id, true);
+    try {
+      await archiveRecommendations([item.id], { updatedBy: actorUid });
+      await normalizeCategoriesAfterRemoval([item.id]);
+      setMessage(`已封存「${item.name}」`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '封存失敗');
+    } finally {
+      setBusy(item.id, false);
+    }
+  }
+
+  async function handleDelete(item: Recommendation) {
+    if (!confirm(`確定永久刪除「${item.name}」嗎？此操作無法復原。`)) return;
+    setBusy(item.id, true);
+    try {
+      await deleteRecommendation(item.id);
+      await normalizeCategoriesAfterRemoval([item.id]);
+      setSelectedIds((current) => withoutId(current, item.id));
+      setMessage(`已永久刪除「${item.name}」`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '刪除失敗');
+    } finally {
+      setBusy(item.id, false);
+    }
+  }
+
+  async function handleDuplicate(item: Recommendation) {
+    const name = `${item.name}（副本）`;
+    try {
+      await createRecommendation(
+        {
+          section: item.section,
+          category: item.category,
+          source: 'admin',
+          name,
+          placeId: '',
+          address: item.address ?? '',
+          lat: item.lat,
+          lng: item.lng,
+          url: item.url,
+          note: item.note,
+          rating: item.rating ?? 3,
+          sortOrder: nextSortOrder(item.category, recommendations),
+        },
+        { updatedBy: actorUid }
+      );
+      setMessage(`已建立「${name}」，請編輯 Maps 連結避免重複。`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '複製失敗');
+    }
+  }
+
+  async function moveItem(item: Recommendation, direction: MoveDirection) {
+    const items = activeCategoryItems(item.category, recommendations);
+    const currentIndex = items.findIndex((candidate) => candidate.id === item.id);
+    if (currentIndex < 0) return;
+    const targetIndex =
+      direction === 'first'
+        ? 0
+        : direction === 'last'
+          ? items.length - 1
+          : direction === 'up'
+            ? Math.max(0, currentIndex - 1)
+            : Math.min(items.length - 1, currentIndex + 1);
+    if (targetIndex === currentIndex) return;
+    const next = [...items];
+    const [moved] = next.splice(currentIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    await persistOrder(next);
+  }
+
+  async function handleDrop(target: Recommendation) {
+    if (!draggedId || draggedId === target.id) return;
+    const dragged = recommendations.find((item) => item.id === draggedId);
+    if (!dragged || dragged.category !== target.category || !dragged.active || isArchived(dragged)) {
+      setDraggedId(null);
+      return;
+    }
+    const items = activeCategoryItems(target.category, recommendations);
+    const fromIndex = items.findIndex((item) => item.id === dragged.id);
+    const toIndex = items.findIndex((item) => item.id === target.id);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...items];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    setDraggedId(null);
+    await persistOrder(next);
+  }
+
+  async function persistOrder(items: Recommendation[]) {
+    clearFeedback();
+    try {
+      await reorderRecommendations(
+        items.map((item, index) => ({ id: item.id, sortOrder: index + 1 })),
+        { updatedBy: actorUid }
+      );
+      setMessage('推薦順序已更新');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '排序更新失敗');
+    }
+  }
+
+  async function handleBulk(action: 'enable' | 'disable' | 'archive' | 'restore') {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    clearFeedback();
+    try {
+      if (action === 'archive') {
+        if (!confirm(`要封存選取的 ${ids.length} 個地點嗎？`)) return;
+        await archiveRecommendations(ids, { updatedBy: actorUid });
+        await normalizeCategoriesAfterRemoval(ids);
+      } else if (action === 'restore' || action === 'enable') {
+        await activateItems(ids);
+      } else {
+        await bulkSetRecommendationActive(ids, false, { updatedBy: actorUid });
+        await normalizeCategoriesAfterRemoval(ids);
+      }
+      setSelectedIds(new Set());
+      setMessage(`已完成 ${ids.length} 個地點的批次操作`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '批次操作失敗');
     }
   }
 
   async function handleImportDefaults() {
     setImportingDefaults(true);
-    setMessage(null);
-    setError(null);
+    clearFeedback();
     try {
       const existingDefaultKeys = new Set(
         recommendations.map((item) => item.defaultKey).filter(Boolean)
@@ -274,15 +439,13 @@ export function RecommendationManagement() {
       const defaults = getDefaultRecommendationInputs().filter(
         (item) => !existingDefaultKeys.has(item.defaultKey)
       );
-
       for (const item of defaults) {
-        await createRecommendation(item);
+        await createRecommendation(item, { updatedBy: actorUid });
       }
-
       setMessage(
-        defaults.length > 0
-          ? `已匯入 ${defaults.length} 筆現有預設地點，現在可以編輯、停用或刪除。`
-          : '現有預設地點都已經在清單中。'
+        defaults.length
+          ? `已匯入 ${defaults.length} 筆預設地點`
+          : '所有預設地點都已在管理清單中'
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : '匯入預設地點失敗');
@@ -291,361 +454,738 @@ export function RecommendationManagement() {
     }
   }
 
+  function setBusy(id: string, busy: boolean) {
+    setBusyIds((current) => {
+      const next = new Set(current);
+      if (busy) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function activateItems(ids: string[]) {
+    const selected = new Set(ids);
+    const categories = new Set(
+      recommendations
+        .filter((item) => selected.has(item.id))
+        .map((item) => item.category)
+    );
+    for (const category of categories) {
+      const currentActive = activeCategoryItems(category, recommendations);
+      const additions = recommendations
+        .filter((item) => (
+          selected.has(item.id)
+          && item.category === category
+          && (!item.active || isArchived(item))
+        ))
+        .sort(compareRecommendationOrder);
+      const ordered = [...currentActive, ...additions];
+      await activateAndReorderRecommendations(
+        ordered.map((item, index) => ({ id: item.id, sortOrder: index + 1 })),
+        { updatedBy: actorUid }
+      );
+    }
+  }
+
+  async function normalizeCategoriesAfterRemoval(ids: string[]) {
+    const removed = new Set(ids);
+    const categories = new Set(
+      recommendations
+        .filter((item) => removed.has(item.id))
+        .map((item) => item.category)
+    );
+    for (const category of categories) {
+      const remaining = activeCategoryItems(category, recommendations)
+        .filter((item) => !removed.has(item.id));
+      if (remaining.length > 0) {
+        await reorderRecommendations(
+          remaining.map((item, index) => ({ id: item.id, sortOrder: index + 1 })),
+          { updatedBy: actorUid }
+        );
+      }
+    }
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
-    <div>
-      <div className="admin-page-header">
+    <div className="recommendation-admin">
+      <header className="recommendation-admin-header">
         <div>
-          <h1 className="admin-page-title">推薦地點</h1>
-          <p style={{ color: 'var(--text-mid)', fontSize: 13, marginTop: 8 }}>
-            可管理房客頁面的餐廳、景點、超市。若要編輯原本已有的地點，請先匯入目前預設清單。
-          </p>
+          <p>GUEST CONTENT</p>
+          <h1 className="admin-page-title">推薦地點管理</h1>
+          <span>管理房客頁、地圖與住宿期間首頁的每日推薦。</span>
         </div>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={handleImportDefaults}
-          disabled={importingDefaults}
-        >
-          {importingDefaults ? '匯入中…' : '匯入目前預設清單'}
+        <button type="button" className="btn-gold" onClick={openCreate}>
+          ＋ 新增推薦地點
         </button>
+      </header>
+
+      <div className="recommendation-summary-grid">
+        <Summary label="全部資料" value={counts.total} />
+        <Summary label="房客顯示中" value={counts.active} tone="active" />
+        <Summary label="暫停顯示" value={counts.inactive} tone="inactive" />
+        <Summary label="封存" value={counts.archived} tone="archived" />
       </div>
 
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className="admin-table"
-        style={{ padding: 18, marginBottom: 24, scrollMarginTop: 96 }}
-      >
-        <h2 style={sectionTitleStyle}>{editingId ? '編輯推薦地點' : '新增推薦地點'}</h2>
-        {editingId && (
-          <p style={{ color: 'var(--gold-light)', fontSize: 13, marginBottom: 14 }}>
-            已帶入要編輯的資料，修改後直接按「儲存變更」即可。
-          </p>
-        )}
-        <div className="form-grid">
-          <div className="form-field">
-            <label>分頁 *</label>
-            <select
-              value={form.section}
-              onChange={(e) => updateField('section', e.target.value as RecommendationSection)}
-            >
-              {Object.entries(SECTION_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>分類 *</label>
-            <select
-              value={form.category}
-              onChange={(e) => updateField('category', e.target.value as RecommendationCategory)}
-            >
-              {SECTION_CATEGORIES[form.section].map((category) => (
-                <option key={category} value={category}>
-                  {CATEGORY_LABELS[category]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>名稱 *</label>
-            <input
-              ref={nameInputRef}
-              value={form.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              placeholder="例如：淺草炸肉餅"
-              required
-            />
-          </div>
-          <div className="form-field">
-            <label>Google Place ID</label>
-            <input
-              value={form.placeId ?? ''}
-              onChange={(e) => updateField('placeId', e.target.value)}
-              placeholder="自動帶入後會填入"
-            />
-          </div>
-          <div className="form-field">
-            <label>推薦星等</label>
-            <input
-              type="number"
-              min={1}
-              max={5}
-              value={form.rating}
-              onChange={(e) => updateField('rating', Number(e.target.value))}
-            />
-          </div>
-          <div className="form-field">
-            <label>排序</label>
-            <input
-              type="number"
-              value={form.sortOrder}
-              onChange={(e) => updateField('sortOrder', Number(e.target.value))}
-            />
-            <p className="helper-text">切換分類時會自動帶入該分類目前可用的最小排序值。</p>
-          </div>
-          <div className="form-field">
-            <label>緯度 lat *</label>
-            <input
-              type="number"
-              step="0.000001"
-              value={form.lat}
-              onChange={(e) => updateField('lat', Number(e.target.value))}
-              required
-            />
-          </div>
-          <div className="form-field">
-            <label>經度 lng *</label>
-            <input
-              type="number"
-              step="0.000001"
-              value={form.lng}
-              onChange={(e) => updateField('lng', Number(e.target.value))}
-              required
-            />
-          </div>
-          <div className="form-field full">
-            <label>Google Maps 連結 *</label>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <input
-                value={form.url}
-                onChange={(e) => updateField('url', e.target.value)}
-                placeholder="https://maps.app.goo.gl/..."
-                required
-                style={{ flex: '1 1 380px' }}
-              />
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={handleLookupPlace}
-                disabled={lookingUpPlace}
-                style={{ minWidth: 120 }}
-              >
-                {lookingUpPlace ? '查詢中…' : '自動帶入'}
-              </button>
-            </div>
-            <p className="helper-text">最省錢版本目前只支援「貼 Google Maps 連結後手動按自動帶入」。</p>
-          </div>
-          <div className="form-field full">
-            <label>地址</label>
-            <input
-              value={form.address ?? ''}
-              onChange={(e) => updateField('address', e.target.value)}
-              placeholder="自動帶入後會填入，可手動修改"
-            />
-          </div>
-          <div className="form-field full">
-            <label>備註</label>
-            <textarea
-              value={form.note}
-              onChange={(e) => updateField('note', e.target.value)}
-              placeholder="例如：排隊名店、適合早餐、雨天備案"
-            />
-          </div>
-          {editingId && (
-            <div className="form-field">
-              <label>狀態</label>
-              <select
-                value={form.active ? 'active' : 'inactive'}
-                onChange={(e) => updateField('active', e.target.value === 'active')}
-              >
-                <option value="active">顯示中</option>
-                <option value="inactive">停用</option>
-              </select>
-            </div>
-          )}
-        </div>
+      <section className="recommendation-toolbar" aria-label="推薦地點搜尋與篩選">
+        <label className="recommendation-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="搜尋名稱、備註或地址"
+          />
+        </label>
+        <select
+          aria-label="分類篩選"
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value as CategoryFilter)}
+        >
+          <option value="all">所有分類</option>
+          {(Object.keys(CATEGORY_LABELS) as RecommendationCategory[]).map((category) => (
+            <option key={category} value={category}>
+              {CATEGORY_LABELS[category]}（{recommendations.filter((item) => item.category === category && !isArchived(item)).length}）
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="狀態篩選"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+        >
+          <option value="all">未封存全部</option>
+          <option value="active">顯示中</option>
+          <option value="inactive">已停用</option>
+          <option value="archived">封存區</option>
+        </select>
+      </section>
 
-        {error && <p className="field-error" style={{ marginTop: 14 }}>{error}</p>}
-        {message && (
-          <p style={{ color: 'var(--gold-light)', marginTop: 14, fontSize: 13 }}>{message}</p>
-        )}
+      {selectedIds.size > 0 && (
+        <section className="recommendation-bulk-bar" aria-label="批次操作">
+          <strong>已選取 {selectedIds.size} 個地點</strong>
+          <div>
+            <button type="button" onClick={() => void handleBulk('enable')}>顯示</button>
+            <button type="button" onClick={() => void handleBulk('disable')}>停用</button>
+            {statusFilter === 'archived' ? (
+              <button type="button" onClick={() => void handleBulk('restore')}>恢復</button>
+            ) : (
+              <button type="button" onClick={() => void handleBulk('archive')}>封存</button>
+            )}
+            <button type="button" onClick={() => setSelectedIds(new Set())}>取消選取</button>
+          </div>
+        </section>
+      )}
 
-        <div className="form-actions">
-          {editingId && (
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                setEditingId(null);
-                setForm(EMPTY_FORM);
-              }}
-            >
-              取消編輯
-            </button>
-          )}
-          <button type="submit" className="btn-gold" disabled={saving}>
-            {saving ? '儲存中…' : editingId ? '儲存變更' : '新增推薦'}
-          </button>
-        </div>
-      </form>
+      {error && <p className="field-error recommendation-feedback">{error}</p>}
+      {message && <p className="recommendation-success recommendation-feedback">{message}</p>}
 
       {loading ? (
-        <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
+        <div className="recommendation-empty">正在載入推薦地點…</div>
+      ) : groupedRecommendations.length === 0 ? (
+        <div className="recommendation-empty">
+          <span aria-hidden="true">📍</span>
+          <strong>找不到符合條件的地點</strong>
+          <p>調整搜尋或篩選條件，或新增第一個推薦地點。</p>
+        </div>
       ) : (
-        <>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-            <button
-              type="button"
-              className={filterKey === 'all' ? 'btn-gold' : 'btn-ghost'}
-              onClick={() => setFilterKey('all')}
-              style={{ padding: '6px 14px', fontSize: 13 }}
-            >
-              全部
-            </button>
-            {(Object.entries(CATEGORY_LABELS) as Array<[RecommendationCategory, string]>).map(
-              ([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={filterKey === value ? 'btn-gold' : 'btn-ghost'}
-                  onClick={() => setFilterKey(value)}
-                  style={{ padding: '6px 14px', fontSize: 13 }}
-                >
-                  {label}
-                </button>
-              )
-            )}
-          </div>
-
-          <div className="admin-table-scroll">
-            <table className="admin-table mobile-card-table recommendation-table">
-            <thead>
-              <tr>
-                <th>{renderSortHeader('分頁', 'section')}</th>
-                <th>{renderSortHeader('分類', 'category')}</th>
-                <th>{renderSortHeader('名稱', 'name')}</th>
-                <th>{renderSortHeader('來源', 'source')}</th>
-                <th>{renderSortHeader('備註', 'note')}</th>
-                <th>{renderSortHeader('星等', 'rating')}</th>
-                <th>{renderSortHeader('排序', 'sortOrder')}</th>
-                <th>{renderSortHeader('狀態', 'status')}</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRecommendations.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ color: 'var(--text-mid)' }}>
-                    {filterKey === 'all'
-                      ? '尚未匯入或新增推薦。按上方「匯入目前預設清單」後，就能看到現在房客頁面的現有地點。'
-                      : `目前沒有「${CATEGORY_LABELS[filterKey]}」分類的推薦地點。`}
-                  </td>
-                </tr>
-              ) : (
-                sortedRecommendations.map((item) => (
-                  <tr
+        <div className="recommendation-groups">
+          {groupedRecommendations.map(({ category, items }) => (
+            <section className="recommendation-group" key={category}>
+              <div className="recommendation-group-heading">
+                <div>
+                  <span aria-hidden="true">{CATEGORY_ICONS[category]}</span>
+                  <h2>{CATEGORY_LABELS[category]}</h2>
+                  <small>{items.length} 個</small>
+                </div>
+                <span>{SECTION_LABELS[sectionForCategory(category)]}</span>
+              </div>
+              <div className="recommendation-list">
+                {items.map((item) => (
+                  <RecommendationRow
                     key={item.id}
-                    style={editingId === item.id ? { outline: '1px solid rgba(201,168,76,0.4)' } : undefined}
-                  >
-                    <td>{SECTION_LABELS[item.section]}</td>
-                    <td>{CATEGORY_LABELS[item.category]}</td>
-                    <td style={{ color: 'var(--text)' }}>
-                      <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>
-                        {item.name}
-                      </a>
-                    </td>
-                    <td style={{ color: 'var(--text-mid)' }}>
-                      {item.source === 'default' ? '預設清單' : '後台新增'}
-                    </td>
-                    <td style={{ color: 'var(--text-mid)', maxWidth: 320 }}>{item.note || '—'}</td>
-                    <td style={{ color: 'var(--gold-light)' }}>{renderStars(item.rating ?? 1)}</td>
-                    <td style={{ color: 'var(--text-mid)' }}>{item.sortOrder}</td>
-                    <td>
-                      <span className={`badge ${item.active ? 'paid' : 'role-pending'}`}>
-                        {item.active ? '顯示中' : '已停用'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <button type="button" className="btn-ghost" onClick={() => startEdit(item)}>
-                          編輯
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-ghost"
-                          onClick={() => setRecommendationActive(item.id, !item.active)}
-                        >
-                          {item.active ? '停用' : '啟用'}
-                        </button>
-                        <button type="button" className="btn-danger" onClick={() => handleDelete(item)}>
-                          刪除
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-            </table>
-          </div>
-        </>
+                    item={item}
+                    allItems={recommendations}
+                    selected={selectedIds.has(item.id)}
+                    busy={busyIds.has(item.id)}
+                    dragging={draggedId === item.id}
+                    currentActorUid={actorUid}
+                    onSelect={() => toggleSelected(item.id)}
+                    onEdit={() => openEdit(item)}
+                    onToggle={() => void handleToggle(item)}
+                    onArchive={() => void handleArchive(item)}
+                    onDelete={() => void handleDelete(item)}
+                    onDuplicate={() => void handleDuplicate(item)}
+                    onMove={(direction) => void moveItem(item, direction)}
+                    onDragStart={() => setDraggedId(item.id)}
+                    onDragEnd={() => setDraggedId(null)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void handleDrop(item);
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      <details className="recommendation-maintenance">
+        <summary>資料維護工具</summary>
+        <div>
+          <p>只有首次建立管理資料時需要匯入內建推薦；日常管理不需要操作。</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => void handleImportDefaults()}
+            disabled={importingDefaults}
+          >
+            {importingDefaults ? '匯入中…' : '匯入尚未管理的預設地點'}
+          </button>
+        </div>
+      </details>
+
+      {drawerOpen && (
+        <RecommendationDrawer
+          form={form}
+          editing={Boolean(editingId)}
+          saving={saving}
+          lookingUpPlace={lookingUpPlace}
+          error={error}
+          nameInputRef={nameInputRef}
+          onSubmit={handleSubmit}
+          onClose={() => closeDrawer()}
+          onLookup={() => void handleLookupPlace()}
+          onUpdate={updateField}
+        />
       )}
     </div>
   );
 }
 
-const sectionTitleStyle = {
-  fontFamily: "'Noto Serif TC', serif",
-  fontSize: 18,
-  color: 'var(--gold-light)',
-  marginBottom: 16,
-};
+function RecommendationRow({
+  item,
+  allItems,
+  selected,
+  busy,
+  dragging,
+  currentActorUid,
+  onSelect,
+  onEdit,
+  onToggle,
+  onArchive,
+  onDelete,
+  onDuplicate,
+  onMove,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+}: {
+  item: Recommendation;
+  allItems: Recommendation[];
+  selected: boolean;
+  busy: boolean;
+  dragging: boolean;
+  currentActorUid: string | null;
+  onSelect: () => void;
+  onEdit: () => void;
+  onToggle: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onMove: (direction: MoveDirection) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDrop: (event: DragEvent<HTMLElement>) => void;
+}) {
+  const qualityIssues = recommendationIssues(item, allItems);
+  const archived = isArchived(item);
+  const reorderable = item.active && !archived;
 
-function getRecommendationStatusRank(active: boolean): number {
-  return active ? 0 : 1;
+  return (
+    <article
+      className={`recommendation-row${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${archived ? ' archived' : ''}`}
+      draggable={reorderable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => {
+        if (reorderable) event.preventDefault();
+      }}
+      onDrop={onDrop}
+    >
+      <label className="recommendation-select">
+        <input type="checkbox" checked={selected} onChange={onSelect} />
+        <span aria-hidden="true">{selected ? '✓' : ''}</span>
+      </label>
+      <span
+        className={`recommendation-drag${reorderable ? '' : ' disabled'}`}
+        title={reorderable ? '拖曳調整順序' : '只有顯示中的地點可以排序'}
+        aria-hidden="true"
+      >
+        ⋮⋮
+      </span>
+      <button type="button" className="recommendation-row-main" onClick={onEdit}>
+        <span className="recommendation-row-title">
+          <strong>{item.name}</strong>
+          <small>{CATEGORY_LABELS[item.category]}</small>
+        </span>
+        <StarDisplay rating={item.rating ?? 1} />
+        <span className="recommendation-row-note">{item.note || '尚未填寫推薦介紹'}</span>
+        <span className="recommendation-row-meta">
+          排序 {item.sortOrder} · {item.source === 'default' ? '預設資料' : '後台新增'}
+          {item.updatedAt ? ` · 更新 ${formatUpdatedAt(item)}` : ''}
+          {item.updatedBy ? ` · ${item.updatedBy === currentActorUid ? '由目前帳號修改' : `修改者 ${shortActor(item.updatedBy)}`}` : ''}
+        </span>
+        {qualityIssues.length > 0 && (
+          <span className="recommendation-quality-list">
+            {qualityIssues.map((issue) => <small key={issue}>⚠ {issue}</small>)}
+          </span>
+        )}
+      </button>
+      <div className="recommendation-row-actions">
+        <a href={item.url} target="_blank" rel="noreferrer" className="recommendation-map-link">
+          地圖 ↗
+        </a>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={item.active && !archived}
+          className={`recommendation-status-switch${item.active && !archived ? ' active' : ''}`}
+          disabled={busy}
+          onClick={onToggle}
+        >
+          <span />
+          {archived ? '恢復' : item.active ? '顯示中' : '已停用'}
+        </button>
+        <details className="recommendation-more">
+          <summary aria-label={`更多操作：${item.name}`}>•••</summary>
+          <div>
+            <button type="button" onClick={onEdit}>編輯</button>
+            <button type="button" onClick={onDuplicate}>建立副本</button>
+            {reorderable && (
+              <>
+                <button type="button" onClick={() => onMove('first')}>移到最前</button>
+                <button type="button" onClick={() => onMove('up')}>向上移</button>
+                <button type="button" onClick={() => onMove('down')}>向下移</button>
+                <button type="button" onClick={() => onMove('last')}>移到最後</button>
+              </>
+            )}
+            {!archived && <button type="button" onClick={onArchive}>移到封存區</button>}
+            <button type="button" className="danger" onClick={onDelete}>永久刪除</button>
+          </div>
+        </details>
+      </div>
+    </article>
+  );
 }
 
-function getNextAvailableSortOrder(
+function RecommendationDrawer({
+  form,
+  editing,
+  saving,
+  lookingUpPlace,
+  error,
+  nameInputRef,
+  onSubmit,
+  onClose,
+  onLookup,
+  onUpdate,
+}: {
+  form: FormState;
+  editing: boolean;
+  saving: boolean;
+  lookingUpPlace: boolean;
+  error: string | null;
+  nameInputRef: Ref<HTMLInputElement>;
+  onSubmit: (event: FormEvent) => void;
+  onClose: () => void;
+  onLookup: () => void;
+  onUpdate: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+}) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="recommendation-drawer-layer">
+      <button
+        type="button"
+        className="recommendation-drawer-backdrop"
+        aria-label="關閉推薦編輯"
+        onClick={onClose}
+      />
+      <aside className="recommendation-drawer" aria-labelledby="recommendation-drawer-title">
+        <form onSubmit={onSubmit}>
+          <header className="recommendation-drawer-header">
+            <div>
+              <p>{editing ? 'EDIT PLACE' : 'NEW PLACE'}</p>
+              <h2 id="recommendation-drawer-title">
+                {editing ? '編輯推薦地點' : '新增推薦地點'}
+              </h2>
+            </div>
+            <button type="button" aria-label="關閉" onClick={onClose}>×</button>
+          </header>
+
+          <div className="recommendation-drawer-content">
+            <div className="form-field full">
+              <label>Google Maps 連結 *</label>
+              <div className="recommendation-map-lookup">
+                <input
+                  value={form.url}
+                  onChange={(event) => onUpdate('url', event.target.value)}
+                  placeholder="貼上 maps.app.goo.gl 或 Google Maps 連結"
+                  required
+                />
+                <button type="button" onClick={onLookup} disabled={lookingUpPlace}>
+                  {lookingUpPlace ? '帶入中…' : '自動帶入'}
+                </button>
+              </div>
+              <p className="helper-text">貼上連結後可自動取得名稱、地址及座標。</p>
+            </div>
+
+            <div className="recommendation-form-grid">
+              <div className="form-field full">
+                <label>地點名稱 *</label>
+                <input
+                  ref={nameInputRef}
+                  value={form.name}
+                  onChange={(event) => onUpdate('name', event.target.value)}
+                  placeholder="例如：Dandelion Chocolate"
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label>分頁</label>
+                <select
+                  value={form.section}
+                  onChange={(event) => onUpdate('section', event.target.value as RecommendationSection)}
+                >
+                  {Object.entries(SECTION_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <label>分類</label>
+                <select
+                  value={form.category}
+                  onChange={(event) => onUpdate('category', event.target.value as RecommendationCategory)}
+                >
+                  {SECTION_CATEGORIES[form.section].map((category) => (
+                    <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field full">
+                <label>推薦星等</label>
+                <StarPicker rating={form.rating} onChange={(rating) => onUpdate('rating', rating)} />
+              </div>
+              <div className="form-field full">
+                <label>推薦介紹</label>
+                <textarea
+                  value={form.note}
+                  onChange={(event) => onUpdate('note', event.target.value)}
+                  placeholder="例如：適合下午散步途中休息，招牌是熱巧克力。"
+                  rows={4}
+                />
+                <p className="helper-text">這段文字會顯示在房客頁與「今日推薦」。</p>
+              </div>
+              <label className="recommendation-active-field">
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(event) => onUpdate('active', event.target.checked)}
+                />
+                <span />
+                <div>
+                  <strong>在房客頁顯示</strong>
+                  <small>關閉後資料仍保留，但房客看不到。</small>
+                </div>
+              </label>
+            </div>
+
+            <details className="recommendation-advanced">
+              <summary>進階設定</summary>
+              <div className="recommendation-form-grid">
+                <div className="form-field full">
+                  <label>地址</label>
+                  <input
+                    value={form.address ?? ''}
+                    onChange={(event) => onUpdate('address', event.target.value)}
+                  />
+                </div>
+                <div className="form-field full">
+                  <label>Google Place ID</label>
+                  <input
+                    value={form.placeId ?? ''}
+                    onChange={(event) => onUpdate('placeId', event.target.value)}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>緯度</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={form.lat}
+                    onChange={(event) => onUpdate('lat', Number(event.target.value))}
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label>經度</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={form.lng}
+                    onChange={(event) => onUpdate('lng', Number(event.target.value))}
+                    required
+                  />
+                </div>
+              </div>
+            </details>
+
+            <RecommendationPreview form={form} />
+            {error && <p className="field-error">{error}</p>}
+          </div>
+
+          <footer className="recommendation-drawer-footer">
+            <button type="button" className="btn-ghost" onClick={onClose}>取消</button>
+            <button type="submit" className="btn-gold" disabled={saving}>
+              {saving ? '儲存中…' : editing ? '儲存變更' : '新增推薦'}
+            </button>
+          </footer>
+        </form>
+      </aside>
+    </div>
+  );
+}
+
+function RecommendationPreview({ form }: { form: FormState }) {
+  const surfaces = recommendationSurfaces(form.category);
+  return (
+    <section className="recommendation-preview">
+      <div className="recommendation-preview-heading">
+        <div>
+          <p>GUEST PREVIEW</p>
+          <h3>房客畫面預覽</h3>
+        </div>
+        <span>{form.active ? '顯示中' : '暫停顯示'}</span>
+      </div>
+      <div className="recommendation-preview-card">
+        <span aria-hidden="true">{CATEGORY_ICONS[form.category]}</span>
+        <div>
+          <small>{CATEGORY_LABELS[form.category]}</small>
+          <strong>{form.name || '地點名稱'}</strong>
+          <StarDisplay rating={form.rating} />
+          <p>{form.note || '推薦介紹會顯示在這裡。'}</p>
+        </div>
+        <span>地圖 ↗</span>
+      </div>
+      <div className="recommendation-surfaces">
+        <strong>會出現在</strong>
+        {surfaces.map((surface) => <span key={surface}>{surface}</span>)}
+      </div>
+    </section>
+  );
+}
+
+function StarPicker({ rating, onChange }: { rating: number; onChange: (rating: number) => void }) {
+  return (
+    <div className="recommendation-star-picker" role="radiogroup" aria-label="推薦星等">
+      {[1, 2, 3, 4, 5].map((value) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={rating === value}
+          aria-label={`${value} 顆星`}
+          className={value <= rating ? 'active' : ''}
+          onClick={() => onChange(value)}
+        >
+          ★
+        </button>
+      ))}
+      <strong>{rating} / 5</strong>
+    </div>
+  );
+}
+
+function StarDisplay({ rating }: { rating: number }) {
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
+  return (
+    <span className="recommendation-stars" aria-label={`推薦 ${safeRating} 顆星`}>
+      <span>{'★'.repeat(safeRating)}</span>
+      <span aria-hidden="true">{'★'.repeat(5 - safeRating)}</span>
+      <small>{safeRating}</small>
+    </span>
+  );
+}
+
+function Summary({
+  label,
+  value,
+  tone = '',
+}: {
+  label: string;
+  value: number;
+  tone?: string;
+}) {
+  return (
+    <div className={`recommendation-summary ${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function recommendationIssues(
+  item: Recommendation,
+  allItems: Recommendation[]
+): string[] {
+  const issues: string[] = [];
+  if (!item.note?.trim()) issues.push('缺少推薦介紹');
+  if ((item.rating ?? 1) <= 1) issues.push('星等偏低');
+  if (!isGoogleMapsUrl(item.url)) issues.push('Maps 連結格式異常');
+  if (findDuplicate(item, allItems, item.id)) issues.push('可能重複');
+  return issues;
+}
+
+function findDuplicate(
+  input: Pick<RecommendationInput, 'placeId' | 'url'>,
+  allItems: Recommendation[],
+  excludeId: string | null
+): Recommendation | null {
+  const placeId = input.placeId?.trim();
+  const normalizedUrl = normalizeMapUrl(input.url);
+  return allItems.find((item) => {
+    if (item.id === excludeId) return false;
+    return Boolean(
+      (placeId && item.placeId?.trim() === placeId)
+      || (normalizedUrl && normalizeMapUrl(item.url) === normalizedUrl)
+    );
+  }) ?? null;
+}
+
+function normalizeMapUrl(value: string): string {
+  return value.trim().replace(/\/+$/, '').toLocaleLowerCase();
+}
+
+function isGoogleMapsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:'
+      && (
+        url.hostname === 'maps.app.goo.gl'
+        || url.hostname === 'maps.google.com'
+        || url.hostname.endsWith('.google.com')
+        || url.hostname.endsWith('.google.co.jp')
+      );
+  } catch {
+    return false;
+  }
+}
+
+function recommendationSurfaces(category: RecommendationCategory): string[] {
+  switch (category) {
+    case 'restaurant':
+    case 'cafe':
+      return ['餐廳推薦頁', '住宿期間首頁「今日推薦」', '地圖'];
+    case 'sight':
+      return ['景點推薦頁', '住宿期間首頁「今日推薦」', '地圖'];
+    case 'convenience':
+    case 'supermarket':
+      return ['超市／便利商店頁', '地圖'];
+  }
+}
+
+function isArchived(item: Recommendation): boolean {
+  return Boolean(item.archivedAt);
+}
+
+function compareRecommendationOrder(first: Recommendation, second: Recommendation): number {
+  if (isArchived(first) !== isArchived(second)) return isArchived(first) ? 1 : -1;
+  if (first.active !== second.active) return first.active ? -1 : 1;
+  return first.sortOrder - second.sortOrder || first.name.localeCompare(second.name, 'zh-Hant');
+}
+
+function activeCategoryItems(
+  category: RecommendationCategory,
+  recommendations: Recommendation[]
+): Recommendation[] {
+  return recommendations
+    .filter((item) => item.category === category && item.active && !isArchived(item))
+    .sort(compareRecommendationOrder);
+}
+
+function nextSortOrder(
   category: RecommendationCategory,
   recommendations: Recommendation[]
 ): number {
-  const used = new Set(
-    recommendations
-      .filter((item) => item.category === category)
-      .map((item) => item.sortOrder)
-      .filter((value) => Number.isInteger(value) && value > 0)
-  );
+  return activeCategoryItems(category, recommendations)
+    .reduce((maximum, item) => Math.max(maximum, item.sortOrder), 0) + 1;
+}
 
-  let next = 1;
-  while (used.has(next)) {
-    next += 1;
-  }
+async function normalizeCategory(
+  category: RecommendationCategory,
+  recommendations: Recommendation[],
+  updatedBy: string | null,
+  excludeId?: string
+) {
+  const items = activeCategoryItems(category, recommendations)
+    .filter((item) => item.id !== excludeId);
+  if (items.length === 0) return;
+  await reorderRecommendations(
+    items.map((item, index) => ({ id: item.id, sortOrder: index + 1 })),
+    { updatedBy }
+  );
+}
+
+function sectionForCategory(category: RecommendationCategory): RecommendationSection {
+  if (category === 'convenience' || category === 'supermarket') return 'services';
+  if (category === 'sight') return 'cityguide';
+  return 'restaurant';
+}
+
+function serializeForm(form: FormState): string {
+  return JSON.stringify(form);
+}
+
+function withoutId(current: Set<string>, id: string): Set<string> {
+  const next = new Set(current);
+  next.delete(id);
   return next;
 }
 
-function compareText(a: string, b: string): number {
-  return (a || '').localeCompare(b || '', 'zh-Hant');
+function formatUpdatedAt(item: Recommendation): string {
+  const date = item.updatedAt?.toDate?.();
+  if (!date) return '—';
+  return new Intl.DateTimeFormat('zh-TW', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
 }
 
-function compareRecommendations(a: Recommendation, b: Recommendation, sortKey: SortKey): number {
-  switch (sortKey) {
-    case 'section':
-      return compareText(SECTION_LABELS[a.section], SECTION_LABELS[b.section]);
-    case 'category':
-      return compareText(CATEGORY_LABELS[a.category], CATEGORY_LABELS[b.category]);
-    case 'name':
-      return compareText(a.name, b.name);
-    case 'source':
-      return compareText(a.source === 'default' ? '預設清單' : '後台新增', b.source === 'default' ? '預設清單' : '後台新增');
-    case 'note':
-      return compareText(a.note, b.note);
-    case 'rating':
-      return (a.rating ?? 1) - (b.rating ?? 1);
-    case 'sortOrder':
-      return a.sortOrder - b.sortOrder;
-    case 'status':
-      return getRecommendationStatusRank(a.active) - getRecommendationStatusRank(b.active);
-    default:
-      return 0;
-  }
-}
-
-function renderStars(rating: number): string {
-  const safeRating = Math.max(1, Math.min(5, Math.round(rating)));
-  return '★'.repeat(safeRating);
+function shortActor(uid: string): string {
+  return uid.length > 10 ? `${uid.slice(0, 6)}…${uid.slice(-4)}` : uid;
 }
 
 function getDefaultRecommendationInputs(): Array<RecommendationInput & { defaultKey: string }> {
@@ -653,8 +1193,8 @@ function getDefaultRecommendationInputs(): Array<RecommendationInput & { default
     const categoryCounts = new Map<RecommendationCategory, number>();
     return places.map((place, index) => {
       const category = place.category ?? SECTION_CATEGORIES[section][0];
-      const nextSortOrder = (categoryCounts.get(category) ?? 0) + 1;
-      categoryCounts.set(category, nextSortOrder);
+      const nextOrder = (categoryCounts.get(category) ?? 0) + 1;
+      categoryCounts.set(category, nextOrder);
       return {
         section,
         category,
@@ -666,7 +1206,7 @@ function getDefaultRecommendationInputs(): Array<RecommendationInput & { default
         url: place.url,
         note: place.note ?? '',
         rating: place.rating ?? 1,
-        sortOrder: nextSortOrder,
+        sortOrder: nextOrder,
       };
     });
   });

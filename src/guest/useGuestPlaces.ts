@@ -29,7 +29,7 @@ export function getGuestPlaces(
   const sectionRecommendations = recommendations.filter((item) => item.section === section);
   const hasImportedDefaults = sectionRecommendations.some((item) => item.source === 'default');
   const managedPlaces = sectionRecommendations
-    .filter((item) => item.active)
+    .filter((item) => item.active && !item.archivedAt)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
     .map<Place>((item) => ({
       id: item.id,

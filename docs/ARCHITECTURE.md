@@ -101,6 +101,19 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 4. 退房日隱藏一般準備與每日旅遊內容，改為顯示「今天退房」及儲存在瀏覽器
    localStorage 的可勾選退房清單。
 
+### 推薦地點管理
+
+1. Admin 在 `/admin/recommendations` 依分類搜尋、篩選與管理 Firestore
+   `recommendations`；房客頁只讀取啟用且未封存的內容。
+2. 一般編輯使用側邊抽屜與星星選擇器，Google Maps 查詢會自動填入名稱、地址、
+   Place ID 與座標；技術欄位預設收在進階設定。
+3. 顯示中的項目依分類獨立排序。拖曳、方向操作、停用、封存、恢復或刪除後，
+   client 會以 Firestore batch 重新編成連續 `sortOrder`。
+4. 批次操作支援顯示、停用、封存與恢復；封存以 `archivedAt` 軟刪除，永久刪除
+   必須另外確認。`updatedAt` 與 `updatedBy` 顯示最近修改資訊。
+5. 編輯器提供房客卡片預覽與顯示位置提示；管理清單即時提示缺少介紹、星等偏低、
+   Maps 連結格式異常或 Place ID／連結疑似重複。
+
 ## 部署單位
 
 | 改動 | Firebase surface |

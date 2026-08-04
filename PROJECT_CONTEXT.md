@@ -80,6 +80,10 @@ Admin backend currently includes:
 - Guest access code management.
 - Notification settings.
 - Guest message management.
+- Recommendation place management with grouped search/filter views, visual star
+  ratings, a drawer editor with Google Maps lookup and guest preview, automatic
+  per-category ordering, bulk status actions, duplicate/archive/restore tools,
+  data-quality warnings, and update attribution.
 - Mobile bottom navigation and installable PWA shell.
 - Per-admin-device Web Push registration and App icon badge support.
 - Button/link flow to preview guest-facing page as admin.
@@ -144,6 +148,31 @@ Relevant files:
 - `src/guest/shared/DailyRecommendationsCard.tsx`
 - `src/admin/TodayDashboard.tsx`
 - `firestore.rules`
+
+## Recommendation Management
+
+- `/admin/recommendations` groups records by guest-facing category instead of
+  exposing a wide technical table.
+- Active records can be reordered by drag-and-drop or explicit first/up/down/last
+  actions. All persisted `sortOrder` values are normalized per category after
+  reorder, disable, archive, restore, or delete operations.
+- The editor keeps address, Place ID, latitude, and longitude under advanced
+  settings. Google Maps lookup fills these fields for normal editing.
+- Rating is edited and displayed as one to five stars. The drawer includes a
+  guest-card preview and lists the guest surfaces that consume the record.
+- Admins can select multiple records to show, disable, archive, or restore.
+  Archive is reversible; permanent deletion remains a separate confirmed action.
+- Active/archive changes use Firestore batches. `archivedAt`, `updatedAt`, and
+  `updatedBy` provide maintenance status and update attribution.
+- Inline quality warnings flag missing descriptions, low ratings, malformed
+  Maps URLs, and likely duplicates based on Place ID or normalized Maps URL.
+
+Relevant files:
+
+- `src/admin/RecommendationManagement.tsx`
+- `src/admin/useRecommendations.ts`
+- `src/lib/recommendations.ts`
+- `src/types/index.ts`
 
 ## Protected Guest Guide Content
 

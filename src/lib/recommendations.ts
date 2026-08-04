@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -28,9 +29,14 @@ export type RecommendationInput = {
   note: string;
   rating: number;
   sortOrder: number;
+  active?: boolean;
   source?: RecommendationDoc['source'];
   defaultKey?: string | null;
 };
+
+interface RecommendationWriteMeta {
+  updatedBy?: string | null;
+}
 
 export function watchRecommendations(cb: (items: Recommendation[]) => void): Unsubscribe {
   const q = query(collection(db, COLLECTION), orderBy('sortOrder', 'asc'));
@@ -44,7 +50,10 @@ export function watchRecommendations(cb: (items: Recommendation[]) => void): Uns
   });
 }
 
-export async function createRecommendation(input: RecommendationInput): Promise<void> {
+export async function createRecommendation(
+  input: RecommendationInput,
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
   validateRecommendation(input);
   const payload = {
     section: input.section,
@@ -59,8 +68,10 @@ export async function createRecommendation(input: RecommendationInput): Promise<
     url: input.url.trim(),
     note: input.note.trim(),
     rating: input.rating,
-    active: true,
+    active: input.active ?? true,
     sortOrder: input.sortOrder,
+    archivedAt: null,
+    updatedBy: meta.updatedBy ?? null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
@@ -75,7 +86,8 @@ export async function createRecommendation(input: RecommendationInput): Promise<
 
 export async function updateRecommendation(
   id: string,
-  input: RecommendationInput & { active: boolean }
+  input: RecommendationInput & { active: boolean },
+  meta: RecommendationWriteMeta = {}
 ): Promise<void> {
   validateRecommendation(input);
   await updateDoc(doc(db, COLLECTION, id), {
@@ -91,15 +103,102 @@ export async function updateRecommendation(
     rating: input.rating,
     active: input.active,
     sortOrder: input.sortOrder,
+    ...(input.active ? { archivedAt: null } : {}),
+    updatedBy: meta.updatedBy ?? null,
     updatedAt: serverTimestamp(),
   });
 }
 
-export async function setRecommendationActive(id: string, active: boolean): Promise<void> {
+export async function setRecommendationActive(
+  id: string,
+  active: boolean,
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
   await updateDoc(doc(db, COLLECTION, id), {
     active,
+    updatedBy: meta.updatedBy ?? null,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function reorderRecommendations(
+  items: Array<{ id: string; sortOrder: number }>,
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
+  const batch = writeBatch(db);
+  items.forEach((item) => {
+    batch.update(doc(db, COLLECTION, item.id), {
+      sortOrder: item.sortOrder,
+      updatedBy: meta.updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function bulkSetRecommendationActive(
+  ids: string[],
+  active: boolean,
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
+  const batch = writeBatch(db);
+  ids.forEach((id) => {
+    batch.update(doc(db, COLLECTION, id), {
+      active,
+      updatedBy: meta.updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function activateAndReorderRecommendations(
+  items: Array<{ id: string; sortOrder: number }>,
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
+  const batch = writeBatch(db);
+  items.forEach((item) => {
+    batch.update(doc(db, COLLECTION, item.id), {
+      active: true,
+      archivedAt: null,
+      sortOrder: item.sortOrder,
+      updatedBy: meta.updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function archiveRecommendations(
+  ids: string[],
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
+  const batch = writeBatch(db);
+  ids.forEach((id) => {
+    batch.update(doc(db, COLLECTION, id), {
+      active: false,
+      archivedAt: serverTimestamp(),
+      updatedBy: meta.updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function restoreRecommendations(
+  ids: string[],
+  meta: RecommendationWriteMeta = {}
+): Promise<void> {
+  const batch = writeBatch(db);
+  ids.forEach((id) => {
+    batch.update(doc(db, COLLECTION, id), {
+      active: true,
+      archivedAt: null,
+      updatedBy: meta.updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
 }
 
 export async function deleteRecommendation(id: string): Promise<void> {
