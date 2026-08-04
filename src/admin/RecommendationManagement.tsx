@@ -5,6 +5,7 @@ import {
   useState,
   type DragEvent,
   type FormEvent,
+  type PointerEvent as ReactPointerEvent,
   type Ref,
 } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
@@ -379,6 +380,21 @@ export function RecommendationManagement() {
   async function handleDrop(target: Recommendation) {
     if (!draggedId || draggedId === target.id) return;
     const dragged = recommendations.find((item) => item.id === draggedId);
+    if (!dragged) return;
+    await reorderDroppedItem(dragged, target);
+  }
+
+  async function handleMobileDrop(dragged: Recommendation, targetId: string) {
+    if (dragged.id === targetId) return;
+    const target = recommendations.find((item) => item.id === targetId);
+    if (!target) return;
+    await reorderDroppedItem(dragged, target);
+  }
+
+  async function reorderDroppedItem(
+    dragged: Recommendation,
+    target: Recommendation
+  ) {
     if (!dragged || dragged.category !== target.category || !dragged.active || isArchived(dragged)) {
       setDraggedId(null);
       return;
@@ -630,6 +646,9 @@ export function RecommendationManagement() {
                       event.preventDefault();
                       void handleDrop(item);
                     }}
+                    onMobileDrop={(targetId) => {
+                      void handleMobileDrop(item, targetId);
+                    }}
                   />
                 ))}
               </div>
@@ -688,6 +707,7 @@ function RecommendationRow({
   onDragStart,
   onDragEnd,
   onDrop,
+  onMobileDrop,
 }: {
   item: Recommendation;
   allItems: Recommendation[];
@@ -705,13 +725,62 @@ function RecommendationRow({
   onDragStart: () => void;
   onDragEnd: () => void;
   onDrop: (event: DragEvent<HTMLElement>) => void;
+  onMobileDrop: (targetId: string) => void;
 }) {
   const qualityIssues = recommendationIssues(item, allItems);
   const archived = isArchived(item);
   const reorderable = item.active && !archived;
+  const longPressTimerRef = useRef<number | null>(null);
+  const touchDraggingRef = useRef(false);
+  const touchTargetIdRef = useRef(item.id);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current !== null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (!reorderable || event.pointerType === 'mouse') return;
+    touchTargetIdRef.current = item.id;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    longPressTimerRef.current = window.setTimeout(() => {
+      touchDraggingRef.current = true;
+      onDragStart();
+    }, 280);
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (!touchDraggingRef.current) return;
+    event.preventDefault();
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>('[data-recommendation-id]');
+    if (target?.dataset.recommendationId) {
+      touchTargetIdRef.current = target.dataset.recommendationId;
+    }
+  }
+
+  function finishPointerDrag(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!touchDraggingRef.current) return;
+    touchDraggingRef.current = false;
+    onMobileDrop(touchTargetIdRef.current);
+    onDragEnd();
+  }
 
   return (
     <article
+      data-recommendation-id={item.id}
       className={`recommendation-row${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${archived ? ' archived' : ''}`}
       draggable={reorderable}
       onDragStart={onDragStart}
@@ -727,8 +796,12 @@ function RecommendationRow({
       </label>
       <span
         className={`recommendation-drag${reorderable ? '' : ' disabled'}`}
-        title={reorderable ? '拖曳調整順序' : '只有顯示中的地點可以排序'}
+        title={reorderable ? '電腦拖曳；手機長按後拖曳調整順序' : '只有顯示中的地點可以排序'}
         aria-hidden="true"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishPointerDrag}
+        onPointerCancel={finishPointerDrag}
       >
         ⋮⋮
       </span>

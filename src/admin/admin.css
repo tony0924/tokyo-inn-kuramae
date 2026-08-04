@@ -3384,11 +3384,17 @@
 }
 
 .recommendation-drag {
+  width: 22px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
   color: var(--text-mid);
   cursor: grab;
   font-size: 15px;
   letter-spacing: -4px;
+  touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .recommendation-drag.disabled {
@@ -3990,12 +3996,16 @@
   }
 
   .recommendation-row {
-    grid-template-columns: 26px minmax(0, 1fr);
+    grid-template-columns: 26px 30px minmax(0, 1fr);
     padding: 11px 10px;
   }
 
   .recommendation-drag {
-    display: none;
+    width: 30px;
+    min-height: 48px;
+    border-radius: 8px;
+    background: var(--bg-mid);
+    font-size: 18px;
   }
 
   .recommendation-row-main {
@@ -4010,7 +4020,7 @@
   }
 
   .recommendation-row-actions {
-    grid-column: 2;
+    grid-column: 3;
     flex-wrap: wrap;
     justify-content: flex-start;
   }
