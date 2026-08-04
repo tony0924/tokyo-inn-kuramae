@@ -810,18 +810,25 @@ function RecommendationDrawer({
   onLookup: () => void;
   onUpdate: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
 }) {
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const shouldLockPage = window.matchMedia('(min-width: 561px)').matches;
+    if (shouldLockPage) document.body.style.overflow = 'hidden';
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      if (shouldLockPage) document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="recommendation-drawer-layer">
