@@ -5,6 +5,7 @@ import {
   savePaymentInformation,
   watchPaymentInformation,
 } from '@/lib/paymentInformation';
+import { getExpectedRevenue } from '@/lib/bookingFinance';
 import type { PaymentInformation } from '@/types';
 import { useBookings } from './useBookings';
 
@@ -38,11 +39,20 @@ export function PaymentInformationPage() {
     []
   );
 
-  const sortedBookings = useMemo(
-    () => [...bookings].sort((a, b) => b.checkIn.toMillis() - a.checkIn.toMillis()),
+  const unpaidBookings = useMemo(
+    () => bookings
+      .filter(
+        (booking) =>
+          booking.paymentStatus === 'unpaid' && getExpectedRevenue(booking) > 0
+      )
+      .sort((a, b) => b.checkIn.toMillis() - a.checkIn.toMillis()),
     [bookings]
   );
-  const selectedBooking = bookings.find((booking) => booking.id === selectedBookingId);
+  const selectedBooking = unpaidBookings.find((booking) => booking.id === selectedBookingId);
+
+  useEffect(() => {
+    if (selectedBookingId && !selectedBooking) setSelectedBookingId('');
+  }, [selectedBooking, selectedBookingId]);
   const preview = renderPaymentMessage(information, selectedBooking);
   const missingAccountInformation =
     !information.bankName || !information.accountName || !information.accountNumber;
@@ -167,7 +177,7 @@ export function PaymentInformationPage() {
             <span>02</span>
             <div>
               <h2 id="payment-message-title">房客訊息</h2>
-              <p>先選擇預約，系統會自動帶入姓名、金額與住宿日期。</p>
+              <p>只列出未付款房客，選擇後會自動帶入姓名、金額與住宿日期。</p>
             </div>
           </div>
 
@@ -180,7 +190,10 @@ export function PaymentInformationPage() {
               disabled={bookingsLoading}
             >
               <option value="">不指定預約（通用訊息）</option>
-              {sortedBookings.map((booking) => (
+              {!bookingsLoading && unpaidBookings.length === 0 && (
+                <option value="" disabled>目前沒有未付款房客</option>
+              )}
+              {unpaidBookings.map((booking) => (
                 <option key={booking.id} value={booking.id}>
                   {booking.guestName}・{formatBookingDate(booking.checkIn.toDate())}・
                   {information.currency} {booking.amount.toLocaleString()}
