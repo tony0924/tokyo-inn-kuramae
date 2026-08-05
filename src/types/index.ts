@@ -183,7 +183,14 @@ export interface GuestGuidePrivateContent {
   updatedAt?: Timestamp;
 }
 
-export type GuestPageViewEventType = 'page_view' | 'code_login';
+export type GuestPageViewEventType =
+  | 'page_view'
+  | 'code_login'
+  | 'email_entry'
+  | 'pwa_guide_open'
+  | 'pwa_install'
+  | 'recommendation_click'
+  | 'checkout_checklist';
 export type GuestPageViewVisitorType = 'gmail' | 'guest_code' | 'admin_preview';
 
 export interface GuestPageViewDoc {
@@ -196,6 +203,9 @@ export interface GuestPageViewDoc {
   guestAccessCode: string | null;
   guestEmail: string | null;
   guestName: string | null;
+  targetId?: string | null;
+  targetLabel?: string | null;
+  value?: number | null;
   userAgent: string;
   deviceId: string;
   createdAt: Timestamp;

@@ -59,12 +59,17 @@ export async function recordGuestPageEvent(input: {
   user?: User | null;
   guestAccessCode?: string | null;
   guestAccess?: GuestAccessCode | null;
+  targetId?: string | null;
+  targetLabel?: string | null;
+  value?: number | null;
 }): Promise<void> {
   const normalizedCode = input.guestAccessCode ? normalizeGuestCode(input.guestAccessCode) : null;
   const eventKey = [
     input.eventType,
     input.path,
     input.user?.uid ?? normalizedCode ?? 'anonymous',
+    input.targetId ?? '',
+    input.value ?? '',
   ].join(':');
 
   if (shouldSkipDuplicate(eventKey)) return;
@@ -79,6 +84,11 @@ export async function recordGuestPageEvent(input: {
     guestAccessCode: normalizedCode,
     guestEmail: input.guestAccess?.guestEmail ?? null,
     guestName: input.guestAccess?.guestName ?? null,
+    targetId: input.targetId?.trim().slice(0, 120) || null,
+    targetLabel: input.targetLabel?.trim().slice(0, 120) || null,
+    value: typeof input.value === 'number' && Number.isFinite(input.value)
+      ? Math.max(0, Math.min(100, Math.round(input.value)))
+      : null,
     userAgent: navigator.userAgent.slice(0, 240),
     deviceId: getDeviceId(),
     createdAt: serverTimestamp(),
@@ -87,15 +97,20 @@ export async function recordGuestPageEvent(input: {
 
 export function watchGuestPageViews(
   cb: (views: GuestPageView[]) => void,
-  maxItems = 500
+  maxItems = 500,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'), limit(maxItems));
-  return onSnapshot(q, (snap) => {
-    cb(
-      snap.docs.map((item) => ({
-        id: item.id,
-        ...(item.data() as GuestPageViewDoc),
-      }))
-    );
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(
+        snap.docs.map((item) => ({
+          id: item.id,
+          ...(item.data() as GuestPageViewDoc),
+        }))
+      );
+    },
+    (error) => onError?.(error)
+  );
 }

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { captureEmailEntry } from '@/lib/guestAttribution';
 
 const LoginAuthBridge = lazy(() => import('@/pages/LoginAuthBridge'));
 
@@ -8,6 +9,10 @@ export default function LoginPage() {
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shouldCheckAuth, setShouldCheckAuth] = useState(false);
+
+  useEffect(() => {
+    captureEmailEntry(location.search);
+  }, [location.search]);
 
   useEffect(() => {
     if ('requestIdleCallback' in window) {
@@ -79,7 +84,7 @@ export default function LoginPage() {
         </button>
 
         <Link
-          to="/code-login"
+          to={`/code-login${location.search}`}
           className="btn-ghost"
           style={{ width: '100%', justifyContent: 'center', marginTop: 12 }}
         >

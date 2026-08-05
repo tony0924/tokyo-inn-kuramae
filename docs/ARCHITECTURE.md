@@ -96,6 +96,18 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
    問題則 deep-link 到對應管理頁。
 3. 待辦為資料狀態的投影，不另外建立可過期的 checklist collection。
 
+### 訪客使用分析
+
+1. Guest Layout 繼續記錄已驗證訪客的分頁瀏覽，並新增 Email 進站、PWA 教學／安裝、
+   推薦地點點擊與退房清單進度等固定事件。
+2. 新增事件只允許長度受限的 `targetId`、`targetLabel` 與 0–100 數值；不收集搜尋字詞、
+   留言內容、門鎖、Wi-Fi 或其他住宿敏感內容。
+3. `/admin/analytics` 讀取最近 2,000 筆 `guestPageViews`，提供 7／30／90 天摘要、
+   使用旅程、每日趨勢、熱門頁面／地點與每位房客的完成訊號。
+4. `admin_preview` 一律排除，訪客碼只作既有事件驗證與內部去重，不在儀表板顯示。
+5. Functions 寄出的房客網站連結帶非個資的 Email 類型 attribution；訪客完成 Gmail
+   或訪客碼驗證後才寫入 `email_entry`。
+
 ### Admin 付款資訊
 
 1. Admin 在 `/admin/payment-information` 管理共用收款帳戶與房客訊息範本，

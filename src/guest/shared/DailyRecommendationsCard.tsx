@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useRecommendations } from '@/admin/useRecommendations';
 import { getGuestPlaces } from '@/guest/useGuestPlaces';
 import type { Place, PlaceCategory } from '@/guest/data/mapPlaces';
+import { useAuth } from '@/auth/AuthProvider';
+import { getStoredGuestAccessCode } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 
 const CATEGORY_COPY: Partial<
   Record<PlaceCategory, { icon: string; label: string; fallback: string }>
@@ -27,6 +30,7 @@ const CATEGORY_COPY: Partial<
 export function DailyRecommendationsCard({ stayDay }: { stayDay: number }) {
   const navigate = useNavigate();
   const { recommendations, loading } = useRecommendations();
+  const { user } = useAuth();
   const places = useMemo(() => {
     const restaurantPlaces = getGuestPlaces('restaurant', recommendations);
     const sightPlaces = getGuestPlaces('cityguide', recommendations);
@@ -67,6 +71,16 @@ export function DailyRecommendationsCard({ stayDay }: { stayDay: number }) {
               href={place.url}
               target="_blank"
               rel="noreferrer"
+              onClick={() => {
+                recordGuestPageEvent({
+                  eventType: 'recommendation_click',
+                  path: '/guest/home',
+                  user,
+                  guestAccessCode: !user ? getStoredGuestAccessCode() : null,
+                  targetId: place.id || place.name,
+                  targetLabel: place.name,
+                }).catch((error) => console.warn('record recommendation click failed', error));
+              }}
             >
               <div className="daily-place-topline">
                 <span aria-hidden="true">{category.icon}</span>

@@ -263,6 +263,8 @@ function EmailPreview({
 }) {
   const template = settings[EMAIL_COPY[type].templateKey] as NotificationTemplate;
   const variables = bookingVariables(booking, settings.senderName);
+  variables.guestCodeLoginUrl =
+    `https://tokyo-inn-kuramae.web.app/code-login?source=email&type=${encodeURIComponent(type)}`;
   return (
     <section className="email-preview-modal">
       <header>

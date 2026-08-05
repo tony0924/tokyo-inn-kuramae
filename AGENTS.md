@@ -74,6 +74,7 @@ Admin（`/admin/*`）：
 - `users`、`keys`、`guest-codes`、`recommendations`
 - `notification-history`、`notifications`
 - `emails`
+- `analytics`
 
 `src/auth/ProtectedRoute.tsx` 是唯一的路由授權入口：
 
@@ -124,7 +125,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `recommendations/{id}` | Guest 地圖推薦 | 公開讀；Admin 寫 |
 | `settings/notifications` | Email 寄件者與範本 | Admin |
 | `settings/paymentInformation` | 收款帳戶與房客付款訊息範本 | Admin |
-| `guestPageViews/{id}` | page view / code login 分析 | 驗證身分後新增；Admin 讀 |
+| `guestPageViews/{id}` | 頁面、登入、Email、PWA、推薦與退房互動分析 | 驗證身分後新增；Admin 讀 |
 | `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |

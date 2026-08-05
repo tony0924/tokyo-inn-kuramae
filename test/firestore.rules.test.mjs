@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
 import { readFile } from 'node:fs/promises';
 
 const projectId = 'demo-tokyo-inn-guest-guide';
@@ -116,5 +116,36 @@ test('only admins can read Email delivery records and clients cannot write them'
     bookingId: 'booking-1',
     status: 'sent',
     createdAt: Timestamp.now(),
+  }));
+});
+
+test('active guests can create bounded analytics interactions but cannot spoof unsupported events', async () => {
+  const guestDb = environment
+    .authenticatedContext('guest-uid', { email: 'guest@example.com' })
+    .firestore();
+  const baseEvent = {
+    visitorType: 'gmail',
+    path: '/guest/home',
+    userUid: 'guest-uid',
+    userEmail: 'guest@example.com',
+    userName: 'Guest',
+    guestAccessCode: null,
+    guestEmail: null,
+    guestName: null,
+    targetId: 'place-1',
+    targetLabel: '測試地點',
+    value: null,
+    userAgent: 'rules-test',
+    deviceId: 'device-1',
+    createdAt: serverTimestamp(),
+  };
+
+  await assertSucceeds(setDoc(doc(guestDb, 'guestPageViews', 'interaction-1'), {
+    ...baseEvent,
+    eventType: 'recommendation_click',
+  }));
+  await assertFails(setDoc(doc(guestDb, 'guestPageViews', 'interaction-2'), {
+    ...baseEvent,
+    eventType: 'private_content_read',
   }));
 });

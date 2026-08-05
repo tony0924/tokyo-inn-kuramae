@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import {
   formatGuestCode,
@@ -7,13 +7,17 @@ import {
   validateGuestAccessCode,
 } from '@/lib/guestAccessCodes';
 import { recordGuestPageEvent } from '@/lib/guestAnalytics';
+import { captureEmailEntry, consumeEmailEntry } from '@/lib/guestAttribution';
 
 export default function GuestCodeLoginPage() {
   const { fbUser, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => captureEmailEntry(location.search), [location.search]);
 
   if (!loading && fbUser && user) {
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
@@ -36,6 +40,16 @@ export default function GuestCodeLoginPage() {
         guestAccessCode: access.code,
         guestAccess: access,
       }).catch((err) => console.warn('record guest code login failed', err));
+      const emailType = consumeEmailEntry();
+      if (emailType) {
+        await recordGuestPageEvent({
+          eventType: 'email_entry',
+          path: '/code-login',
+          guestAccessCode: access.code,
+          guestAccess: access,
+          targetId: emailType,
+        }).catch((err) => console.warn('record Email entry failed', err));
+      }
       saveGuestAccessSession(access.code);
       navigate('/guest/home', { replace: true });
     } catch (err) {
@@ -100,7 +114,7 @@ export default function GuestCodeLoginPage() {
         )}
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 18 }}>
-          <Link to="/login" style={{ color: 'var(--text-mid)', fontSize: 13 }}>
+          <Link to={`/login${location.search}`} style={{ color: 'var(--text-mid)', fontSize: 13 }}>
             使用 Gmail 登入
           </Link>
           <Link to="/" style={{ color: 'var(--text-mid)', fontSize: 13 }}>

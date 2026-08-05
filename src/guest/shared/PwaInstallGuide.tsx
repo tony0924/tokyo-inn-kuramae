@@ -4,9 +4,10 @@ import { usePwaInstall } from '@/pwa/guestInstall';
 type Props = {
   open: boolean;
   onClose: () => void;
+  onInstallAccepted?: () => void;
 };
 
-export function PwaInstallGuide({ open, onClose }: Props) {
+export function PwaInstallGuide({ open, onClose, onInstallAccepted }: Props) {
   const {
     device,
     installed,
@@ -110,6 +111,7 @@ export function PwaInstallGuide({ open, onClose }: Props) {
                 onClick={async () => {
                   const result = await requestInstall();
                   if (result !== 'unavailable') setInstallResult(result);
+                  if (result === 'accepted') onInstallAccepted?.();
                 }}
               >
                 安裝 KURACHEN Stay

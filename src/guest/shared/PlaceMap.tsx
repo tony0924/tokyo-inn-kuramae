@@ -16,6 +16,9 @@ import {
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { HOME, TILE_ATTR, TILE_URL, type Place } from '@/guest/data/mapPlaces';
+import { useAuth } from '@/auth/AuthProvider';
+import { getStoredGuestAccessCode } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 
 function makePinIcon(color: string, num: number, name: string) {
   return L.divIcon({
@@ -61,6 +64,7 @@ interface PlaceMapProps {
 }
 
 export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
+  const { user } = useAuth();
   const [selected, setSelected] = useState<number | null>(null);
   const markerRefs = useRef<Record<number, L.Marker | null>>({});
 
@@ -74,6 +78,17 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
     setSelected(idx);
     const m = markerRefs.current[idx];
     if (m) m.openPopup();
+  };
+
+  const recordPlaceClick = (place: Place) => {
+    recordGuestPageEvent({
+      eventType: 'recommendation_click',
+      path: window.location.pathname,
+      user,
+      guestAccessCode: !user ? getStoredGuestAccessCode() : null,
+      targetId: place.id || place.name,
+      targetLabel: place.name,
+    }).catch((error) => console.warn('record recommendation click failed', error));
   };
 
   return (
@@ -115,7 +130,12 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
                 <Popup>
                   <b>{p.name}</b>
                   <br />
-                  <a href={p.url} target="_blank" rel="noreferrer">
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => recordPlaceClick(p)}
+                  >
                     在 Google Maps 開啟 →
                   </a>
                 </Popup>
@@ -152,6 +172,7 @@ export interface PlaceCardProps {
 
 export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps) {
   const ctx = useContext(PlaceMapContext);
+  const { user } = useAuth();
   const selected = ctx?.selected === idx;
 
   return (
@@ -190,7 +211,17 @@ export function PlaceCard({ idx, place, mapId, pinNumber, tags }: PlaceCardProps
         target="_blank"
         rel="noreferrer"
         className="map-btn"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          recordGuestPageEvent({
+            eventType: 'recommendation_click',
+            path: window.location.pathname,
+            user,
+            guestAccessCode: !user ? getStoredGuestAccessCode() : null,
+            targetId: place.id || place.name,
+            targetLabel: place.name,
+          }).catch((error) => console.warn('record recommendation click failed', error));
+        }}
         title="在 Google Maps 開啟"
       >
         📍

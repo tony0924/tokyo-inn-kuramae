@@ -1244,6 +1244,8 @@ async function sendTrackedGuestEmail({
 
   const template = settings[config.settingKey];
   const variables = bookingVariables(booking, settings.senderName);
+  variables.guestCodeLoginUrl =
+    `${GUEST_CODE_LOGIN_URL}?source=email&type=${encodeURIComponent(type)}`;
   const recipient = recipientOverride || booking.guestEmail || "";
   const subject = renderTemplate(template.subject, variables);
   const text = renderTemplate(template.body, variables);

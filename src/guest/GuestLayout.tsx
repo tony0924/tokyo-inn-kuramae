@@ -21,6 +21,7 @@ import {
   setAdminGuestPreviewDate,
 } from '@/lib/bookingPreview';
 import './legacy.css';
+import { consumeEmailEntry } from '@/lib/guestAttribution';
 
 const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
 
@@ -100,6 +101,19 @@ function GuestLayoutContent() {
     : user && user.role !== 'admin'
       ? `user:${user.uid}`
       : null;
+
+  const recordGuestInteraction = (
+    eventType: 'pwa_guide_open' | 'pwa_install',
+    targetId: string
+  ) => {
+    recordGuestPageEvent({
+      eventType,
+      path: location.pathname,
+      user,
+      guestAccessCode: guestCode,
+      targetId,
+    }).catch((err) => console.warn('record guest interaction failed', err));
+  };
 
   const matches: SearchEntry[] = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -196,6 +210,29 @@ function GuestLayoutContent() {
   }, [guestCode, location.pathname, user]);
 
   useEffect(() => {
+    if (!user || user.role === 'admin') return;
+    const emailType = consumeEmailEntry();
+    if (!emailType) return;
+    recordGuestPageEvent({
+      eventType: 'email_entry',
+      path: location.pathname,
+      user,
+      targetId: emailType,
+    }).catch((err) => console.warn('record Email entry failed', err));
+  }, [location.pathname, user]);
+
+  useEffect(() => {
+    if (!pwaInstalled || (!user && !guestCode)) return;
+    recordGuestPageEvent({
+      eventType: 'pwa_install',
+      path: location.pathname,
+      user,
+      guestAccessCode: guestCode,
+      targetId: 'standalone',
+    }).catch((err) => console.warn('record PWA install failed', err));
+  }, [guestCode, location.pathname, pwaInstalled, user]);
+
+  useEffect(() => {
     if (!visitorKey) {
       setShowWelcomeGuide(false);
       return;
@@ -235,9 +272,14 @@ function GuestLayoutContent() {
         onOpenPwaGuide={() => {
           setShowWelcomeGuide(false);
           setShowPwaGuide(true);
+          recordGuestInteraction('pwa_guide_open', 'welcome_guide');
         }}
       />
-      <PwaInstallGuide open={showPwaGuide} onClose={() => setShowPwaGuide(false)} />
+      <PwaInstallGuide
+        open={showPwaGuide}
+        onClose={() => setShowPwaGuide(false)}
+        onInstallAccepted={() => recordGuestInteraction('pwa_install', 'browser_prompt')}
+      />
       <div className="top-bar" />
       {isAdminPreview && (
         <aside className="admin-preview-dock" aria-label="管理員預覽模式">

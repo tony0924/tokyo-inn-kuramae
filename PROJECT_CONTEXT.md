@@ -99,6 +99,9 @@ Admin backend currently includes:
   guest resend actions.
 - Today checklist combines payment, key handoff/return, guest code, guest Email,
   and reminder-delivery issues. Payment and key tasks have one-tap completion.
+- Guest analytics dashboard with 7/30/90-day filters, real-guest-only journey
+  funnel, daily activity, top pages and places, Email entry attribution, PWA
+  engagement, checkout checklist progress, and per-guest usage signals.
 
 Admin app entry: `src/pages/AdminApp.tsx`.
 
@@ -378,6 +381,18 @@ or delete these documents.
 `adminNotificationReads/{uid}` stores each admin's latest read timestamp. The
 mobile header bell shows that admin's unread count and marks visible history as
 read when the history page opens.
+
+`guestPageViews/{id}` stores authenticated usage events:
+
+- `eventType`: `page_view | code_login | email_entry | pwa_guide_open |
+  pwa_install | recommendation_click | checkout_checklist`
+- `visitorType`, `path`, authenticated identity fields
+- optional bounded `targetId`, `targetLabel`, and numeric `value`
+- `deviceId`, `userAgent`, `createdAt`
+
+The analytics dashboard excludes `admin_preview`, never displays guest access
+codes, and does not collect search text, message bodies, lock details, or Wi-Fi
+content.
 
 ## Firestore Rules
 

@@ -50,6 +50,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/admin/notification-history': '通知紀錄',
   '/admin/notifications': '通知設定',
   '/admin/emails': 'Email 管理中心',
+  '/admin/analytics': '訪客使用分析',
 };
 
 function PageTitle() {

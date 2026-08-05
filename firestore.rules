@@ -215,10 +215,60 @@ service cloud.firestore {
     match /guestPageViews/{id} {
       allow read, list, delete: if isAdmin();
       allow create: if request.resource.data.createdAt == request.time
-        && request.resource.data.eventType in ['page_view', 'code_login']
+        && request.resource.data.keys().hasOnly([
+          'eventType',
+          'visitorType',
+          'path',
+          'userUid',
+          'userEmail',
+          'userName',
+          'guestAccessCode',
+          'guestEmail',
+          'guestName',
+          'targetId',
+          'targetLabel',
+          'value',
+          'userAgent',
+          'deviceId',
+          'createdAt'
+        ])
+        && request.resource.data.eventType in [
+          'page_view',
+          'code_login',
+          'email_entry',
+          'pwa_guide_open',
+          'pwa_install',
+          'recommendation_click',
+          'checkout_checklist'
+        ]
         && request.resource.data.path is string
+        && request.resource.data.path.size() <= 160
         && request.resource.data.deviceId is string
+        && request.resource.data.deviceId.size() <= 120
         && request.resource.data.userAgent is string
+        && request.resource.data.userAgent.size() <= 240
+        && (
+          request.resource.data.targetId == null
+          || (
+            request.resource.data.targetId is string
+            && request.resource.data.targetId.size() <= 120
+          )
+        )
+        && (
+          request.resource.data.targetLabel == null
+          || (
+            request.resource.data.targetLabel is string
+            && request.resource.data.targetLabel.size() <= 120
+          )
+        )
+        && (
+          request.resource.data.value == null
+          || (
+            request.resource.data.value is int
+            && request.resource.data.value >= 0
+            && request.resource.data.value <= 100
+          )
+        )
         && (
           (
             isSignedIn()

@@ -4,6 +4,9 @@ import { zhTW } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import type { StayStage, StayStatus } from '@/lib/stayStatus';
 import type { Booking } from '@/types';
+import { useAuth } from '@/auth/AuthProvider';
+import { getStoredGuestAccessCode } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 
 const CHECKOUT_ITEMS = [
   { id: 'remotes', label: '冷氣與電視遙控器放回客廳餐桌' },
@@ -72,6 +75,7 @@ export function StayOverviewCard({
   status: StayStatus;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const baseCopy = STAGE_COPY[status.stage];
   const copy =
     status.stage === 'staying' && status.stayDay
@@ -97,6 +101,15 @@ export function StayOverviewCard({
       } catch {
         // Keep checklist usable in memory when storage is unavailable.
       }
+      const completed = CHECKOUT_ITEMS.filter((item) => next.includes(item.id)).length;
+      recordGuestPageEvent({
+        eventType: 'checkout_checklist',
+        path: '/guest/home',
+        user,
+        guestAccessCode: !user ? getStoredGuestAccessCode() : null,
+        targetId: id,
+        value: Math.round((completed / CHECKOUT_ITEMS.length) * 100),
+      }).catch((error) => console.warn('record checkout checklist failed', error));
       return next;
     });
   };

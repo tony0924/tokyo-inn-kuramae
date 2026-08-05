@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PwaInstallGuide } from '@/guest/shared/PwaInstallGuide';
 import { usePwaInstall } from '@/pwa/guestInstall';
+import { useAuth } from '@/auth/AuthProvider';
+import { getStoredGuestAccessCode } from '@/lib/guestAccessCodes';
+import { recordGuestPageEvent } from '@/lib/guestAnalytics';
 
 const GUIDE_SECTIONS = [
   {
@@ -52,6 +55,18 @@ export function UserGuideTab() {
   const navigate = useNavigate();
   const [showPwaGuide, setShowPwaGuide] = useState(false);
   const { installed, device } = usePwaInstall();
+  const { user } = useAuth();
+  const guestCode = !user ? getStoredGuestAccessCode() : null;
+
+  const recordPwaEvent = (eventType: 'pwa_guide_open' | 'pwa_install', targetId: string) => {
+    recordGuestPageEvent({
+      eventType,
+      path: '/guest/guide',
+      user,
+      guestAccessCode: guestCode,
+      targetId,
+    }).catch((error) => console.warn('record PWA guide event failed', error));
+  };
 
   return (
     <div className="section active user-guide">
@@ -161,7 +176,10 @@ export function UserGuideTab() {
                   : '可將網站安裝成應用程式，之後從裝置直接開啟。'}
           </p>
         </div>
-        <button type="button" onClick={() => setShowPwaGuide(true)}>
+        <button type="button" onClick={() => {
+          setShowPwaGuide(true);
+          recordPwaEvent('pwa_guide_open', 'user_guide');
+        }}>
           {installed ? '查看狀態' : '查看安裝方式'}
         </button>
       </section>
@@ -174,7 +192,11 @@ export function UserGuideTab() {
         </div>
         <button type="button" onClick={() => navigate('/guest/messages')}>前往推薦牆</button>
       </div>
-      <PwaInstallGuide open={showPwaGuide} onClose={() => setShowPwaGuide(false)} />
+      <PwaInstallGuide
+        open={showPwaGuide}
+        onClose={() => setShowPwaGuide(false)}
+        onInstallAccepted={() => recordPwaEvent('pwa_install', 'browser_prompt')}
+      />
     </div>
   );
 }
