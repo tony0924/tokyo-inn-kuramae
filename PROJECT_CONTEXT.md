@@ -168,6 +168,9 @@ Relevant files:
 
 - `/admin/recommendations` groups records by guest-facing category instead of
   exposing a wide technical table.
+- On the Guest restaurant page, mobile uses the document scroll instead of a
+  nested fixed-height sidebar. Selecting a restaurant scrolls to its map marker,
+  and the map provides a return-to-selected-restaurant action.
 - Active records can be reordered by drag-and-drop or explicit first/up/down/last
   actions. All persisted `sortOrder` values are normalized per category after
   reorder, disable, archive, restore, or delete operations.

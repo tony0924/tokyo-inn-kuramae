@@ -28,6 +28,7 @@ export function RestaurantTab() {
       {loading && <p className="photo-hint">正在同步後台新增的推薦地點…</p>}
       <PlaceMap
         places={places}
+        mobileAutoScrollToMap
         getMarkerNumber={(place) => numberMap.get(placeKey(place)) ?? 1}
         sidebar={
           <>

@@ -61,12 +61,20 @@ interface PlaceMapProps {
   places: Place[];
   sidebar: ReactNode;
   getMarkerNumber?: (place: Place, idx: number) => number;
+  mobileAutoScrollToMap?: boolean;
 }
 
-export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
+export function PlaceMap({
+  places,
+  sidebar,
+  getMarkerNumber,
+  mobileAutoScrollToMap = false,
+}: PlaceMapProps) {
   const { user } = useAuth();
   const [selected, setSelected] = useState<number | null>(null);
   const markerRefs = useRef<Record<number, L.Marker | null>>({});
+  const sidebarRef = useRef<HTMLElement>(null);
+  const mapPaneRef = useRef<HTMLDivElement>(null);
 
   const lats = places.map((p) => p.lat).concat([HOME[0]]);
   const lngs = places.map((p) => p.lng).concat([HOME[1]]);
@@ -78,6 +86,28 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
     setSelected(idx);
     const m = markerRefs.current[idx];
     if (m) m.openPopup();
+    if (mobileAutoScrollToMap && window.matchMedia('(max-width: 680px)').matches) {
+      window.requestAnimationFrame(() => {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        mapPaneRef.current?.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      });
+    }
+  };
+
+  const returnToSelectedPlace = () => {
+    const selectedCard = selected == null
+      ? null
+      : sidebarRef.current?.querySelector<HTMLElement>(`[data-idx="${selected}"]`);
+    const target = selectedCard ?? sidebarRef.current;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'center',
+    });
+    selectedCard?.focus({ preventScroll: true });
   };
 
   const recordPlaceClick = (place: Place) => {
@@ -93,10 +123,19 @@ export function PlaceMap({ places, sidebar, getMarkerNumber }: PlaceMapProps) {
 
   return (
     <PlaceMapContext.Provider value={{ selected, select }}>
-      <div className="map-layout">
-        <aside className="map-sidebar">{sidebar}</aside>
+      <div className={`map-layout${mobileAutoScrollToMap ? ' mobile-map-jump' : ''}`}>
+        <aside ref={sidebarRef} className="map-sidebar">{sidebar}</aside>
 
-        <div className="map-pane">
+        <div ref={mapPaneRef} className="map-pane">
+          {mobileAutoScrollToMap && selected !== null && (
+            <button
+              type="button"
+              className="mobile-map-return"
+              onClick={returnToSelectedPlace}
+            >
+              ↑ 返回餐廳清單
+            </button>
+          )}
           <MapContainer
             bounds={bounds}
             boundsOptions={{ padding: [32, 32] }}

@@ -164,6 +164,8 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
    必須另外確認。`updatedAt` 與 `updatedBy` 顯示最近修改資訊。
 5. 編輯器提供房客卡片預覽與顯示位置提示；管理清單即時提示缺少介紹、星等偏低、
    Maps 連結格式異常或 Place ID／連結疑似重複。
+6. 手機版餐廳頁不使用固定高度的內層清單捲動；選取餐廳後會將整頁帶到地圖，
+   地圖上的返回按鈕則回到剛才選取的餐廳卡片。
 
 ## 部署單位
 
