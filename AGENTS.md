@@ -73,6 +73,7 @@ Admin（`/admin/*`）：
 - `today`、`revenue`、`payment-information`、`calendar`、`bookings`、`messages`
 - `users`、`keys`、`guest-codes`、`recommendations`
 - `notification-history`、`notifications`
+- `emails`
 
 `src/auth/ProtectedRoute.tsx` 是唯一的路由授權入口：
 
@@ -127,6 +128,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |
 | `adminNotifications/{id}` | Functions 保存的推播歷史 | Admin 唯讀 |
+| `emailDeliveries/{id}` | 房客 Email 寄送結果與錯誤紀錄 | Admin 唯讀 |
 | `adminNotificationReads/{uid}` | 每位 Admin 最後已讀時間 | Admin 只讀寫自己 |
 | `guestCodeDailyLogins/{code_date}` | 每日首次訪客碼登入去重 | Functions only |
 | `systemCache/kuramaeWeather` | 藏前天氣的一小時共用快取 | Functions only |
@@ -140,7 +142,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 ## 6. Cloud Functions
 
-入口目前為 `functions/index.js`，共 16 個 exports：
+入口目前為 `functions/index.js`，共 17 個 exports：
 
 事件觸發：
 
@@ -165,6 +167,7 @@ HTTP / callable：
 - `getGuestPortalData`：驗證訪客碼後回傳私密指南與清理過的住宿摘要。
 - `lookupGoogleMapPlace`：Admin callable，解析允許的 Google Maps URL。
 - `getGuestWeather`：驗證 Guest 身分後讀取日本氣象廳資料，並共用快取一小時。
+- `sendGuestBookingEmail`：Admin 手動寄送或寄測試版房客 Email，並保存結果。
 - `normalizeRecommendationCategorySortOrders`：帶 maintenance token 的維護端點。
 
 共同不變條件：

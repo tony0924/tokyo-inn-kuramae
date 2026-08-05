@@ -57,6 +57,11 @@ before(async () => {
         guestUid: null,
         guestAccessCode: 'ABCD2345',
       }),
+      setDoc(doc(db, 'emailDeliveries', 'delivery-1'), {
+        bookingId: 'booking-1',
+        status: 'sent',
+        createdAt: now,
+      }),
     ]);
   });
 });
@@ -93,4 +98,23 @@ test('public clients cannot read guest-code or booking documents directly', asyn
   const db = environment.unauthenticatedContext().firestore();
   await assertFails(getDoc(doc(db, 'guestAccessCodes', 'ABCD2345')));
   await assertFails(getDoc(doc(db, 'bookings', 'booking-1')));
+});
+
+test('only admins can read Email delivery records and clients cannot write them', async () => {
+  const publicDb = environment.unauthenticatedContext().firestore();
+  const guestDb = environment
+    .authenticatedContext('guest-uid', { email: 'guest@example.com' })
+    .firestore();
+  const adminDb = environment
+    .authenticatedContext('admin-uid', { email: 'admin@example.com' })
+    .firestore();
+
+  await assertFails(getDoc(doc(publicDb, 'emailDeliveries', 'delivery-1')));
+  await assertFails(getDoc(doc(guestDb, 'emailDeliveries', 'delivery-1')));
+  await assertSucceeds(getDoc(doc(adminDb, 'emailDeliveries', 'delivery-1')));
+  await assertFails(setDoc(doc(adminDb, 'emailDeliveries', 'client-write'), {
+    bookingId: 'booking-1',
+    status: 'sent',
+    createdAt: Timestamp.now(),
+  }));
 });

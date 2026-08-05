@@ -144,6 +144,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /emailDeliveries/{deliveryId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
     match /adminNotificationReads/{uid} {
       allow get: if isAdmin() && isSelf(uid);
       allow list: if false;

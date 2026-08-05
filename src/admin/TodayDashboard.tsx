@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBookings } from './useBookings';
@@ -7,9 +7,23 @@ import { BookingForm } from './BookingForm';
 import { AdminWeatherCard } from './AdminWeatherCard';
 import { Modal } from './Modal';
 import { watchGuestCommunityMessages } from '@/lib/guestMessages';
+import { watchEmailDeliveries } from '@/lib/emailDeliveries';
+import { markKeyLent, markKeyReturned, updateBooking } from '@/lib/bookings';
 import { setAdminGuestPreviewBookingId } from '@/lib/bookingPreview';
 import { getStayStatus, selectOperationalBooking, type StayStage } from '@/lib/stayStatus';
-import type { Booking, GuestCommunityMessage } from '@/types';
+import type { Booking, EmailDelivery, GuestCommunityMessage } from '@/types';
+
+type TodayTask = {
+  id: string;
+  icon: string;
+  title: string;
+  detail: string;
+  to?: string;
+  action?: 'paid' | 'lend' | 'return';
+  booking?: Booking;
+  actionLabel?: string;
+  urgent?: boolean;
+};
 
 const PAYMENT_LABEL = {
   unpaid: '未付款',
@@ -20,10 +34,14 @@ const PAYMENT_LABEL = {
 export function TodayDashboard() {
   const { bookings, loading } = useBookings();
   const [messages, setMessages] = useState<GuestCommunityMessage[]>([]);
+  const [emailDeliveries, setEmailDeliveries] = useState<EmailDelivery[]>([]);
   const [creating, setCreating] = useState(false);
+  const [taskBusyId, setTaskBusyId] = useState<string | null>(null);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const now = new Date();
 
   useEffect(() => watchGuestCommunityMessages(setMessages, undefined, 100), []);
+  useEffect(() => watchEmailDeliveries(setEmailDeliveries, () => {}), []);
 
   const summary = useMemo(() => {
     const startToday = new Date(now);
@@ -73,6 +91,29 @@ export function TodayDashboard() {
     () => messages.filter((message) => message.authorType === 'guest').length,
     [messages]
   );
+  const todayTasks = useMemo(
+    () => buildTodayTasks(summary, emailDeliveries, now),
+    [emailDeliveries, summary]
+  );
+
+  async function completeTask(task: TodayTask) {
+    if (!task.action || !task.booking) return;
+    setTaskBusyId(task.id);
+    setTaskError(null);
+    try {
+      if (task.action === 'paid') {
+        await updateBooking(task.booking.id, { paymentStatus: 'paid' });
+      } else if (task.action === 'lend') {
+        await markKeyLent(task.booking);
+      } else {
+        await markKeyReturned(task.booking);
+      }
+    } catch {
+      setTaskError('待辦更新失敗，請重新整理後再試。');
+    } finally {
+      setTaskBusyId(null);
+    }
+  }
 
   return (
     <div className="today-dashboard">
@@ -117,38 +158,51 @@ export function TodayDashboard() {
             <SummaryCard label="付款待處理" value={summary.paymentAttention.length} detail={paymentDetail(summary.paymentAttention)} tone="red" to="/admin/revenue" />
           </section>
 
-          {(summary.paymentAttention.length > 0 || summary.keysOut.length > 0) && (
-            <section className="today-attention" aria-labelledby="attention-heading">
-              <div className="today-section-heading">
+          <section className="today-attention today-task-section" aria-labelledby="attention-heading">
+            <div className="today-section-heading">
+              <div>
+                <p className="today-eyebrow">TODAY&apos;S CHECKLIST</p>
+                <h2 id="attention-heading">今日待辦</h2>
+              </div>
+              <span>{todayTasks.length > 0 ? `${todayTasks.length} 項待處理` : '今天都處理完成了'}</span>
+            </div>
+            {taskError && <p className="field-error">{taskError}</p>}
+            {todayTasks.length === 0 ? (
+              <div className="today-tasks-complete">
+                <span aria-hidden="true">✓</span>
                 <div>
-                  <p className="today-eyebrow">需要注意</p>
-                  <h2 id="attention-heading">待處理事項</h2>
+                  <strong>目前沒有待處理事項</strong>
+                  <small>款項、鑰匙、訪客碼、房客資料與 Email 皆無異常。</small>
                 </div>
               </div>
-              <div className="attention-grid">
-                {summary.paymentAttention.length > 0 && (
-                  <Link to="/admin/bookings" className="attention-card">
-                    <span className="attention-icon" aria-hidden="true">＄</span>
-                    <span>
-                      <strong>{summary.paymentAttention.length} 筆款項尚未完成</strong>
-                      <small>{summary.paymentAttention.slice(0, 3).map((booking) => `${booking.guestName}・${PAYMENT_LABEL[booking.paymentStatus]}`).join('、')}</small>
+            ) : (
+              <div className="today-task-list">
+                {todayTasks.map((task) => (
+                  <div className={`today-task-row${task.urgent ? ' urgent' : ''}`} key={task.id}>
+                    <span className="attention-icon" aria-hidden="true">{task.icon}</span>
+                    <span className="today-task-copy">
+                      <strong>{task.title}</strong>
+                      <small>{task.detail}</small>
                     </span>
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                )}
-                {summary.keysOut.length > 0 && (
-                  <Link to="/admin/bookings" className="attention-card">
-                    <span className="attention-icon" aria-hidden="true">鑰</span>
-                    <span>
-                      <strong>{summary.keysOut.length} 把鑰匙尚未歸還</strong>
-                      <small>{summary.keysOut.slice(0, 3).map((booking) => booking.guestName).join('、')}</small>
-                    </span>
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                )}
+                    {task.action && task.booking ? (
+                      <button
+                        type="button"
+                        className="today-task-action"
+                        disabled={taskBusyId !== null}
+                        onClick={() => void completeTask(task)}
+                      >
+                        {taskBusyId === task.id ? '處理中…' : task.actionLabel}
+                      </button>
+                    ) : (
+                      <Link className="today-task-action" to={task.to || '/admin/bookings'}>
+                        前往處理
+                      </Link>
+                    )}
+                  </div>
+                ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
 
           <div className="today-content-grid">
             <section className="today-panel">
@@ -381,4 +435,152 @@ function formatMessageTime(message: GuestCommunityMessage): string {
   if (!date) return '剛剛';
   if (isSameDay(date, new Date())) return format(date, 'HH:mm');
   return format(date, 'M/d');
+}
+
+function buildTodayTasks(
+  summary: {
+    arrivals: Booking[];
+    departures: Booking[];
+    staying: Booking[];
+    upcoming: Booking[];
+    paymentAttention: Booking[];
+    keysOut: Booking[];
+  },
+  deliveries: EmailDelivery[],
+  now: Date
+): TodayTask[] {
+  const tasks: TodayTask[] = [];
+  const tomorrow = addDays(now, 1);
+
+  summary.arrivals.forEach((booking) => {
+    if (!booking.guestEmail.trim()) {
+      tasks.push({
+        id: `missing-email:${booking.id}`,
+        icon: '✉',
+        title: `${booking.guestName} 尚未填寫 Email`,
+        detail: '今天入住，請補上聯絡信箱。',
+        to: `/admin/bookings?booking=${booking.id}`,
+        urgent: true,
+      });
+    }
+    if (!booking.guestAccessCode) {
+      tasks.push({
+        id: `missing-code:${booking.id}`,
+        icon: '碼',
+        title: `${booking.guestName} 尚無訪客碼`,
+        detail: '今天入住，房客目前無法使用訪客碼查看指南。',
+        to: '/admin/guest-codes',
+        urgent: true,
+      });
+    }
+    if (booking.keyCode && !booking.keyLentAt) {
+      tasks.push({
+        id: `lend-key:${booking.id}`,
+        icon: '鑰',
+        title: `交付 ${booking.guestName} 的鑰匙`,
+        detail: `${booking.keyCode} 尚未登記出借。`,
+        action: 'lend',
+        actionLabel: '登記已交付',
+        booking,
+      });
+    }
+  });
+
+  summary.departures.forEach((booking) => {
+    if (booking.keyCode && booking.keyLentAt && !booking.keyReturnedAt) {
+      tasks.push({
+        id: `return-key:${booking.id}`,
+        icon: '鑰',
+        title: `確認 ${booking.guestName} 歸還鑰匙`,
+        detail: `${booking.keyCode} 仍顯示借出中。`,
+        action: 'return',
+        actionLabel: '登記已歸還',
+        booking,
+        urgent: true,
+      });
+    }
+  });
+
+  summary.paymentAttention.slice(0, 5).forEach((booking) => {
+    tasks.push({
+      id: `payment:${booking.id}`,
+      icon: '＄',
+      title: `${booking.guestName} 款項尚未完成`,
+      detail: `${PAYMENT_LABEL[booking.paymentStatus]}・${format(booking.checkIn.toDate(), 'M/d')} 入住`,
+      action: 'paid',
+      actionLabel: '標記已付款',
+      booking,
+    });
+  });
+
+  const tomorrowBookings = [...summary.upcoming, ...summary.arrivals, ...summary.staying]
+    .filter((booking, index, all) => all.findIndex((item) => item.id === booking.id) === index)
+    .filter((booking) => isSameDay(booking.checkIn.toDate(), tomorrow));
+  if (now.getHours() >= 9) {
+    tomorrowBookings.forEach((booking) => {
+      if (!booking.guestEmail) return;
+      const sent = deliveries.some(
+        (delivery) =>
+          delivery.bookingId === booking.id
+          && delivery.type === 'check_in_reminder'
+          && delivery.status === 'sent'
+          && delivery.trigger !== 'test'
+      );
+      if (!sent) {
+        tasks.push({
+          id: `checkin-email:${booking.id}`,
+          icon: '✉',
+          title: `${booking.guestName} 的入住提醒尚無寄送紀錄`,
+          detail: '明天入住，09:00 排程後仍未確認寄出。',
+          to: '/admin/emails',
+          urgent: true,
+        });
+      }
+    });
+  }
+
+  if (now.getHours() >= 12) {
+    summary.departures.forEach((booking) => {
+      if (!booking.guestEmail) return;
+      const sent = deliveries.some(
+        (delivery) =>
+          delivery.bookingId === booking.id
+          && delivery.type === 'checkout_reminder'
+          && delivery.status === 'sent'
+          && delivery.trigger !== 'test'
+      );
+      if (!sent) {
+        tasks.push({
+          id: `checkout-email:${booking.id}`,
+          icon: '✉',
+          title: `${booking.guestName} 的退房提醒尚無寄送紀錄`,
+          detail: '今天退房，12:00 排程後仍未確認寄出。',
+          to: '/admin/emails',
+          urgent: true,
+        });
+      }
+    });
+  }
+
+  const latestDeliveryByPlan = new Map<string, EmailDelivery>();
+  deliveries
+    .filter((delivery) => delivery.trigger !== 'test')
+    .forEach((delivery) => {
+      const key = `${delivery.bookingId}:${delivery.type}`;
+      if (!latestDeliveryByPlan.has(key)) latestDeliveryByPlan.set(key, delivery);
+    });
+  const failedEmail = Array.from(latestDeliveryByPlan.values())
+    .find((delivery) => delivery.status === 'failed');
+  if (failedEmail) {
+    tasks.unshift({
+      id: `failed-email:${failedEmail.id}`,
+      icon: '!',
+      title: `Email 寄送失敗：${failedEmail.guestName}`,
+      detail: failedEmail.errorMessage || failedEmail.typeLabel,
+      to: '/admin/emails',
+      urgent: true,
+    });
+  }
+
+  return tasks;
 }

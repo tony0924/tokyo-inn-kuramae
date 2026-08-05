@@ -14,6 +14,7 @@ const KeyManagement = lazy(() => import('@/admin/KeyManagement').then((module) =
 const RecommendationManagement = lazy(() => import('@/admin/RecommendationManagement').then((module) => ({ default: module.RecommendationManagement })));
 const MessageManagement = lazy(() => import('@/admin/MessageManagement').then((module) => ({ default: module.MessageManagement })));
 const PaymentInformationPage = lazy(() => import('@/admin/PaymentInformationPage').then((module) => ({ default: module.PaymentInformationPage })));
+const EmailManagementPage = lazy(() => import('@/admin/EmailManagementPage').then((module) => ({ default: module.EmailManagementPage })));
 
 export default function AdminApp() {
   return (
@@ -30,6 +31,7 @@ export default function AdminApp() {
         <Route path="guest-codes" element={<GuestCodeManagement />} />
         <Route path="recommendations" element={<RecommendationManagement />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
+        <Route path="emails" element={<EmailManagementPage />} />
         <Route path="notification-history" element={<NotificationHistoryPage />} />
         <Route path="messages" element={<MessageManagement />} />
         <Route path="*" element={<Navigate to="today" replace />} />

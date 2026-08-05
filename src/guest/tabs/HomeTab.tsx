@@ -17,6 +17,7 @@ export function HomeTab() {
   const {
     booking,
     greetingName,
+    previewNow,
     loading: bookingLoading,
     error: bookingError,
   } = useOutletContext<GuestOutletContext>();
@@ -28,8 +29,8 @@ export function HomeTab() {
   }, [booking]);
 
   const stayStatus = useMemo(
-    () => (booking ? getStayStatus(booking, statusNow) : null),
-    [booking, statusNow]
+    () => (booking ? getStayStatus(booking, previewNow ?? statusNow) : null),
+    [booking, previewNow, statusNow]
   );
   const showDailyStay =
     stayStatus?.stage === 'checkin_today' || stayStatus?.stage === 'staying';

@@ -107,6 +107,33 @@ export interface NotificationSettings {
   updatedAt?: Timestamp;
 }
 
+export type GuestEmailType =
+  | 'booking_created'
+  | 'check_in_reminder'
+  | 'checkout_reminder';
+export type EmailDeliveryStatus = 'pending' | 'sent' | 'failed';
+export type EmailDeliveryTrigger = 'automatic' | 'scheduled' | 'manual' | 'test';
+
+export interface EmailDeliveryDoc {
+  bookingId: string;
+  guestName: string;
+  recipient: string;
+  type: GuestEmailType;
+  typeLabel: string;
+  subject: string;
+  status: EmailDeliveryStatus;
+  trigger: EmailDeliveryTrigger;
+  initiatedBy: string | null;
+  errorMessage: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  sentAt: Timestamp | null;
+}
+
+export interface EmailDelivery extends EmailDeliveryDoc {
+  id: string;
+}
+
 export interface GuestAccessCodeDoc {
   code: string;
   label: string;

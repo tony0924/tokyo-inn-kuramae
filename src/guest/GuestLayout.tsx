@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { addDays, format, subDays } from 'date-fns';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LightboxProvider } from './shared/Lightbox';
 import { useAuth } from '@/auth/AuthProvider';
@@ -14,12 +15,18 @@ import { GuestGuideProvider, useGuestGuide } from './GuestGuideProvider';
 import { PwaInstallGuide } from './shared/PwaInstallGuide';
 import { applyGuestPwaMetadata, usePwaInstall } from '@/pwa/guestInstall';
 import { useGuestBooking, type GuestBookingState } from './useGuestBooking';
+import {
+  getAdminGuestPreviewDate,
+  getAdminGuestPreviewDateKey,
+  setAdminGuestPreviewDate,
+} from '@/lib/bookingPreview';
 import './legacy.css';
 
 const WELCOME_GUIDE_STORAGE_PREFIX = 'guest-welcome-guide-dismissed';
 
 export interface GuestOutletContext extends GuestBookingState {
   greetingName: string | null;
+  previewNow: Date | null;
 }
 
 const TABS: { id: GuestTabId; icon: string; label: string }[] = [
@@ -81,6 +88,10 @@ function GuestLayoutContent() {
   const { guide, loading: guideLoading, error: guideError } = useGuestGuide();
   const { installed: pwaInstalled } = usePwaInstall();
   const guestBooking = useGuestBooking();
+  const [previewDateKey, setPreviewDateKey] = useState(() =>
+    user?.role === 'admin' ? getAdminGuestPreviewDateKey() ?? '' : ''
+  );
+  const previewNow = user?.role === 'admin' ? getAdminGuestPreviewDate() : null;
   const greetingName =
     guestBooking.guestName
     || (user?.role === 'guest' ? user.displayName.trim() || null : null);
@@ -107,6 +118,24 @@ function GuestLayoutContent() {
   const isSearching = query.trim().length > 0;
   const guideActive = location.pathname.startsWith('/guest/guide');
   const isAdminPreview = user?.role === 'admin';
+  const previewDateOptions = useMemo(() => {
+    const booking = guestBooking.booking;
+    if (!booking) return [];
+    const checkIn = booking.checkIn.toDate();
+    const checkOut = booking.checkOut.toDate();
+    const options = [
+      { value: format(subDays(checkIn, 3), 'yyyy-MM-dd'), label: '入住前 3 天' },
+      { value: format(checkIn, 'yyyy-MM-dd'), label: '入住當天' },
+    ];
+    if (addDays(checkIn, 1) < checkOut) {
+      options.push({ value: format(addDays(checkIn, 1), 'yyyy-MM-dd'), label: '住宿第 2 天' });
+    }
+    options.push(
+      { value: format(checkOut, 'yyyy-MM-dd'), label: '退房當天' },
+      { value: format(addDays(checkOut, 1), 'yyyy-MM-dd'), label: '退房後' }
+    );
+    return Array.from(new Map(options.map((option) => [option.value, option])).values());
+  }, [guestBooking.booking]);
 
   const toggleMobileGuide = () => {
     setQuery('');
@@ -218,6 +247,26 @@ function GuestLayoutContent() {
                 ? `管理員預覽：${greetingName} 的房客頁面`
                 : '管理員預覽：無住客狀態'}
             </span>
+            {guestBooking.booking && (
+              <label className="admin-preview-date-control">
+                <span>模擬日期</span>
+                <select
+                  value={previewDateKey}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setPreviewDateKey(value);
+                    setAdminGuestPreviewDate(value || null);
+                  }}
+                >
+                  <option value="">今天（真實日期）</option>
+                  {previewDateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}・{option.value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <NavLink to="/admin" className="admin-preview-back">
               回管理後台
             </NavLink>
@@ -344,6 +393,7 @@ function GuestLayoutContent() {
             context={{
               ...guestBooking,
               greetingName,
+              previewNow,
             } satisfies GuestOutletContext}
           />
         )}

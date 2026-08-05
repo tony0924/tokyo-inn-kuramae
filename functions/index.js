@@ -23,6 +23,7 @@ import {
   normalizeJmaWeather,
   weatherAdvice,
 } from "./guestWeather.js";
+import { friendlyEmailError, renderTemplate } from "./emailHelpers.js";
 
 initializeApp();
 
@@ -36,6 +37,20 @@ const WEBSITE_URL = "https://tokyo-inn-kuramae.web.app";
 const GUEST_CODE_LOGIN_URL = `${WEBSITE_URL}/code-login`;
 const PRIVATE_GUEST_GUIDE_PATH = "guestGuideContent/private";
 const CURRENT_REMINDER_TEMPLATE_VERSION = 2;
+const EMAIL_TYPE_CONFIG = {
+  booking_created: {
+    settingKey: "bookingCreatedReminder",
+    label: "預約完成通知",
+  },
+  check_in_reminder: {
+    settingKey: "checkInReminder",
+    label: "入住前一天提醒",
+  },
+  checkout_reminder: {
+    settingKey: "checkoutAdminReminder",
+    label: "退房當天提醒",
+  },
+};
 
 const DEFAULT_SETTINGS = {
   senderName: "KURACHEN Stay",
@@ -97,15 +112,14 @@ export const sendBookingCreatedReminder = onDocumentCreated(
 
     const settings = await getNotificationSettings();
     const adminEmails = await getAdminEmails();
-    const variables = bookingVariables(booking, settings.senderName);
 
-    await sendEmail({
-      to: [booking.guestEmail],
-      cc: adminEmails,
-      subject: renderTemplate(settings.bookingCreatedReminder.subject, variables),
-      text: renderTemplate(settings.bookingCreatedReminder.body, variables),
-      senderName: settings.senderName,
-      senderEmail: settings.senderEmail,
+    await sendTrackedGuestEmail({
+      booking,
+      type: "booking_created",
+      settings,
+      adminEmails,
+      trigger: "automatic",
+      deliveryId: `booking_created__${booking.id}`,
     });
   }
 );
@@ -424,14 +438,13 @@ export const sendUpcomingCheckInReminders = onSchedule(
 
     for (const booking of bookings) {
       if (!booking.guestEmail) continue;
-      const variables = bookingVariables(booking, settings.senderName);
-      await sendEmail({
-        to: [booking.guestEmail],
-        cc: adminEmails,
-        subject: renderTemplate(settings.checkInReminder.subject, variables),
-        text: renderTemplate(settings.checkInReminder.body, variables),
-        senderName: settings.senderName,
-        senderEmail: settings.senderEmail,
+      await sendTrackedGuestEmail({
+        booking,
+        type: "check_in_reminder",
+        settings,
+        adminEmails,
+        trigger: "scheduled",
+        deliveryId: `check_in__${booking.id}__${formatDateKey(booking.checkIn)}`,
       });
     }
   }
@@ -515,16 +528,64 @@ export const sendCheckoutAdminReminders = onSchedule(
         });
         continue;
       }
-      const variables = bookingVariables(booking, settings.senderName);
-      await sendEmail({
-        to: [booking.guestEmail],
-        cc: adminEmails,
-        subject: renderTemplate(settings.checkoutAdminReminder.subject, variables),
-        text: renderTemplate(settings.checkoutAdminReminder.body, variables),
-        senderName: settings.senderName,
-        senderEmail: settings.senderEmail,
+      await sendTrackedGuestEmail({
+        booking,
+        type: "checkout_reminder",
+        settings,
+        adminEmails,
+        trigger: "scheduled",
+        deliveryId: `checkout__${booking.id}__${formatDateKey(booking.checkOut)}`,
       });
     }
+  }
+);
+
+export const sendGuestBookingEmail = onCall(
+  {
+    region: REGION,
+    secrets: [gmailAppPassword],
+  },
+  async (request) => {
+    const admin = await requireAdmin(request.auth?.uid);
+    const bookingId = typeof request.data?.bookingId === "string"
+      ? request.data.bookingId.trim()
+      : "";
+    const type = typeof request.data?.type === "string" ? request.data.type : "";
+    const testOnly = request.data?.testOnly === true;
+
+    if (!bookingId || !EMAIL_TYPE_CONFIG[type]) {
+      throw new HttpsError("invalid-argument", "請選擇預約與 Email 類型。");
+    }
+
+    const bookingSnapshot = await db.collection("bookings").doc(bookingId).get();
+    if (!bookingSnapshot.exists) {
+      throw new HttpsError("not-found", "找不到這筆預約。");
+    }
+    const booking = { id: bookingSnapshot.id, ...bookingSnapshot.data() };
+    const recipientOverride = testOnly ? String(admin.email || "").trim() : "";
+    if (testOnly && !recipientOverride) {
+      throw new HttpsError("failed-precondition", "管理員帳號沒有可用的 Email。");
+    }
+    if (!testOnly && !booking.guestEmail) {
+      throw new HttpsError("failed-precondition", "這筆預約尚未填寫房客 Email。");
+    }
+
+    const settings = await getNotificationSettings();
+    const adminEmails = await getAdminEmails();
+    const delivery = await sendTrackedGuestEmail({
+      booking,
+      type,
+      settings,
+      adminEmails: testOnly ? [] : adminEmails,
+      trigger: testOnly ? "test" : "manual",
+      recipientOverride,
+      initiatedBy: request.auth.uid,
+    });
+
+    if (delivery.status !== "sent") {
+      throw new HttpsError("internal", "Email 寄送失敗，請查看寄送紀錄後再試。");
+    }
+    return { status: delivery.status, deliveryId: delivery.id };
   }
 );
 
@@ -1096,6 +1157,18 @@ function timestampsEqual(first, second) {
   return first?.toMillis?.() === second?.toMillis?.();
 }
 
+async function requireAdmin(uid) {
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "請先登入管理員帳號。");
+  }
+  const userSnapshot = await db.collection("users").doc(uid).get();
+  const user = userSnapshot.data();
+  if (!userSnapshot.exists || user?.role !== "admin") {
+    throw new HttpsError("permission-denied", "只有管理員可以使用這個功能。");
+  }
+  return user;
+}
+
 function atMidnightDaysFromNow(offsetDays) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TIME_ZONE,
@@ -1156,11 +1229,69 @@ function formatDateKey(value) {
   }).format(date);
 }
 
-function renderTemplate(template, variables) {
-  return Object.entries(variables).reduce(
-    (text, [key, value]) => text.replaceAll(`{{${key}}}`, value),
-    template
-  );
+async function sendTrackedGuestEmail({
+  booking,
+  type,
+  settings,
+  adminEmails,
+  trigger,
+  deliveryId = "",
+  recipientOverride = "",
+  initiatedBy = null,
+}) {
+  const config = EMAIL_TYPE_CONFIG[type];
+  if (!config) throw new Error(`Unsupported guest email type: ${type}`);
+
+  const template = settings[config.settingKey];
+  const variables = bookingVariables(booking, settings.senderName);
+  const recipient = recipientOverride || booking.guestEmail || "";
+  const subject = renderTemplate(template.subject, variables);
+  const text = renderTemplate(template.body, variables);
+  const reference = deliveryId
+    ? db.collection("emailDeliveries").doc(deliveryId)
+    : db.collection("emailDeliveries").doc();
+
+  if (deliveryId) {
+    const existing = await reference.get();
+    if (existing.data()?.status === "sent") {
+      return { id: reference.id, status: "sent", duplicate: true };
+    }
+  }
+
+  const now = Timestamp.now();
+  await reference.set({
+    bookingId: booking.id,
+    guestName: booking.guestName || "",
+    recipient,
+    type,
+    typeLabel: config.label,
+    subject,
+    status: "pending",
+    trigger,
+    initiatedBy,
+    errorMessage: null,
+    createdAt: now,
+    updatedAt: now,
+    sentAt: null,
+  }, { merge: true });
+
+  const result = await sendEmail({
+    to: [recipient],
+    cc: adminEmails,
+    subject,
+    text,
+    senderName: settings.senderName,
+    senderEmail: settings.senderEmail,
+  });
+  const completedAt = Timestamp.now();
+  await reference.set({
+    status: result.sent ? "sent" : "failed",
+    errorMessage: result.sent ? null : result.errorMessage,
+    sentAt: result.sent ? completedAt : null,
+    updatedAt: completedAt,
+  }, { merge: true });
+
+  return { id: reference.id, status: result.sent ? "sent" : "failed" };
 }
 
 function truncatePushText(value, maxLength) {
@@ -1177,7 +1308,7 @@ async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }
       cc,
       subject,
     });
-    return;
+    return { sent: false, errorMessage: "寄件服務尚未完成設定。" };
   }
 
   const transporter = nodemailer.createTransport({
@@ -1196,6 +1327,7 @@ async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }
       subject,
       text,
     });
+    return { sent: true, errorMessage: null };
   } catch (error) {
     logger.error("Failed to send email with Gmail SMTP", {
       message: error?.message,
@@ -1205,9 +1337,12 @@ async function sendEmail({ to, cc = [], subject, text, senderName, senderEmail }
       cc,
       subject,
     });
+    return {
+      sent: false,
+      errorMessage: friendlyEmailError(error),
+    };
   }
 }
-
 
 function extractPlaceLookupHints(inputUrl) {
   let url;

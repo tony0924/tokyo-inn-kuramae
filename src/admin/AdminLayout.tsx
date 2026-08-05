@@ -25,6 +25,7 @@ const navItems = [
   { to: '/admin/keys', label: '鑰匙管理' },
   { to: '/admin/guest-codes', label: '訪客碼' },
   { to: '/admin/recommendations', label: '推薦地點' },
+  { to: '/admin/emails', label: 'Email 管理' },
   { to: '/admin/notification-history', label: '通知紀錄' },
   { to: '/admin/notifications', label: '通知設定' },
 ];
@@ -102,6 +103,7 @@ export function AdminLayout() {
     '/admin/guest-codes',
     '/admin/recommendations',
     '/admin/notifications',
+    '/admin/emails',
   ].some((path) => location.pathname.startsWith(path));
 
   function openGuestPreviewPicker() {
@@ -247,6 +249,7 @@ export function AdminLayout() {
               <MoreLink to="/admin/guest-codes" label="訪客碼" icon="codes" />
               <MoreLink to="/admin/recommendations" label="推薦地點" icon="places" />
               <MoreLink to="/admin/notifications" label="通知設定" icon="notifications" />
+              <MoreLink to="/admin/emails" label="Email 管理" icon="email" />
             </div>
             <div className="admin-more-actions">
               <button type="button" className="btn-ghost" onClick={openGuestPreviewPicker}>
@@ -283,7 +286,8 @@ type MobileIconName =
   | 'codes'
   | 'places'
   | 'notificationHistory'
-  | 'notifications';
+  | 'notifications'
+  | 'email';
 
 function MobileNavLink({ to, label, icon }: { to: string; label: string; icon: MobileIconName }) {
   return (
@@ -318,6 +322,7 @@ function MobileNavIcon({ name }: { name: MobileIconName }) {
     places: <><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     notificationHistory: <><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3v-4ZM10 20h4" /><path d="M8 7 5 4M16 7l3-3" /></>,
     notifications: <><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3v-4ZM10 20h4" /></>,
+    email: <><rect x="3.5" y="5.5" width="17" height="13" rx="2" /><path d="m4.5 7 7.5 6 7.5-6" /></>,
   };
 
   return (

@@ -90,8 +90,15 @@ Admin backend currently includes:
 - The Admin guest-preview entry opens a picker containing every current or
   upcoming booking in check-in order. Selecting a booking stores its ID in
   session storage and renders the Guest portal with that booking's name and
-  date-aware stay stage. When there are no current/upcoming bookings, Admin can
-  explicitly preview the generic no-guest state.
+  date-aware stay stage. The preview dock can simulate pre-arrival, check-in,
+  stay day 2, checkout, and completed states without changing booking data.
+  When there are no current/upcoming bookings, Admin can explicitly preview the
+  generic no-guest state.
+- Email management center with upcoming schedules, rendered template previews,
+  delivery history, missing-recipient warnings, admin test sends, and manual
+  guest resend actions.
+- Today checklist combines payment, key handoff/return, guest code, guest Email,
+  and reminder-delivery issues. Payment and key tasks have one-tap completion.
 
 Admin app entry: `src/pages/AdminApp.tsx`.
 
@@ -342,6 +349,15 @@ Shared types: `src/types/index.ts`.
 - `checkoutAdminReminder.body`
 - `updatedAt`
 
+`emailDeliveries/{deliveryId}`:
+
+- `bookingId`, `guestName`, `recipient`
+- `type`, `typeLabel`, `trigger`
+- `subject`, `status`, `errorMessage`
+- `initiatedBy`, `createdAt`, `updatedAt`, `sentAt`
+
+Only Functions write delivery records; Admin clients can read them.
+
 `adminPushDevices/{uid_deviceId}`:
 
 - `ownerUid`
@@ -373,6 +389,7 @@ Important behavior:
 - Users can self-create pending profile or profile matching `emailAccess/{email}`.
 - Users cannot change their own role/active/bookingId.
 - Admin can manage `users`, `emailAccess`, `settings`, `bookings`, `guestAccessCodes`, `keys`.
+- Admin can read `emailDeliveries`; all writes remain Functions-only.
 - Guest access codes can be read without Firebase Auth only when active and within validity window.
 - Bookings can be read by admin or by signed-in user whose `guestUid` matches the booking.
 

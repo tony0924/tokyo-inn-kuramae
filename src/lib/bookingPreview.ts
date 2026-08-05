@@ -5,6 +5,7 @@ import type { Booking, BookingDoc } from '@/types';
 
 const ADMIN_GUEST_PREVIEW_BOOKING_KEY = 'admin-guest-preview-booking-id';
 const ADMIN_GUEST_PREVIEW_EMPTY_VALUE = '__no_guest__';
+const ADMIN_GUEST_PREVIEW_DATE_KEY = 'admin-guest-preview-date';
 
 export function setAdminGuestPreviewBookingId(bookingId: string | null): void {
   try {
@@ -12,9 +13,38 @@ export function setAdminGuestPreviewBookingId(bookingId: string | null): void {
       ADMIN_GUEST_PREVIEW_BOOKING_KEY,
       bookingId ?? ADMIN_GUEST_PREVIEW_EMPTY_VALUE
     );
+    sessionStorage.removeItem(ADMIN_GUEST_PREVIEW_DATE_KEY);
   } catch {
     // Preview remains available without personalization when storage is unavailable.
   }
+}
+
+export function setAdminGuestPreviewDate(dateKey: string | null): void {
+  try {
+    if (dateKey) {
+      sessionStorage.setItem(ADMIN_GUEST_PREVIEW_DATE_KEY, dateKey);
+    } else {
+      sessionStorage.removeItem(ADMIN_GUEST_PREVIEW_DATE_KEY);
+    }
+  } catch {
+    // Preview falls back to the real date when storage is unavailable.
+  }
+}
+
+export function getAdminGuestPreviewDateKey(): string | null {
+  try {
+    const value = sessionStorage.getItem(ADMIN_GUEST_PREVIEW_DATE_KEY);
+    return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getAdminGuestPreviewDate(): Date | null {
+  const dateKey = getAdminGuestPreviewDateKey();
+  if (!dateKey) return null;
+  const date = new Date(`${dateKey}T12:00:00+09:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export function getAdminGuestPreviewBookingId(): string | null {

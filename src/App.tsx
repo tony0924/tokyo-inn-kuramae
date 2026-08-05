@@ -49,6 +49,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/admin/recommendations': '推薦地點管理',
   '/admin/notification-history': '通知紀錄',
   '/admin/notifications': '通知設定',
+  '/admin/emails': 'Email 管理中心',
 };
 
 function PageTitle() {
