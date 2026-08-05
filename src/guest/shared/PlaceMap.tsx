@@ -62,6 +62,7 @@ interface PlaceMapProps {
   sidebar: ReactNode;
   getMarkerNumber?: (place: Place, idx: number) => number;
   mobileAutoScrollToMap?: boolean;
+  mobileListLabel?: string;
 }
 
 export function PlaceMap({
@@ -69,6 +70,7 @@ export function PlaceMap({
   sidebar,
   getMarkerNumber,
   mobileAutoScrollToMap = false,
+  mobileListLabel = '地點',
 }: PlaceMapProps) {
   const { user } = useAuth();
   const [selected, setSelected] = useState<number | null>(null);
@@ -133,7 +135,7 @@ export function PlaceMap({
               className="mobile-map-return"
               onClick={returnToSelectedPlace}
             >
-              ↑ 返回餐廳清單
+              ↑ 返回{mobileListLabel}清單
             </button>
           )}
           <MapContainer

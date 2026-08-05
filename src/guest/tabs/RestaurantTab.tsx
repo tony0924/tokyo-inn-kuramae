@@ -29,6 +29,7 @@ export function RestaurantTab() {
       <PlaceMap
         places={places}
         mobileAutoScrollToMap
+        mobileListLabel="餐廳"
         getMarkerNumber={(place) => numberMap.get(placeKey(place)) ?? 1}
         sidebar={
           <>

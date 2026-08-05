@@ -14,6 +14,8 @@ export function CityguideTab() {
       {loading && <p className="photo-hint">正在同步後台新增的推薦地點…</p>}
       <PlaceMap
         places={places}
+        mobileAutoScrollToMap
+        mobileListLabel="景點"
         sidebar={places.map((p, i) => (
           <PlaceCard
             key={p.id ?? p.name}
