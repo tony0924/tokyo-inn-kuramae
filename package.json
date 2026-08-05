@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test:health": "node --test test/systemHealth.test.mjs",
+    "test:functions": "npm --prefix functions test",
+    "check": "npm run build && npm run test:health && npm run test:functions",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy"
   },

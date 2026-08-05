@@ -186,11 +186,26 @@ Relevant files:
 - Inline quality warnings flag missing descriptions, low ratings, malformed
   Maps URLs, and likely duplicates based on Place ID or normalized Maps URL.
 
+## System Health
+
+- `/admin/system-health` provides a read-only operational health dashboard for
+  private Guest guide completeness, recommendation category coverage and data
+  quality, upcoming booking / guest-code consistency, and recent Email / Admin
+  notification delivery failures.
+- Health findings link to the existing Admin management page that can resolve
+  them. The checker never edits Firestore content automatically.
+- `npm run check` is the release verification entry point. It runs the frontend
+  production build, deterministic system-health rule tests, and all Functions
+  tests.
+
 Relevant files:
 
 - `src/admin/RecommendationManagement.tsx`
 - `src/admin/useRecommendations.ts`
 - `src/lib/recommendations.ts`
+- `src/admin/SystemHealthDashboard.tsx`
+- `src/lib/systemHealth.ts`
+- `test/systemHealth.test.mjs`
 - `src/types/index.ts`
 
 ## Protected Guest Guide Content

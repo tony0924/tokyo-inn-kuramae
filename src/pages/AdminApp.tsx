@@ -16,6 +16,7 @@ const MessageManagement = lazy(() => import('@/admin/MessageManagement').then((m
 const PaymentInformationPage = lazy(() => import('@/admin/PaymentInformationPage').then((module) => ({ default: module.PaymentInformationPage })));
 const EmailManagementPage = lazy(() => import('@/admin/EmailManagementPage').then((module) => ({ default: module.EmailManagementPage })));
 const GuestAnalyticsDashboard = lazy(() => import('@/admin/GuestAnalyticsDashboard').then((module) => ({ default: module.GuestAnalyticsDashboard })));
+const SystemHealthDashboard = lazy(() => import('@/admin/SystemHealthDashboard').then((module) => ({ default: module.SystemHealthDashboard })));
 
 export default function AdminApp() {
   return (
@@ -34,6 +35,7 @@ export default function AdminApp() {
         <Route path="notifications" element={<NotificationSettingsPage />} />
         <Route path="emails" element={<EmailManagementPage />} />
         <Route path="analytics" element={<GuestAnalyticsDashboard />} />
+        <Route path="system-health" element={<SystemHealthDashboard />} />
         <Route path="notification-history" element={<NotificationHistoryPage />} />
         <Route path="messages" element={<MessageManagement />} />
         <Route path="*" element={<Navigate to="today" replace />} />

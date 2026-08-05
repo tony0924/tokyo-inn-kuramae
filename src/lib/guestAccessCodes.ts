@@ -38,17 +38,22 @@ export function generateGuestCode(length = 8): string {
 }
 
 export function watchGuestAccessCodes(
-  cb: (codes: GuestAccessCode[]) => void
+  cb: (codes: GuestAccessCode[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => {
-    cb(
-      snap.docs.map((item) => ({
-        id: item.id,
-        ...(item.data() as GuestAccessCodeDoc),
-      }))
-    );
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(
+        snap.docs.map((item) => ({
+          id: item.id,
+          ...(item.data() as GuestAccessCodeDoc),
+        }))
+      );
+    },
+    (error) => onError?.(error)
+  );
 }
 
 export async function createGuestAccessCode(input: {
