@@ -168,13 +168,14 @@ export function PaymentInformationPage() {
               請先填寫銀行名稱、戶名與帳號，才能複製訊息。
             </p>
           )}
-          {error && <p className="field-error" role="alert">{error}</p>}
-          {message && <p className="payment-information-success" role="status">{message}</p>}
+          {error?.startsWith('無法自動複製') && (
+            <p className="field-error" role="alert">{error}</p>
+          )}
+          {message?.startsWith('付款訊息') && (
+            <p className="payment-information-success" role="status">{message}</p>
+          )}
 
           <div className="payment-information-actions">
-            <button type="submit" className="btn-ghost" disabled={saving}>
-              {saving ? '儲存中…' : '儲存付款資訊'}
-            </button>
             <button
               type="button"
               className="btn-gold payment-copy-button"
@@ -244,6 +245,19 @@ export function PaymentInformationPage() {
                 required
               />
             </div>
+          </div>
+
+          {error?.startsWith('付款資訊') && (
+            <p className="field-error" role="alert">{error}</p>
+          )}
+          {message?.startsWith('付款資訊') && (
+            <p className="payment-information-success" role="status">{message}</p>
+          )}
+
+          <div className="payment-information-actions">
+            <button type="submit" className="btn-gold" disabled={saving}>
+              {saving ? '儲存中…' : '儲存付款資訊'}
+            </button>
           </div>
         </section>
       </div>
