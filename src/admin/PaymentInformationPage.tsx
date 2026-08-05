@@ -111,70 +111,9 @@ export function PaymentInformationPage() {
       </div>
 
       <div className="payment-information-layout">
-        <section className="admin-table payment-information-card" aria-labelledby="payment-account-title">
-          <div className="payment-information-section-heading">
-            <span>01</span>
-            <div>
-              <h2 id="payment-account-title">收款帳戶</h2>
-              <p>資料只會顯示在管理後台與複製的訊息中。</p>
-            </div>
-          </div>
-          <div className="form-grid">
-            <div className="form-field">
-              <label htmlFor="payment-bank-name">銀行名稱</label>
-              <input
-                id="payment-bank-name"
-                value={information.bankName}
-                onChange={(event) => update('bankName', event.target.value)}
-                placeholder="例如：○○銀行"
-                required
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="payment-branch-name">分行名稱</label>
-              <input
-                id="payment-branch-name"
-                value={information.branchName}
-                onChange={(event) => update('branchName', event.target.value)}
-                placeholder="例如：藏前分行（可留白）"
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="payment-account-name">戶名</label>
-              <input
-                id="payment-account-name"
-                value={information.accountName}
-                onChange={(event) => update('accountName', event.target.value)}
-                required
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="payment-account-number">帳號</label>
-              <input
-                id="payment-account-number"
-                value={information.accountNumber}
-                onChange={(event) => update('accountNumber', event.target.value)}
-                inputMode="numeric"
-                autoComplete="off"
-                required
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="payment-currency">幣別</label>
-              <input
-                id="payment-currency"
-                value={information.currency}
-                onChange={(event) => update('currency', event.target.value.toUpperCase())}
-                maxLength={8}
-                required
-              />
-            </div>
-          </div>
-        </section>
-
         <section className="admin-table payment-information-card" aria-labelledby="payment-message-title">
           <div className="payment-information-section-heading">
-            <span>02</span>
+            <span>01</span>
             <div>
               <h2 id="payment-message-title">房客訊息</h2>
               <p>只列出未付款房客，選擇後會自動帶入姓名、金額與住宿日期。</p>
@@ -244,6 +183,67 @@ export function PaymentInformationPage() {
             >
               {copying ? '複製中…' : '一鍵複製給房客'}
             </button>
+          </div>
+        </section>
+
+        <section className="admin-table payment-information-card" aria-labelledby="payment-account-title">
+          <div className="payment-information-section-heading">
+            <span>02</span>
+            <div>
+              <h2 id="payment-account-title">收款帳戶</h2>
+              <p>資料只會顯示在管理後台與複製的訊息中。</p>
+            </div>
+          </div>
+          <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="payment-bank-name">銀行名稱</label>
+              <input
+                id="payment-bank-name"
+                value={information.bankName}
+                onChange={(event) => update('bankName', event.target.value)}
+                placeholder="例如：○○銀行"
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="payment-branch-name">分行名稱</label>
+              <input
+                id="payment-branch-name"
+                value={information.branchName}
+                onChange={(event) => update('branchName', event.target.value)}
+                placeholder="例如：藏前分行（可留白）"
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="payment-account-name">戶名</label>
+              <input
+                id="payment-account-name"
+                value={information.accountName}
+                onChange={(event) => update('accountName', event.target.value)}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="payment-account-number">帳號</label>
+              <input
+                id="payment-account-number"
+                value={information.accountNumber}
+                onChange={(event) => update('accountNumber', event.target.value)}
+                inputMode="numeric"
+                autoComplete="off"
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="payment-currency">幣別</label>
+              <input
+                id="payment-currency"
+                value={information.currency}
+                onChange={(event) => update('currency', event.target.value.toUpperCase())}
+                maxLength={8}
+                required
+              />
+            </div>
           </div>
         </section>
       </div>
