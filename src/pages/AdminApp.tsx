@@ -13,6 +13,7 @@ const GuestCodeManagement = lazy(() => import('@/admin/GuestCodeManagement').the
 const KeyManagement = lazy(() => import('@/admin/KeyManagement').then((module) => ({ default: module.KeyManagement })));
 const RecommendationManagement = lazy(() => import('@/admin/RecommendationManagement').then((module) => ({ default: module.RecommendationManagement })));
 const MessageManagement = lazy(() => import('@/admin/MessageManagement').then((module) => ({ default: module.MessageManagement })));
+const PaymentInformationPage = lazy(() => import('@/admin/PaymentInformationPage').then((module) => ({ default: module.PaymentInformationPage })));
 
 export default function AdminApp() {
   return (
@@ -21,6 +22,7 @@ export default function AdminApp() {
         <Route index element={<Navigate to="today" replace />} />
         <Route path="today" element={<TodayDashboard />} />
         <Route path="revenue" element={<RevenueOverview />} />
+        <Route path="payment-information" element={<PaymentInformationPage />} />
         <Route path="calendar" element={<CalendarView />} />
         <Route path="bookings" element={<BookingList />} />
         <Route path="users" element={<UserManagement />} />

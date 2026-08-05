@@ -17,6 +17,7 @@ import './admin.css';
 const navItems = [
   { to: '/admin/today', label: '今日營運' },
   { to: '/admin/revenue', label: '收入總覽' },
+  { to: '/admin/payment-information', label: '付款資訊' },
   { to: '/admin/calendar', label: '行事曆' },
   { to: '/admin/bookings', label: '預約清單' },
   { to: '/admin/messages', label: '推薦牆' },
@@ -95,6 +96,7 @@ export function AdminLayout() {
 
   const moreActive = [
     '/admin/revenue',
+    '/admin/payment-information',
     '/admin/users',
     '/admin/keys',
     '/admin/guest-codes',
@@ -239,6 +241,7 @@ export function AdminLayout() {
             </div>
             <div className="admin-more-grid">
               <MoreLink to="/admin/revenue" label="收入總覽" icon="revenue" />
+              <MoreLink to="/admin/payment-information" label="付款資訊" icon="payment" />
               <MoreLink to="/admin/users" label="使用者" icon="users" />
               <MoreLink to="/admin/keys" label="鑰匙管理" icon="keys" />
               <MoreLink to="/admin/guest-codes" label="訪客碼" icon="codes" />
@@ -274,6 +277,7 @@ type MobileIconName =
   | 'messages'
   | 'more'
   | 'revenue'
+  | 'payment'
   | 'users'
   | 'keys'
   | 'codes'
@@ -307,6 +311,7 @@ function MobileNavIcon({ name }: { name: MobileIconName }) {
     messages: <><path d="M5 18.5 3.5 21l3.8-1.3c1.3.8 2.9 1.3 4.7 1.3 4.9 0 8.5-3.4 8.5-8S16.9 5 12 5s-8.5 3.4-8.5 8c0 2.1.6 4 1.5 5.5Z" /><path d="M8 12.5h8M8 16h5" /></>,
     more: <><circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /></>,
     revenue: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5h-5a2 2 0 1 0 0 4h3a2 2 0 1 1 0 4H8.5M12 6.5v11" /></>,
+    payment: <><rect x="3.5" y="5.5" width="17" height="13" rx="2" /><path d="M3.5 9.5h17M7 14h4" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3.5 19c.5-3.5 2.3-5.5 5.5-5.5s5 2 5.5 5.5M15 6.5a3 3 0 0 1 0 5.8M16 14c2.5.4 4 2.1 4.5 5" /></>,
     keys: <><circle cx="8" cy="15.5" r="4.5" /><path d="m11.5 12.5 7-7M16 8l2 2M18.5 5.5l2 2" /></>,
     codes: <><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2" /></>,

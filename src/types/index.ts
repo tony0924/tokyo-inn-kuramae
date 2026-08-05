@@ -7,6 +7,15 @@ export type StayType = 'paid_guest' | 'self' | 'family' | 'complimentary' | 'oth
 export type BookingPaymentKind = 'payment' | 'refund';
 export type BookingPaymentMethod = 'cash' | 'transfer' | 'card' | 'platform' | 'other';
 
+export interface PaymentInformation {
+  bankName: string;
+  branchName: string;
+  accountName: string;
+  accountNumber: string;
+  currency: string;
+  messageTemplate: string;
+}
+
 export interface KeyLoanRecord {
   keyCode: string;
   lentAt: Timestamp;

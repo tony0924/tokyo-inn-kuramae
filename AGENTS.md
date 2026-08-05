@@ -70,7 +70,7 @@ Guest（`/guest/*`）：
 
 Admin（`/admin/*`）：
 
-- `today`、`revenue`、`calendar`、`bookings`、`messages`
+- `today`、`revenue`、`payment-information`、`calendar`、`bookings`、`messages`
 - `users`、`keys`、`guest-codes`、`recommendations`
 - `notification-history`、`notifications`
 
@@ -122,6 +122,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 | `guestAccessCodes/{code}` | 有效期間訪客碼 | Admin 管理；有效碼可單筆驗證 |
 | `recommendations/{id}` | Guest 地圖推薦 | 公開讀；Admin 寫 |
 | `settings/notifications` | Email 寄件者與範本 | Admin |
+| `settings/paymentInformation` | 收款帳戶與房客付款訊息範本 | Admin |
 | `guestPageViews/{id}` | page view / code login 分析 | 驗證身分後新增；Admin 讀 |
 | `guestCommunityMessages/{id}` | 訪客共享推薦牆 | 公開讀；Function 驗證訪客後寫入；Admin 可刪除 |
 | `adminPushDevices/{uid_deviceId}` | Admin FCM token | 每位 Admin 管理自己的裝置 |

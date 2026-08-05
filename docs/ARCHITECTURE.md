@@ -77,6 +77,15 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 4. 若沒有住宿中或未來預約，選擇器改為提供「無住客狀態」，呈現未綁定預約時的
    通用房客指南畫面。
 
+### Admin 付款資訊
+
+1. Admin 在 `/admin/payment-information` 管理共用收款帳戶與房客訊息範本，
+   資料儲存在 `settings/paymentInformation`，只允許 Admin 讀寫。
+2. 頁面可選擇 booking，將房客姓名、預約金額與入住／退房日期套入訊息變數；
+   未選預約時可產生不含特定住客資料的通用訊息。
+3. 訊息在瀏覽器端即時預覽，一鍵複製後由管理員貼到既有通訊工具；系統不會
+   自動對外傳送銀行帳戶或房客資料。
+
 ### 訪客 PWA 安裝
 
 1. Guest Layout 載入後切換到 `guest-manifest.webmanifest`，並監聽瀏覽器的
