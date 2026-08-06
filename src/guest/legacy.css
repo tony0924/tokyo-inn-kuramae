@@ -1112,6 +1112,21 @@
         linear-gradient(120deg, rgba(201, 168, 76, 0.08), rgba(201, 168, 76, 0.02));
     }
 
+    .guide-pwa-card.installed {
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      padding: 17px 20px;
+      border-color: rgba(86, 212, 176, 0.28);
+      background: linear-gradient(120deg, rgba(86, 212, 176, 0.08), rgba(86, 212, 176, 0.02));
+    }
+
+    .guide-pwa-card.installed .guide-pwa-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #75dec0, #3a9d82);
+      box-shadow: 0 8px 20px rgba(86, 212, 176, 0.18);
+    }
+
     .guide-pwa-icon {
       display: grid;
       width: 64px;
@@ -1180,6 +1195,11 @@
         gap: 14px;
         padding: 20px 18px;
       }
+      .guide-pwa-card.installed {
+        grid-template-columns: 44px minmax(0, 1fr);
+        padding: 16px;
+      }
+      .guide-pwa-card.installed .guide-pwa-icon { width: 44px; height: 44px; }
       .guide-pwa-icon { width: 52px; height: 52px; border-radius: 14px; }
       .guide-pwa-card > button { grid-column: 1 / -1; width: 100%; }
       .guide-help-card { align-items: stretch; flex-direction: column; }

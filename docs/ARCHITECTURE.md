@@ -121,10 +121,11 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 
 1. Guest Layout 載入後切換到 `guest-manifest.webmanifest`，並監聽瀏覽器的
    `beforeinstallprompt` 與 `appinstalled` 事件。
-2. 每日歡迎視窗提供安裝介紹；「使用說明」頁保留固定入口。
+2. 每日歡迎視窗提供安裝介紹；「使用說明」頁在開場介紹後立即顯示 Quick Access，
+   讓第一次使用的房客先看到加入主畫面的方式。
 3. iPhone／iPad 顯示 Safari「分享 → 加入主畫面」步驟；Android 優先呼叫
    瀏覽器原生安裝提示，無提示時顯示 Chrome 手動步驟。
-4. 已在 standalone 模式開啟時顯示完成狀態。這個階段只改善安裝引導，
+4. 已在 standalone 模式開啟時顯示較精簡的完成狀態。這個階段只改善安裝引導，
    不快取 Firestore 私密指南，也不承諾離線瀏覽。
 
 ### 訪客推薦牆

@@ -224,6 +224,9 @@ Relevant files:
 
 - The authenticated Guest shell switches the page metadata to
   `public/guest-manifest.webmanifest`; Admin keeps the existing Admin manifest.
+- The permanent Quick Access card appears immediately after the Guest guide
+  introduction so first-time iPhone and Android visitors see installation help
+  before the longer guide. Installed visitors receive a compact completion state.
 - The daily welcome modal includes a PWA entry point, and the Guest user-guide
   tab keeps a permanent entry so visitors can reopen the instructions later.
 - iPhone/iPad visitors receive Safari-specific Add to Home Screen steps.

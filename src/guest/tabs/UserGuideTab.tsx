@@ -81,6 +81,34 @@ export function UserGuideTab() {
         </div>
       </div>
 
+      <section
+        className={`guide-pwa-card${installed ? ' installed' : ''}`}
+        aria-labelledby="guide-pwa-title"
+      >
+        <div className="guide-pwa-icon" aria-hidden="true">藏前</div>
+        <div className="guide-pwa-copy">
+          <span>QUICK ACCESS · 快速開啟</span>
+          <h2 id="guide-pwa-title">
+            {installed ? '已加入手機主畫面' : '把房客指南加入主畫面'}
+          </h2>
+          <p>
+            {installed
+              ? '你目前正以 App 模式使用，可以直接從主畫面開啟。'
+              : device === 'ios'
+                ? '使用 iPhone 的 Safari 分享選單，幾個步驟就能像 App 一樣開啟。'
+                : device === 'android'
+                  ? '在 Android 上安裝後，可直接從主畫面開啟，不必重新找網址。'
+                  : '可將網站安裝成應用程式，之後從裝置直接開啟。'}
+          </p>
+        </div>
+        <button type="button" onClick={() => {
+          setShowPwaGuide(true);
+          recordPwaEvent('pwa_guide_open', 'user_guide');
+        }}>
+          {installed ? '查看狀態' : '查看安裝方式'}
+        </button>
+      </section>
+
       <section className="guide-start-card" aria-labelledby="guide-start-title">
         <div className="guide-section-heading">
           <span>01</span>
@@ -157,31 +185,6 @@ export function UserGuideTab() {
           <div><span>↗</span><p><strong>地圖會另開頁面</strong>餐廳、超市與景點可直接開啟 Google Maps 導航。</p></div>
           <div><span>🔒</span><p><strong>請勿分享訪客碼</strong>網站包含住宿與進房資訊，僅限同行房客使用。</p></div>
         </div>
-      </section>
-
-      <section className="guide-pwa-card" aria-labelledby="guide-pwa-title">
-        <div className="guide-pwa-icon" aria-hidden="true">藏前</div>
-        <div className="guide-pwa-copy">
-          <span>QUICK ACCESS · 快速開啟</span>
-          <h2 id="guide-pwa-title">
-            {installed ? '已加入手機主畫面' : '把房客指南加入主畫面'}
-          </h2>
-          <p>
-            {installed
-              ? '你目前正以 App 模式使用，可以直接從主畫面開啟。'
-              : device === 'ios'
-                ? '使用 iPhone 的 Safari 分享選單，幾個步驟就能像 App 一樣開啟。'
-                : device === 'android'
-                  ? '在 Android 上安裝後，可直接從主畫面開啟，不必重新找網址。'
-                  : '可將網站安裝成應用程式，之後從裝置直接開啟。'}
-          </p>
-        </div>
-        <button type="button" onClick={() => {
-          setShowPwaGuide(true);
-          recordPwaEvent('pwa_guide_open', 'user_guide');
-        }}>
-          {installed ? '查看狀態' : '查看安裝方式'}
-        </button>
       </section>
 
       <div className="guide-help-card">
