@@ -24,6 +24,7 @@ import {
   weatherAdvice,
 } from "./guestWeather.js";
 import { friendlyEmailError, renderTemplate } from "./emailHelpers.js";
+import { buildBookingDateChangeBody } from "./bookingNotifications.js";
 
 initializeApp();
 
@@ -325,7 +326,7 @@ export const sendBookingUpdatedPush = onDocumentUpdated(
       tasks.push(
         sendAdminPush({
           title: `預約日期已修改｜${after.guestName || "未命名房客"}`,
-          body: `${formatDateInTimeZone(after.checkIn)} 入住・${formatDateInTimeZone(after.checkOut)} 退房`,
+          body: buildBookingDateChangeBody(before, afterData, formatDateInTimeZone),
           url: `${WEBSITE_URL}/admin/bookings`,
           tag: `booking-updated-${event.params.bookingId}`,
         })

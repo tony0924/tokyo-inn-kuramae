@@ -399,7 +399,8 @@ Each admin can read and manage only their own device documents. Cloud Functions 
 `adminNotifications/{id}` stores every management push event, including its
 title, body, deep link, delivery status, device count, and timestamps. Admins
 can read the latest 100 records from the `通知紀錄` page; clients cannot write
-or delete these documents.
+or delete these documents. Booking date-change notifications show only the
+fields that changed, including the previous and new check-in / checkout dates.
 `adminNotificationReads/{uid}` stores each admin's latest read timestamp. The
 mobile header bell shows that admin's unread count and marks visible history as
 read when the history page opens.

@@ -89,6 +89,14 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
    會建立獨立紀錄；排程寄送使用固定 ID 避免 Function retry 重複寄信。
 4. 今日待辦會整合最新失敗紀錄，以及已到排程時間但尚無成功紀錄的入住／退房信。
 
+### 預約異動通知
+
+1. booking 的入住或退房時間改變時，`sendBookingUpdatedPush` 寫入通知紀錄並推播
+   給已啟用的管理員裝置。
+2. 通知只列出實際變動的欄位，格式為「入住：原日期 → 新日期」或
+   「退房：原日期 → 新日期」；兩者同時修改時會一起顯示。
+3. 既有通知紀錄不會回溯修改，新的日期異動才會使用前後日期格式。
+
 ### Admin 今日待辦
 
 1. 今日營運頁依目前 booking、Email delivery、付款、訪客碼與鑰匙狀態即時計算。
