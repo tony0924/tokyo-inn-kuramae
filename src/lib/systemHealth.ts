@@ -149,7 +149,6 @@ function inspectRecommendations(recommendations: Recommendation[], issues: Healt
   active.forEach((item) => {
     const missing: string[] = [];
     if (!item.note?.trim()) missing.push('推薦介紹');
-    if (!item.address?.trim()) missing.push('地址');
     if (!isGoogleMapsUrl(item.url)) missing.push('有效的 Google Maps 連結');
     if (!validCoordinates(item.lat, item.lng)) missing.push('正確座標');
     if (!Number.isInteger(item.rating) || (item.rating ?? 0) < 1 || (item.rating ?? 0) > 5) {

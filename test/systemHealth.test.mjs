@@ -34,7 +34,6 @@ function recommendation(category, index) {
     category,
     name: `Place ${index}`,
     placeId: `place-id-${index}`,
-    address: 'Tokyo',
     lat: 35.7,
     lng: 139.7,
     url: `https://maps.app.goo.gl/place-${index}`,
@@ -80,6 +79,16 @@ test('完整內容與一致的訪客存取不產生健康問題', () => {
   assert.equal(report.issues.length, 0);
   assert.equal(report.criticalCount, 0);
   assert.equal(report.warningCount, 0);
+});
+
+test('推薦地址為選填，不會在地圖連結與座標完整時誤報', () => {
+  const input = healthyInput();
+  input.recommendations.forEach((item) => {
+    delete item.address;
+  });
+
+  const report = buildSystemHealthReport(input);
+  assert.equal(report.contentIssueCount, 0);
 });
 
 test('偵測缺少指南、錯誤推薦、缺少訪客碼與寄信失敗', () => {
