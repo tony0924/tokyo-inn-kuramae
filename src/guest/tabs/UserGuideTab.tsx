@@ -54,7 +54,7 @@ const GUIDE_SECTIONS = [
 export function UserGuideTab() {
   const navigate = useNavigate();
   const [showPwaGuide, setShowPwaGuide] = useState(false);
-  const { installed, device } = usePwaInstall();
+  const { installed } = usePwaInstall();
   const { user } = useAuth();
   const guestCode = !user ? getStoredGuestAccessCode() : null;
 
@@ -89,23 +89,19 @@ export function UserGuideTab() {
         <div className="guide-pwa-copy">
           <span>QUICK ACCESS · 快速開啟</span>
           <h2 id="guide-pwa-title">
-            {installed ? '已加入手機主畫面' : '把房客指南加入主畫面'}
+            {installed ? '已可從主畫面快速開啟' : '一點就開，不用再找網址'}
           </h2>
           <p>
             {installed
-              ? '你目前正以 App 模式使用，可以直接從主畫面開啟。'
-              : device === 'ios'
-                ? '使用 iPhone 的 Safari 分享選單，幾個步驟就能像 App 一樣開啟。'
-                : device === 'android'
-                  ? '在 Android 上安裝後，可直接從主畫面開啟，不必重新找網址。'
-                  : '可將網站安裝成應用程式，之後從裝置直接開啟。'}
+              ? '住宿資訊隨手可看，不用再找網址。'
+              : '加入主畫面，住宿資訊隨手可看；同一裝置會記住訪客碼。'}
           </p>
         </div>
         <button type="button" onClick={() => {
           setShowPwaGuide(true);
           recordPwaEvent('pwa_guide_open', 'user_guide');
         }}>
-          {installed ? '查看狀態' : '查看安裝方式'}
+          {installed ? '查看狀態' : '加入主畫面'}
         </button>
       </section>
 

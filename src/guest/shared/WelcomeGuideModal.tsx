@@ -117,7 +117,7 @@ export function WelcomeGuideModal({
             <small>
               {pwaInstalled
                 ? '你已經能像 App 一樣快速開啟房客指南。'
-                : 'iPhone 與 Android 都能安裝，入住期間更容易找到。'}
+                : '一點就開、不用找網址；同一裝置會記住訪客碼。'}
             </small>
           </span>
           <span aria-hidden="true">›</span>

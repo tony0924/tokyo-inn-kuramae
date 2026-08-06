@@ -66,7 +66,7 @@ export function PwaInstallGuide({ open, onClose, onInstallAccepted }: Props) {
           <span className="pwa-guide-app-icon" aria-hidden="true">藏前</span>
           <p>ADD TO HOME SCREEN</p>
           <h2 id="pwa-guide-title">{heading}</h2>
-          <span>安裝後可直接從手機主畫面開啟，不必再尋找網址。</span>
+          <span>一點就開住宿指南；同一裝置會記住訪客碼。</span>
         </div>
 
         {installed ? (
@@ -144,7 +144,7 @@ export function PwaInstallGuide({ open, onClose, onInstallAccepted }: Props) {
           <p className="pwa-guide-result" role="status">這次沒有安裝，之後仍可從使用指南重新操作。</p>
         )}
         <p className="pwa-guide-footnote">
-          安裝不會建立新的帳號；仍需使用原本的 Gmail 或訪客碼進入房客網站。
+          訪客碼失效或清除網站資料後，需要重新輸入。
         </p>
         <button type="button" className="pwa-guide-done" onClick={onClose}>
           {installed ? '完成' : '我知道了'}
