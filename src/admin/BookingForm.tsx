@@ -627,6 +627,14 @@ export function BookingForm({ booking, defaultCheckIn, onClose }: Props) {
                 >
                   選日期
                 </button>
+                <button
+                  type="button"
+                  className="picker-button"
+                  onClick={() => update('keyReturnedAt', '')}
+                  disabled={!state.keyReturnedAt}
+                >
+                  清除日期
+                </button>
               </div>
             </div>
           </>
