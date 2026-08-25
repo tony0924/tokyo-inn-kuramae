@@ -95,6 +95,7 @@ export function CheckinTab() {
           <li>全室地板用吸塵器清潔</li>
           <li>移除拋棄式床單</li>
           <li>清空冰箱</li>
+          <li>確認微波爐內沒有留下食物或容器</li>
           <li>
             <span>
               丟棄所有垃圾（

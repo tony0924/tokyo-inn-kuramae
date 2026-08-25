@@ -70,7 +70,7 @@ const DEFAULT_SETTINGS = {
   checkoutAdminReminder: {
     subject: "今日退房提醒｜{{guestName}}",
     body:
-      "您好 {{guestName}}，\n\n今天 {{checkOutDate}} 是退房日，請於 11:00 前完成退房。離開前請簡單確認：\n\n・將冷氣與電視遙控器放回客廳餐桌\n・用吸塵器清潔全室地板\n・移除使用過的拋棄式床單\n・清空冰箱，並依分類丟棄所有垃圾\n・關閉燈、浴室抽風機與熱水機\n・拍照或錄影臥室、客廳、冰箱、廚房與浴室，並回傳房內狀態\n\n房客網站：{{guestCodeLoginUrl}}\n訪客碼：{{guestAccessCode}}\n\nEmail 僅提供簡短清單；垃圾位置、完整退房步驟與可勾選 Checklist，請登入房客網站查看。\n\n謝謝您的入住，祝旅途順利\n{{senderName}}",
+      "您好 {{guestName}}，\n\n今天 {{checkOutDate}} 是退房日，請於 11:00 前完成退房。離開前請簡單確認：\n\n・將冷氣與電視遙控器放回客廳餐桌\n・用吸塵器清潔全室地板\n・移除使用過的拋棄式床單\n・清空冰箱內的食物與飲料\n・確認微波爐內沒有留下食物或容器\n・依分類丟棄所有垃圾\n・關閉燈、浴室抽風機與熱水機\n・拍照或錄影臥室、客廳、冰箱、廚房與浴室，並回傳房內狀態\n\n房客網站：{{guestCodeLoginUrl}}\n訪客碼：{{guestAccessCode}}\n\nEmail 僅提供簡短清單；垃圾位置、完整退房步驟與可勾選 Checklist，請登入房客網站查看。\n\n謝謝您的入住，祝旅途順利\n{{senderName}}",
   },
 };
 

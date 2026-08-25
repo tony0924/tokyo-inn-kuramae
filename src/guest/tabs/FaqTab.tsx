@@ -57,7 +57,7 @@ export function FaqTab() {
 
       <Accordion icon="🏁" title="退房前要做什麼？">
         <p className="faq-answer">
-          請清空冰箱、移除拋棄式床單、丟棄垃圾、關燈與熱水機，並拍照或錄影回傳房內狀態。
+          請清空冰箱、確認微波爐內沒有留下食物或容器、移除拋棄式床單、丟棄垃圾、關燈與熱水機，並拍照或錄影回傳房內狀態。
           <button type="button" className="inline-button-link" onClick={() => jumpTo('checkin', 'anchor-checkout')}>
             查看 Check-Out 清單 →
           </button>

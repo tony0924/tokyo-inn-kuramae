@@ -13,6 +13,7 @@ const CHECKOUT_ITEMS = [
   { id: 'floor', label: '用吸塵器清潔全室地板' },
   { id: 'sheets', label: '移除使用過的拋棄式床單' },
   { id: 'fridge', label: '清空冰箱內的食物與飲料' },
+  { id: 'microwave', label: '確認微波爐內沒有留下食物或容器' },
   { id: 'garbage', label: '依分類丟棄所有垃圾' },
   { id: 'power', label: '關閉燈、浴室抽風機與熱水機' },
   { id: 'photos', label: '拍照或錄影回傳房內狀態' },
