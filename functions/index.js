@@ -458,7 +458,7 @@ export const sendTodayCheckInAdminPushes = onSchedule(
     region: REGION,
   },
   async () => {
-    const target = atMidnightDaysFromNow(0);
+    const target = atMidnightDaysFromNow(1);
     const bookings = await getBookingsByDateField("checkIn", target);
 
     for (const booking of bookings) {
@@ -483,12 +483,12 @@ export const sendTodayCheckInAdminPushes = onSchedule(
 
 export const sendTodayCheckoutAdminPushes = onSchedule(
   {
-    schedule: "0 11 * * *",
+    schedule: "0 21 * * *",
     timeZone: TIME_ZONE,
     region: REGION,
   },
   async () => {
-    const target = atMidnightDaysFromNow(0);
+    const target = atMidnightDaysFromNow(1);
     const bookings = await getBookingsByDateField("checkOut", target);
 
     for (const booking of bookings) {
@@ -507,7 +507,7 @@ export const sendTodayCheckoutAdminPushes = onSchedule(
 
 export const sendCheckoutAdminReminders = onSchedule(
   {
-    schedule: "0 12 * * *",
+    schedule: "0 21 * * *",
     timeZone: TIME_ZONE,
     region: REGION,
     secrets: [gmailAppPassword],
@@ -519,7 +519,7 @@ export const sendCheckoutAdminReminders = onSchedule(
       logger.warn("No admin emails found. Guest checkout reminders will send without CC.");
     }
 
-    const target = atMidnightDaysFromNow(0);
+    const target = atMidnightDaysFromNow(1);
     const bookings = await getBookingsByDateField("checkOut", target);
 
     for (const booking of bookings) {

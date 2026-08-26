@@ -554,7 +554,7 @@ function buildTodayTasks(
           id: `checkout-email:${booking.id}`,
           icon: '✉',
           title: `${booking.guestName} 的退房提醒尚無寄送紀錄`,
-          detail: '今天退房，12:00 排程後仍未確認寄出。',
+          detail: '明天退房，21:00 排程後仍未確認寄出。',
           to: '/admin/emails',
           urgent: true,
         });

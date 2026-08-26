@@ -44,8 +44,8 @@ const EMAIL_COPY: Record<GuestEmailType, {
     templateKey: 'checkInReminder',
   },
   checkout_reminder: {
-    title: '退房當天提醒',
-    timing: '退房當天 12:00 寄送',
+    title: '退房前一天提醒',
+    timing: '退房前一天 21:00 寄送',
     templateKey: 'checkoutAdminReminder',
   },
 };
