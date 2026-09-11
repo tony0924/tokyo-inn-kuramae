@@ -1,3 +1,4 @@
+import { RecurringExpenseManagement } from './RecurringExpenseManagement';
 import { useCallback, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Modal } from "./Modal";
@@ -30,6 +31,8 @@ export function ExpenseManagement() {
   const month = /^(0[1-9]|1[0-2])$/.test(params.get("month") ?? "")
     ? params.get("month")!
     : "";
+  const [tab, setTab] = useState<'paid' | 'recurring'>('paid');
+  const [source, setSource] = useState('all');
   const [category, setCategory] = useState("");
   const { items, loading, error } = useExpenses(all ? null : year);
   const [form, setForm] = useState<ExpenseInput | null>(null);
@@ -44,7 +47,8 @@ export function ExpenseManagement() {
       (all ||
         !month ||
         taipeiDate(item.paidAt.toDate()).slice(5, 7) === month) &&
-      (!category || item.category === category),
+      (!category || item.category === category) &&
+      (source === "all" || (source === "recurring" ? !!item.recurringBillId : !item.recurringBillId)),
   );
   function open(item?: Expense, copy = false) {
     setEditing(copy ? undefined : item?.id);
@@ -68,6 +72,8 @@ export function ExpenseManagement() {
       await saveExpense(form, editing);
       setParams({ year: form.paidDate.slice(0, 4) });
       setCategory("");
+      setSource("all");
+      setTab("paid");
       setForm(null);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "儲存失敗，請稍後再試。");
@@ -96,10 +102,17 @@ export function ExpenseManagement() {
           <p>記錄已付款費用，依付款日期統計；總額統一以新臺幣計算。</p>
         </div>
         <button className="btn-gold" onClick={() => open()}>
-          新增支出
+          手動新增支出
         </button>
       </div>
+      <div className="expense-actions expense-tabs" role="group" aria-label="支出管理分區">
+        <button className={tab === 'paid' ? 'btn-gold' : 'btn-ghost'} onClick={() => setTab('paid')}>已付款明細</button>
+        <button className={tab === 'recurring' ? 'btn-gold' : 'btn-ghost'} onClick={() => setTab('recurring')}>每月固定支出</button>
+      </div>
+      {tab === 'recurring' && <RecurringExpenseManagement />}
+      <div hidden={tab !== 'paid'}>
       <div className="expense-filters admin-table">
+        <label>新增方式<select value={source} onChange={e => setSource(e.target.value)}><option value="all">全部來源</option><option value="manual">手動新增</option><option value="recurring">每月固定</option></select></label>
         <label>
           年度
           <select
@@ -197,7 +210,7 @@ export function ExpenseManagement() {
                 {visible.map((item) => (
                   <article className="admin-table expense-item" key={item.id}>
                     <div>
-                      <strong>{item.name}</strong>
+                      <strong>{item.name} · {item.recurringBillId ? "每月固定" : "手動新增"}</strong>
                       <p>
                         {taipeiDate(item.paidAt.toDate())}・{item.category}・
                         {item.method}
@@ -228,7 +241,8 @@ export function ExpenseManagement() {
                       </button>
                       <button
                         className="btn-danger"
-                        disabled={busy}
+                        disabled={busy || !!item.recurringBillId}
+                        title={item.recurringBillId ? "固定支出已入帳，請使用編輯更正金額。" : undefined}
                         onClick={() => void remove(item)}
                       >
                         刪除
@@ -241,6 +255,7 @@ export function ExpenseManagement() {
           </>
         )
       )}
+      </div>
       <Modal open={form !== null} onClose={close}>
         {form && (
           <form

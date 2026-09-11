@@ -217,3 +217,15 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - UI → `useExpenses` → `lib/expenses.ts` → Firestore。年度查詢以同一 `paidAt` 欄位範圍與排序，使用自動單欄索引，不需複合索引。每次監聽上限 10,001 筆；超過 10,000 筆顯示錯誤而不呈現不完整總額，後續應擴充分頁／伺服器聚合。
 - Rules 驗證角色、欄位、金額、日期、幣別及操作者；建立資訊不可覆寫。Functions 未讀寫此集合，不需異動或部署 Functions。
 - 驗證：`node --test test/expenseFinance.test.mjs`、Firestore Emulator 下的 `test/firestore.rules.test.mjs`、`npm run build`，另以模擬資料進行手機表單互動測試。部署順序：Firestore Rules → Hosting。
+
+## 每月固定支出（2026-09）
+
+支出管理現在分為「已付款明細」與「每月固定支出」。手動新增仍直接記錄已付款支出；明細可依手動／每月固定來源篩選。原本的手動支出不會自動轉成固定項目，以免重複入帳。
+
+- `recurringExpenses/{id}` 保存固定項目的名稱、分類、每月原幣金額、付款日（1–31）、起始月份、付款方式、備註、啟用狀態與 `nextMonth` 產生游標。新增只能從當月或未來開始，起始月份不可修改。設定可修改、暫停、恢復；已產生紀錄保留當時快照，修改僅影響未產生的月份。
+- `generateMonthlyExpenseBills`：`asia-east1`、每日 `00:15`、`Asia/Taipei`。分頁掃描固定項目，每次逐項最多補齊 12 個月份；下次排程繼續。短月份的 29–31 日自動改為月底。啟用中的項目會補齊漏跑月份；暫停不產生新紀錄，恢復時游標從當月或未來起始月份繼續，不補暫停月份。
+- `recurringExpenseBills/{templateId}_{YYYY-MM}` 保存月份、預定付款日與費用快照，狀態為 `pending`／`paid`／`skipped`。每月紀錄與游標在同一 transaction 寫入；重跑不重複產生。建立當月固定項目時立即產生當月紀錄，之後即使未開啟頁面仍由排程產生。
+- `manageRecurringExpenses` callable 驗證 Firebase 登入與 Admin 角色，提供儲存設定、暫停／恢復、略過本月、確認付款。固定設定及每月紀錄的 client 寫入權限全部關閉，只允許管理者讀取。
+- 確認付款在同一 transaction 建立 `expenses/recurring_{billId}` 並將 bill 改為 paid，記錄 `recurringBillId` 來源。JPY 每月另填實際折合 TWD 金額；TWD 使用固定金額。財務仍只查詢 expenses，依實際付款日期計算，pending 與 skipped 不計入支出。
+- 固定支出入帳後可在明細編輯更正付款資料，來源不可更動且不可直接刪除，避免已付款紀錄與每月帳單脫節。略過的月份不會重新生成。各來源讀取超過 1,000 筆會顯示錯誤，避免無限監聽。
+- 驗證：Functions 單元測試、Firestore Rules Emulator、`test/recurringExpenses.integration.test.mjs`（防重複、跨年、暫停恢復、金額快照、漏跑補齊）、手機及桌面互動測試、前端 build。部署：Rules → `manageRecurringExpenses`／`generateMonthlyExpenseBills` → Hosting。

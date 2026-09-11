@@ -294,7 +294,7 @@ service cloud.firestore {
     match /expenses/{id} {
       function validExpense() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['name', 'category', 'amount', 'currency', 'amountTwd', 'paidAt', 'expenseMonth', 'method', 'note', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+        return d.keys().hasOnly(['name', 'category', 'amount', 'currency', 'amountTwd', 'paidAt', 'expenseMonth', 'method', 'note', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'recurringBillId'])
           && d.name is string && d.name.size() > 0 && d.name.size() <= 120
           && d.category in ['水費', '電費', '瓦斯', '管理費', '網路', '清潔', '維修', '設備耗材', '稅費', '其他']
           && d.currency in ['JPY', 'TWD']
@@ -307,9 +307,19 @@ service cloud.firestore {
           && d.note is string && d.note.size() <= 2000
           && d.updatedAt == request.time && d.updatedBy == request.auth.uid;
       }
-      allow read, delete: if isAdmin();
-      allow create: if isAdmin() && validExpense() && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isAdmin() && validExpense() && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+      allow read: if isAdmin();
+      allow delete: if isAdmin() && !('recurringBillId' in resource.data);
+      allow create: if isAdmin() && !('recurringBillId' in request.resource.data) && validExpense() && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin() && validExpense() && request.resource.data.get('recurringBillId', '') == resource.data.get('recurringBillId', '') && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+    }
+
+    match /recurringExpenses/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /recurringExpenseBills/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     match /bookingPayments/{id} {

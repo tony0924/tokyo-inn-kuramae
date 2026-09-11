@@ -5769,3 +5769,8 @@
 .expense-note { white-space: pre-wrap; }
 .expense-summary-link { color: inherit; text-decoration: none; }
 @media (max-width: 600px) { .expense-form fieldset { grid-template-columns: 1fr; } .expense-item { flex-direction: column; align-items: stretch; } }
+
+.expense-tabs { margin-bottom: 24px; }
+.recurring-expenses h3 { margin: 24px 0 12px; }
+.recurring-expenses > p { margin-bottom: 16px; color: var(--text-mid); }
+.recurring-expenses .expense-filters input { padding: 10px; background: var(--bg-mid); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }

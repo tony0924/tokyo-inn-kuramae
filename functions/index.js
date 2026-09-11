@@ -1,3 +1,4 @@
+import { generateTemplateBills, monthNow, processRecurringExpenseAction } from './recurringExpenses.js';
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
@@ -1467,3 +1468,23 @@ async function safeReadJson(response) {
     return null;
   }
 }
+
+// Monthly expense drafts never count as paid expenses until an admin confirms.
+export const manageRecurringExpenses = onCall({ region: REGION }, async request => {
+  if (!request.auth) throw new HttpsError('unauthenticated', '請先登入。');
+  const user = await db.collection('users').doc(request.auth.uid).get();
+  if (user.data()?.role !== 'admin') throw new HttpsError('permission-denied', '僅管理者可操作。');
+  return processRecurringExpenseAction(db, request.auth.uid, request.data);
+});
+export const generateMonthlyExpenseBills = onSchedule({ region: REGION, schedule: '15 0 * * *', timeZone: TIME_ZONE, retryCount: 3 }, async () => {
+  let cursor;
+  const month = monthNow();
+  while (true) {
+    let query = db.collection('recurringExpenses').orderBy('__name__').limit(100);
+    if (cursor) query = query.startAfter(cursor);
+    const page = await query.get();
+    for (const item of page.docs) await generateTemplateBills(db, item.id, month);
+    if (page.size < 100) break;
+    cursor = page.docs.at(-1);
+  }
+});

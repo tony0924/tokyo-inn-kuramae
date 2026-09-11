@@ -70,7 +70,7 @@ Guest（`/guest/*`）：
 
 Admin（`/admin/*`）：
 
-- `today`、`revenue`、`payment-information`、`calendar`、`bookings`、`messages`
+- `today`、`revenue`、`expenses`、`payment-information`、`calendar`、`bookings`、`messages`
 - `users`、`keys`、`guest-codes`、`recommendations`
 - `notification-history`、`notifications`
 - `emails`
@@ -143,7 +143,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 ## 6. Cloud Functions
 
-入口目前為 `functions/index.js`，共 17 個 exports：
+入口為 `functions/index.js`；固定支出 domain helper 在 `functions/recurringExpenses.js`：
 
 事件觸發：
 
@@ -157,6 +157,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 排程：
 
+- `generateMonthlyExpenseBills`：00:15，每月固定支出待確認紀錄與漏跑補齊
 - `sendUpcomingCheckInReminders`：09:00，入住前一天 Email
 - `sendTodayCheckInAdminPushes`：09:00，入住日／缺訪客碼
 - `sendTodayCheckoutAdminPushes`：11:00，退房／未還鑰匙
@@ -164,6 +165,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 HTTP / callable：
 
+- `manageRecurringExpenses`：Admin 固定支出設定與付款確認
 - `createGuestCommunityMessage`：驗證 Guest 身分後寫入共享推薦牆。
 - `getGuestPortalData`：驗證訪客碼後回傳私密指南與清理過的住宿摘要。
 - `lookupGoogleMapPlace`：Admin callable，解析允許的 Google Maps URL。

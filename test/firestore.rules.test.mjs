@@ -169,3 +169,24 @@ test('支出僅限管理者讀寫，金額與操作者不可偽造', async () =>
   await assertFails(deleteDoc(doc(guest, 'expenses', 'expense-1')));
   await assertSucceeds(deleteDoc(doc(admin, 'expenses', 'expense-1')));
 });
+
+test('固定支出設定與每月紀錄僅管理者可讀，前端不得直接寫入', async () => {
+  const admin = environment.authenticatedContext('admin-uid').firestore();
+  const guest = environment.authenticatedContext('guest-uid').firestore();
+  for (const collection of ['recurringExpenses', 'recurringExpenseBills']) {
+    await assertSucceeds(getDoc(doc(admin, collection, 'test')));
+    await assertFails(getDoc(doc(guest, collection, 'test')));
+    await assertFails(setDoc(doc(admin, collection, 'test'), { name: '不允許直接寫入' }));
+  }
+});
+
+test('固定支出入帳來源不可冒用、移除或直接刪除；可編輯付款金額', async () => {
+  const admin = environment.authenticatedContext('admin-uid').firestore();
+  const { updateDoc, deleteDoc } = await import('firebase/firestore');
+  await environment.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), 'expenses', 'recurring-paid'), { name: '固定管理費', category: '管理費', amount: 10000, currency: 'JPY', amountTwd: 2300, paidAt: Timestamp.now(), expenseMonth: '2026-09', method: '轉帳', note: '', recurringBillId: 'template_2026-09', createdAt: Timestamp.now(), updatedAt: Timestamp.now(), createdBy: 'admin-uid', updatedBy: 'admin-uid' });
+  });
+  await assertFails(deleteDoc(doc(admin, 'expenses', 'recurring-paid')));
+  await assertFails(updateDoc(doc(admin, 'expenses', 'recurring-paid'), { recurringBillId: 'spoofed', updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(doc(admin, 'expenses', 'recurring-paid'), { amountTwd: 2400, updatedAt: serverTimestamp() }));
+});

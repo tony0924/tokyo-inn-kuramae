@@ -351,6 +351,7 @@ export interface GuestWeatherData {
 }
 
 export interface ExpenseDoc {
+  recurringBillId?: string;
   name: string;
   category: string;
   amount: number;
@@ -366,3 +367,13 @@ export interface ExpenseDoc {
   updatedBy: string;
 }
 export interface Expense extends ExpenseDoc { id: string }
+
+export interface RecurringExpense {
+  id: string; name: string; category: string; amount: number; currency: 'JPY' | 'TWD';
+  day: number; startMonth: string; method: string; note: string; active: boolean;
+}
+export interface RecurringExpenseBill {
+  id: string; templateId: string; month: string; name: string; category: string;
+  amount: number; currency: 'JPY' | 'TWD'; method: string; note: string;
+  dueDate: string; status: 'pending' | 'paid' | 'skipped'; expenseId?: string;
+}
