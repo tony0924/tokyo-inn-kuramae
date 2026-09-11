@@ -27,7 +27,7 @@
 ## 預約與金額
 
 - 日期儲存為 Firestore Timestamp；入住 15:00、退房 11:00 的 domain 規則不可在不同頁各自重寫。
-- 金額為 JPY 整數；付款狀態只用既有 union。
+- 收入金額為 TWD 整數；支出保存 JPY／TWD 原幣整數及折合 TWD 整數，總覽統一使用 TWD；付款狀態只用既有 union。
 - 建立／刪除預約涉及訪客碼、Email 授權與鑰匙時，優先使用 `src/lib/bookings.ts` 的 batch helper。
 
 ## 驗證

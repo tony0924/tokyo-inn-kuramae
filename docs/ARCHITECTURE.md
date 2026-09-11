@@ -207,3 +207,13 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - 地址、房號、Wi-Fi、入口與門鎖文字只存在 `guestGuideContent/private`，不編譯進公開 bundle。
 - 訪客碼 client 只能透過 Callable 取得經過清理的資料，不能直接讀訪客碼或 booking 文件。
 - 含入口、門鎖與平面圖的敏感圖片不進 Hosting bundle；未來若重新提供，必須使用受保護媒體端點。
+
+## 支出管理與財務總覽（2026-09）
+
+- `/admin/expenses`：僅管理者使用；桌面導覽與手機「更多」提供入口。支援新增、編輯、複製、刪除已付款支出，依年度、月份、分類篩選；`?year=2026&month=09` 可連結明細，`?scope=all` 查看全部期間。
+- `/admin/revenue` 保留原網址，名稱改為「財務總覽」。新增所選年度支出與期間支出，點擊可前往對應明細；全部期間時年度卡顯示今年。
+- `expenses/{id}` 保存名稱、分類、JPY/TWD 原幣整數金額、`amountTwd` 固定換算金額、`paidAt` Timestamp、選填費用月份、付款方式、備註，以及建立／修改時間與操作者 UID。付款日採 `Asia/Taipei`，年度為曆年；費用月份不影響付款年度。
+- TWD 支出強制 `amountTwd == amount`；JPY 由管理者填寫實際扣款或換算的新臺幣整數金額。沒有自動匯率，也不修改既有收入資料。
+- UI → `useExpenses` → `lib/expenses.ts` → Firestore。年度查詢以同一 `paidAt` 欄位範圍與排序，使用自動單欄索引，不需複合索引。每次監聽上限 10,001 筆；超過 10,000 筆顯示錯誤而不呈現不完整總額，後續應擴充分頁／伺服器聚合。
+- Rules 驗證角色、欄位、金額、日期、幣別及操作者；建立資訊不可覆寫。Functions 未讀寫此集合，不需異動或部署 Functions。
+- 驗證：`node --test test/expenseFinance.test.mjs`、Firestore Emulator 下的 `test/firestore.rules.test.mjs`、`npm run build`，另以模擬資料進行手機表單互動測試。部署順序：Firestore Rules → Hosting。

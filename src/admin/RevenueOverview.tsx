@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { useExpenses } from './useExpenses';
+import { sumExpenses, taipeiDate } from '@/lib/expenseFinance';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { useBookings } from './useBookings';
@@ -51,6 +54,9 @@ export function RevenueOverview() {
   const [month, setMonth] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   );
+  const expenseYear = scope === 'year' && /^(20\d{2}|2100)$/.test(year) ? year : scope === 'month' && month ? month.slice(0, 4) : taipeiDate().slice(0, 4);
+  const expenses = useExpenses(scope === 'all' ? null : expenseYear);
+  const expensePrefix = scope === 'all' ? '' : scope === 'year' ? expenseYear : month;
   const [paymentBookingId, setPaymentBookingId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(todayInput());
@@ -217,8 +223,8 @@ export function RevenueOverview() {
     <div>
       <div className="admin-page-header">
         <div>
-          <h1 className="admin-page-title">收入總覽</h1>
-          <p className="revenue-page-intro">同時查看住宿創造的價值與真正收到的款項。</p>
+          <h1 className="admin-page-title">財務總覽</h1>
+          <p className="revenue-page-intro">查看住宿收入與營運支出，統一以新臺幣呈現。</p>
         </div>
       </div>
 
@@ -265,6 +271,12 @@ export function RevenueOverview() {
             <StatCard label="尚待收款" value={summary.outstanding} tone="amber" />
             <StatCard label="未收費住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
+
+          {expenses.error ? <p role="alert">{expenses.error}</p> : expenses.loading ? <p role="status">支出載入中…</p> : <div className="stats-grid revenue-stats-grid">
+            <Link className="expense-summary-link" to={`/admin/expenses?year=${expenseYear}`}><StatCard label={`${expenseYear} 年支出`} value={sumExpenses(expenses.items, expenseYear)} tone="amber" /></Link>
+            <Link className="expense-summary-link" to={scope === 'all' ? '/admin/expenses?scope=all' : `/admin/expenses?year=${expenseYear}${scope === 'month' ? '&month=' + month.slice(5, 7) : ''}`}><StatCard label={`${scopeLabel}支出`} value={sumExpenses(expenses.items, expensePrefix)} tone="amber" /></Link>
+          </div>}
+          <p className="revenue-definition-note">支出依臺灣時區付款日期統計；日圓以登記時保存的折合新臺幣金額加總。</p>
 
           <RevenueCompositionChart
             scopeLabel={scopeLabel}

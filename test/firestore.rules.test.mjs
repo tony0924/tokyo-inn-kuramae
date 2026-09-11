@@ -149,3 +149,23 @@ test('active guests can create bounded analytics interactions but cannot spoof u
     eventType: 'private_content_read',
   }));
 });
+
+test('支出僅限管理者讀寫，金額與操作者不可偽造', async () => {
+  const admin = environment.authenticatedContext('admin-uid').firestore();
+  const guest = environment.authenticatedContext('guest-uid').firestore();
+  const anon = environment.unauthenticatedContext().firestore();
+  const data = { name: '測試管理費', category: '管理費', amount: 10000, currency: 'JPY', amountTwd: 2200, paidAt: Timestamp.fromDate(new Date('2026-01-01T12:00:00+08:00')), expenseMonth: '2025-12', method: '轉帳', note: '', createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdBy: 'admin-uid', updatedBy: 'admin-uid' };
+  await assertSucceeds(setDoc(doc(admin, 'expenses', 'expense-1'), data));
+  await assertSucceeds(getDoc(doc(admin, 'expenses', 'expense-1')));
+  await assertFails(getDoc(doc(guest, 'expenses', 'expense-1')));
+  await assertFails(getDoc(doc(anon, 'expenses', 'expense-1')));
+  await assertFails(setDoc(doc(guest, 'expenses', 'guest-expense'), data));
+  for (const patch of [{ amount: -1 }, { amount: 1.5 }, { currency: 'USD' }, { currency: 'TWD' }, { updatedBy: 'guest-uid' }, { category: '無效分類' }]) {
+    await assertFails(setDoc(doc(admin, 'expenses', 'invalid-expense'), { ...data, ...patch }));
+  }
+  const { updateDoc, deleteDoc } = await import('firebase/firestore');
+  await assertSucceeds(updateDoc(doc(admin, 'expenses', 'expense-1'), { amountTwd: 2300, updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(admin, 'expenses', 'expense-1'), { createdBy: 'guest-uid', updatedAt: serverTimestamp() }));
+  await assertFails(deleteDoc(doc(guest, 'expenses', 'expense-1')));
+  await assertSucceeds(deleteDoc(doc(admin, 'expenses', 'expense-1')));
+});

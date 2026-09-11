@@ -5757,3 +5757,15 @@
     justify-content: center;
   }
 }
+
+.expense-filters, .expense-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.expense-filters { padding: 16px; margin-bottom: 20px; }
+.expense-filters label, .expense-form label { display: grid; gap: 6px; }
+.expense-form fieldset { border: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.expense-form input, .expense-form select, .expense-form textarea, .expense-filters select { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-mid); color: var(--text); font: inherit; }
+.expense-list { display: grid; gap: 12px; }
+.expense-item { padding: 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center; overflow-wrap: anywhere; }
+.expense-item p { margin: 8px 0; }
+.expense-note { white-space: pre-wrap; }
+.expense-summary-link { color: inherit; text-decoration: none; }
+@media (max-width: 600px) { .expense-form fieldset { grid-template-columns: 1fr; } .expense-item { flex-direction: column; align-items: stretch; } }

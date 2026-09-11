@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from '@/admin/AdminLayout';
 
+const ExpenseManagement = lazy(() => import('@/admin/ExpenseManagement').then(module => ({ default: module.ExpenseManagement })));
 const RevenueOverview = lazy(() => import('@/admin/RevenueOverview').then((module) => ({ default: module.RevenueOverview })));
 const TodayDashboard = lazy(() => import('@/admin/TodayDashboard').then((module) => ({ default: module.TodayDashboard })));
 const CalendarView = lazy(() => import('@/admin/CalendarView').then((module) => ({ default: module.CalendarView })));
@@ -25,6 +26,7 @@ export default function AdminApp() {
         <Route index element={<Navigate to="today" replace />} />
         <Route path="today" element={<TodayDashboard />} />
         <Route path="revenue" element={<RevenueOverview />} />
+        <Route path="expenses" element={<ExpenseManagement />} />
         <Route path="payment-information" element={<PaymentInformationPage />} />
         <Route path="calendar" element={<CalendarView />} />
         <Route path="bookings" element={<BookingList />} />

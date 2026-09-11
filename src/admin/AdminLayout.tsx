@@ -16,7 +16,8 @@ import './admin.css';
 
 const navItems = [
   { to: '/admin/today', label: '今日營運' },
-  { to: '/admin/revenue', label: '收入總覽' },
+  { to: '/admin/revenue', label: '財務總覽' },
+  { to: '/admin/expenses', label: '支出管理' },
   { to: '/admin/payment-information', label: '付款資訊' },
   { to: '/admin/calendar', label: '行事曆' },
   { to: '/admin/bookings', label: '預約清單' },
@@ -56,7 +57,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     setMoreOpen(false);
-  }, [location.pathname]);
+  }, [location.key]);
 
   useEffect(
     () => watchAdminNotifications(
@@ -99,6 +100,7 @@ export function AdminLayout() {
 
   const moreActive = [
     '/admin/revenue',
+    '/admin/expenses',
     '/admin/payment-information',
     '/admin/users',
     '/admin/keys',
@@ -246,7 +248,8 @@ export function AdminLayout() {
               <button type="button" onClick={() => setMoreOpen(false)} aria-label="關閉更多選單">×</button>
             </div>
             <div className="admin-more-grid">
-              <MoreLink to="/admin/revenue" label="收入總覽" icon="revenue" />
+              <MoreLink to="/admin/revenue" label="財務總覽" icon="revenue" />
+              <MoreLink to="/admin/expenses" label="支出管理" icon="revenue" />
               <MoreLink to="/admin/payment-information" label="付款資訊" icon="payment" />
               <MoreLink to="/admin/users" label="使用者" icon="users" />
               <MoreLink to="/admin/keys" label="鑰匙管理" icon="keys" />

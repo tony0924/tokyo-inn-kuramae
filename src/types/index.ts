@@ -349,3 +349,20 @@ export interface GuestWeatherData {
   updatedAt: string;
   stale: boolean;
 }
+
+export interface ExpenseDoc {
+  name: string;
+  category: string;
+  amount: number;
+  currency: 'JPY' | 'TWD';
+  amountTwd: number;
+  paidAt: Timestamp;
+  expenseMonth: string;
+  method: string;
+  note: string;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+  createdBy: string;
+  updatedBy: string;
+}
+export interface Expense extends ExpenseDoc { id: string }
