@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useExpenses } from './useExpenses';
-import { sumExpenses, taipeiDate } from '@/lib/expenseFinance';
+import { expenseTotalLabel, taipeiDate } from '@/lib/expenseFinance';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { format } from 'date-fns';
 import { useBookings } from './useBookings';
@@ -224,7 +224,7 @@ export function RevenueOverview() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">財務總覽</h1>
-          <p className="revenue-page-intro">查看住宿收入與營運支出，統一以新臺幣呈現。</p>
+          <p className="revenue-page-intro">查看住宿收入與營運支出，支出依原幣分開呈現。</p>
         </div>
       </div>
 
@@ -273,10 +273,10 @@ export function RevenueOverview() {
           </div>
 
           {expenses.error ? <p role="alert">{expenses.error}</p> : expenses.loading ? <p role="status">支出載入中…</p> : <div className="stats-grid revenue-stats-grid">
-            <Link className="expense-summary-link" to={`/admin/expenses?year=${expenseYear}`}><StatCard label={`${expenseYear} 年支出`} value={sumExpenses(expenses.items, expenseYear)} tone="amber" /></Link>
-            <Link className="expense-summary-link" to={scope === 'all' ? '/admin/expenses?scope=all' : `/admin/expenses?year=${expenseYear}${scope === 'month' ? '&month=' + month.slice(5, 7) : ''}`}><StatCard label={`${scopeLabel}支出`} value={sumExpenses(expenses.items, expensePrefix)} tone="amber" /></Link>
+            <Link className="expense-summary-link" to={`/admin/expenses?year=${expenseYear}`}><div className="stat-card amber"><div className="stat-label">{expenseYear} 年支出</div><div className="expense-currency-total">{expenseTotalLabel(expenses.items, expenseYear)}</div></div></Link>
+            <Link className="expense-summary-link" to={scope === 'all' ? '/admin/expenses?scope=all' : `/admin/expenses?year=${expenseYear}${scope === 'month' ? '&month=' + month.slice(5, 7) : ''}`}><div className="stat-card amber"><div className="stat-label">{scopeLabel}支出</div><div className="expense-currency-total">{expenseTotalLabel(expenses.items, expensePrefix)}</div></div></Link>
           </div>}
-          <p className="revenue-definition-note">支出依臺灣時區付款日期統計；日圓以登記時保存的折合新臺幣金額加總。</p>
+          <p className="revenue-definition-note">支出依臺灣時區付款日期統計；JPY 與 TWD 分開加總，不換匯、不混算。</p>
 
           <RevenueCompositionChart
             scopeLabel={scopeLabel}

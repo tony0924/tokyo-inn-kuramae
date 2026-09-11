@@ -20,11 +20,12 @@ import {
   validExpenseDate,
 } from "./expenseFinance";
 export interface ExpenseInput {
+  recurringBillId?: string;
   name: string;
   category: string;
   amount: number;
   currency: "JPY" | "TWD";
-  amountTwd: number;
+  amountTwd: number | null;
   paidDate: string;
   expenseMonth: string;
   method: string;
@@ -78,7 +79,12 @@ export function watchExpenses(
 export async function saveExpense(input: ExpenseInput, id?: string) {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("請重新登入後再試。");
-  const amountTwd = input.currency === "TWD" ? input.amount : input.amountTwd;
+  const amountTwd =
+    input.recurringBillId && input.currency === "JPY"
+      ? null
+      : input.currency === "TWD"
+        ? input.amount
+        : input.amountTwd;
   if (
     !input.name.trim() ||
     input.name.trim().length > 120 ||
@@ -89,8 +95,15 @@ export async function saveExpense(input: ExpenseInput, id?: string) {
       input.method as (typeof EXPENSE_METHODS)[number],
     ) ||
     !["JPY", "TWD"].includes(input.currency) ||
-    ![input.amount, amountTwd].every(
-      (n) => Number.isSafeInteger(n) && n > 0 && n <= 1000000000,
+    ![
+      input.amount,
+      ...(input.recurringBillId && input.currency === "JPY" ? [] : [amountTwd]),
+    ].every(
+      (n) =>
+        typeof n === "number" &&
+        Number.isSafeInteger(n) &&
+        n > 0 &&
+        n <= 1000000000,
     ) ||
     !validExpenseDate(input.paidDate) ||
     (input.expenseMonth &&

@@ -45,3 +45,11 @@ test("拒絕無效日期，接受閏年日期", () => {
     assert.equal(validExpenseDate(date), false);
   assert.equal(validExpenseDate("2024-02-29"), true);
 });
+
+test('日圓與新臺幣依原幣分開加總，固定支出不需要換匯', () => {
+  const paidAt={toDate:()=>new Date('2025-09-05T12:00:00+08:00')};
+  const items=[{paidAt,currency:'JPY',amount:10000,amountTwd:null},{paidAt,currency:'JPY',amount:2000,amountTwd:450},{paidAt,currency:'TWD',amount:300,amountTwd:300}];
+  assert.equal(sumExpenses(items,'2025','JPY'),12000);
+  assert.equal(sumExpenses(items,'2025','TWD'),300);
+  assert.equal(sumExpenses(items,'2026','JPY'),0);
+});

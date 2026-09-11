@@ -208,24 +208,21 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - 訪客碼 client 只能透過 Callable 取得經過清理的資料，不能直接讀訪客碼或 booking 文件。
 - 含入口、門鎖與平面圖的敏感圖片不進 Hosting bundle；未來若重新提供，必須使用受保護媒體端點。
 
-## 支出管理與財務總覽（2026-09）
+## 支出管理與財務總覽（2026-09-12）
 
-- `/admin/expenses`：僅管理者使用；桌面導覽與手機「更多」提供入口。支援新增、編輯、複製、刪除已付款支出，依年度、月份、分類篩選；`?year=2026&month=09` 可連結明細，`?scope=all` 查看全部期間。
-- `/admin/revenue` 保留原網址，名稱改為「財務總覽」。新增所選年度支出與期間支出，點擊可前往對應明細；全部期間時年度卡顯示今年。
-- `expenses/{id}` 保存名稱、分類、JPY/TWD 原幣整數金額、`amountTwd` 固定換算金額、`paidAt` Timestamp、選填費用月份、付款方式、備註，以及建立／修改時間與操作者 UID。付款日採 `Asia/Taipei`，年度為曆年；費用月份不影響付款年度。
-- TWD 支出強制 `amountTwd == amount`；JPY 由管理者填寫實際扣款或換算的新臺幣整數金額。沒有自動匯率，也不修改既有收入資料。
-- UI → `useExpenses` → `lib/expenses.ts` → Firestore。年度查詢以同一 `paidAt` 欄位範圍與排序，使用自動單欄索引，不需複合索引。每次監聽上限 10,001 筆；超過 10,000 筆顯示錯誤而不呈現不完整總額，後續應擴充分頁／伺服器聚合。
-- Rules 驗證角色、欄位、金額、日期、幣別及操作者；建立資訊不可覆寫。Functions 未讀寫此集合，不需異動或部署 Functions。
-- 驗證：`node --test test/expenseFinance.test.mjs`、Firestore Emulator 下的 `test/firestore.rules.test.mjs`、`npm run build`，另以模擬資料進行手機表單互動測試。部署順序：Firestore Rules → Hosting。
+- `/admin/expenses` 分為「已付款明細」與「每月固定支出」，管理者可依年度、月份、分類及來源篩選。`?year=2025&month=09` 可連結明細，`?scope=all` 查看全部期間。桌面導覽及手機「更多」保留入口。
+- `/admin/revenue` 顯示年度與期間支出，JPY／TWD 各自以原幣加總，日圓不折算成新臺幣，也不與 TWD 收入相減。既有換算金額保留在文件，但不列入支出統計。
+- `expenses/{id}` 保存名稱、分類、原幣整數金額、付款日 Timestamp、費用月份、方式、備註與操作者／時間。固定 JPY 支出 `amountTwd: null`，手動支出維持原有換算參考欄位。付款日期採 `Asia/Taipei`；曆年依付款日歸屬。
+- 固定支出具有不可更改的 `recurringBillId`，可編輯付款資料，不可直接刪除或改幣別。手動支出可新增、編輯、複製、刪除。client 不可偽造固定來源。所有資料僅管理者可讀寫。
+- `useExpenses` → `lib/expenses.ts` → Firestore 以 paidAt 範圍與排序查詢，無需複合索引。每次最多 10,001 筆，超過 10,000 顯示錯誤而不呈現不完整總額。
 
-## 每月固定支出（2026-09）
+## 每月固定日圓支出
 
-支出管理現在分為「已付款明細」與「每月固定支出」。手動新增仍直接記錄已付款支出；明細可依手動／每月固定來源篩選。原本的手動支出不會自動轉成固定項目，以免重複入帳。
-
-- `recurringExpenses/{id}` 保存固定項目的名稱、分類、每月原幣金額、付款日（1–31）、起始月份、付款方式、備註、啟用狀態與 `nextMonth` 產生游標。新增只能從當月或未來開始，起始月份不可修改。設定可修改、暫停、恢復；已產生紀錄保留當時快照，修改僅影響未產生的月份。
-- `generateMonthlyExpenseBills`：`asia-east1`、每日 `00:15`、`Asia/Taipei`。分頁掃描固定項目，每次逐項最多補齊 12 個月份；下次排程繼續。短月份的 29–31 日自動改為月底。啟用中的項目會補齊漏跑月份；暫停不產生新紀錄，恢復時游標從當月或未來起始月份繼續，不補暫停月份。
-- `recurringExpenseBills/{templateId}_{YYYY-MM}` 保存月份、預定付款日與費用快照，狀態為 `pending`／`paid`／`skipped`。每月紀錄與游標在同一 transaction 寫入；重跑不重複產生。建立當月固定項目時立即產生當月紀錄，之後即使未開啟頁面仍由排程產生。
-- `manageRecurringExpenses` callable 驗證 Firebase 登入與 Admin 角色，提供儲存設定、暫停／恢復、略過本月、確認付款。固定設定及每月紀錄的 client 寫入權限全部關閉，只允許管理者讀取。
-- 確認付款在同一 transaction 建立 `expenses/recurring_{billId}` 並將 bill 改為 paid，記錄 `recurringBillId` 來源。JPY 每月另填實際折合 TWD 金額；TWD 使用固定金額。財務仍只查詢 expenses，依實際付款日期計算，pending 與 skipped 不計入支出。
-- 固定支出入帳後可在明細編輯更正付款資料，來源不可更動且不可直接刪除，避免已付款紀錄與每月帳單脫節。略過的月份不會重新生成。各來源讀取超過 1,000 筆會顯示錯誤，避免無限監聽。
-- 驗證：Functions 單元測試、Firestore Rules Emulator、`test/recurringExpenses.integration.test.mjs`（防重複、跨年、暫停恢復、金額快照、漏跑補齊）、手機及桌面互動測試、前端 build。部署：Rules → `manageRecurringExpenses`／`generateMonthlyExpenseBills` → Hosting。
+- `recurringExpenses/{id}`：固定名稱、分類、JPY 整數金額、扣款日（1–31）、起始月份、付款方式、備註、active 與 nextMonth 游標。起始月份允許 2000-01 至 2100-12；既有項目可往前延伸。新補月份採本次設定金額，已入帳月份不改寫、不重複產生。起始月份不能往後縮以免暗中刪帳。
+- `manageRecurringExpenses` callable：驗證 Firebase Auth 與 Admin 角色，支援 saveTemplate、setActive、sync。設定儲存即補齊已到扣款日的歷史月份；開啟固定支出分頁也呼叫 sync。舊 confirmBill／skipBill API 已停用，UI 不再要求逐月確認或換匯。單次 timeout 為 540 秒。
+- `generateMonthlyExpenseBills`：asia-east1，每日 00:15，Asia/Taipei，重試 3 次、timeout 540 秒。自動記錄到期扣款，未到期當月保留到扣款日再入帳，短月份以月底為扣款日；未開啟 UI 仍會執行。
+- 每 24 個月份為一個 transaction，讀取各月帳單及支出後，原子寫入 `recurringExpenseBills/{templateId}_{YYYY-MM}`、`expenses/recurring_{billId}` 與游標；連續處理直到完整補齊，不再限制只補 12 個月。每日掃描設定每頁 100 筆，確保所有項目都有處理。
+- 回溯延伸使用 backfillEndMonth／backfillResumeMonth 保留原游標，延伸完成後刪除臨時欄位，避免補進原本暫停的空白月份。暫停保留歷史，恢復從當月或未來起始月份繼續；暫停時提出的回溯延伸會在恢復後處理。
+- 新固定帳單直接為 paid；支出 paidAt 為設定扣款日、currency 為 JPY、amountTwd 為 null，系統操作者為 system:recurring。既有 pending JPY 依原帳單快照與扣款日自動入帳，已 paid／skipped 保留；舊 TWD 固定資料不自行改幣別。
+- 兩個固定支出 collections 均禁止 client 寫入，只能透過 callable 或排程操作。交易及固定文件 ID 防止並行同步或重試重複入帳。模板與月份清單超過 1,000 筆顯示錯誤。
+- 驗證：Functions 測試、Firestore Emulator 的 Rules 與 recurringExpenses.integration.test.mjs（13 個月／超過 24 個月完整回溯、月末、到期、暫停恢復、延伸起始月份、legacy 遷移、防重複）、expenseFinance.test.mjs（幣別分開及跨年）、390px 與桌面 UI、npm run build。部署 Rules → manageRecurringExpenses／generateMonthlyExpenseBills → Hosting。

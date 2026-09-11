@@ -190,3 +190,14 @@ test('固定支出入帳來源不可冒用、移除或直接刪除；可編輯�
   await assertFails(updateDoc(doc(admin, 'expenses', 'recurring-paid'), { recurringBillId: 'spoofed', updatedAt: serverTimestamp() }));
   await assertSucceeds(updateDoc(doc(admin, 'expenses', 'recurring-paid'), { amountTwd: 2400, updatedAt: serverTimestamp() }));
 });
+
+test('日圓固定支出允許無換算金額，手動支出不可冒用；幣別不可更換', async () => {
+  const admin=environment.authenticatedContext('admin-uid').firestore();
+  const {updateDoc}=await import('firebase/firestore');
+  await assertSucceeds(updateDoc(doc(admin,'expenses','recurring-paid'),{amountTwd:null,updatedAt:serverTimestamp()}));
+  await assertFails(updateDoc(doc(admin,'expenses','recurring-paid'),{currency:'TWD',amountTwd:10000,updatedAt:serverTimestamp()}));
+  await assertSucceeds(updateDoc(doc(admin,'expenses','recurring-paid'),{amount:12000,updatedAt:serverTimestamp()}));
+  const manual = (await getDoc(doc(admin,'expenses','recurring-paid'))).data();
+  delete manual.recurringBillId;
+  await assertFails(setDoc(doc(admin,'expenses','manual-null-conversion'),{...manual,createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+});

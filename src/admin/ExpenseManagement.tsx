@@ -7,7 +7,7 @@ import { deleteExpense, saveExpense, type ExpenseInput } from "@/lib/expenses";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_METHODS,
-  sumExpenses,
+  expenseTotalLabel,
   taipeiDate,
 } from "@/lib/expenseFinance";
 import type { Expense } from "@/types";
@@ -57,6 +57,7 @@ export function ExpenseManagement() {
       item
         ? {
             ...item,
+            recurringBillId: copy ? undefined : item.recurringBillId,
             paidDate: copy ? taipeiDate() : taipeiDate(item.paidAt.toDate()),
             expenseMonth: copy ? "" : item.expenseMonth,
           }
@@ -99,7 +100,7 @@ export function ExpenseManagement() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">支出管理</h1>
-          <p>記錄已付款費用，依付款日期統計；總額統一以新臺幣計算。</p>
+          <p>記錄支出，依付款日期統計；日圓與新臺幣分開加總。</p>
         </div>
         <button className="btn-gold" onClick={() => open()}>
           手動新增支出
@@ -178,8 +179,8 @@ export function ExpenseManagement() {
             <div className="stats-grid">
               <div className="stat-card amber">
                 <div className="stat-label">{year} 年總支出</div>
-                <div className="stat-value">
-                  TWD {sumExpenses(items, year).toLocaleString()}
+                <div className="expense-currency-total">
+                  {expenseTotalLabel(items, year)}
                 </div>
               </div>
               <div className="stat-card">
@@ -189,17 +190,16 @@ export function ExpenseManagement() {
                     ? "（請切換今年查看）"
                     : ""}
                 </div>
-                <div className="stat-value">
+                <div className="expense-currency-total">
                   {year === taipeiDate().slice(0, 4)
-                    ? `TWD ${sumExpenses(items, taipeiDate().slice(0, 7)).toLocaleString()}`
+                    ? expenseTotalLabel(items, taipeiDate().slice(0, 7))
                     : "—"}
                 </div>
               </div>
             </div>
             <h2 className="admin-section-title">支出明細</h2>
             <p>
-              {visible.length} 筆・篩選合計 TWD{" "}
-              {sumExpenses(visible, "").toLocaleString()}
+              {visible.length} 筆・篩選合計 {expenseTotalLabel(visible, "")}
             </p>
             {visible.length === 0 ? (
               <div className="admin-empty-state">
@@ -219,8 +219,7 @@ export function ExpenseManagement() {
                         <p>費用所屬月份：{item.expenseMonth}</p>
                       )}
                       <p>
-                        {item.currency} {item.amount.toLocaleString()} ／ 折合
-                        TWD {item.amountTwd.toLocaleString()}
+                        {item.currency} {item.amount.toLocaleString()}
                       </p>
                       {item.note && <p className="expense-note">{item.note}</p>}
                     </div>
@@ -281,7 +280,7 @@ export function ExpenseManagement() {
           >
             <h2>{editing ? "編輯支出" : "新增支出"}</h2>
             <p>
-              僅登記已付款費用。日圓請填入實際扣款或手動換算的新臺幣整數金額。
+              {form.recurringBillId ? "固定支出以日圓記錄，不需換算新臺幣。" : "手動支出可保留折合金額供參考；財務總額依原幣分別統計。"}
             </p>
             <fieldset disabled={busy}>
               <label>
@@ -309,6 +308,7 @@ export function ExpenseManagement() {
               <label>
                 幣別
                 <select
+                  disabled={!!form.recurringBillId}
                   value={form.currency}
                   onChange={(e) =>
                     setForm({
@@ -335,7 +335,7 @@ export function ExpenseManagement() {
                   }
                 />
               </label>
-              {form.currency === "JPY" && (
+              {form.currency === "JPY" && !form.recurringBillId && (
                 <label>
                   折合新臺幣金額
                   <input

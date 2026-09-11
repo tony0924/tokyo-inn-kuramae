@@ -28,16 +28,35 @@ export function validExpenseDate(value: string): boolean {
     new Date(`${value}T12:00:00+08:00`).toISOString().slice(0, 10) === value
   );
 }
+type ExpenseAmount = {
+  paidAt: { toDate(): Date };
+  amountTwd: number | null;
+  amount?: number;
+  currency?: "JPY" | "TWD";
+};
 export function sumExpenses(
-  items: { paidAt: { toDate(): Date }; amountTwd: number }[],
+  items: ExpenseAmount[],
   prefix: string,
+  currency: "JPY" | "TWD" = "TWD",
 ): number {
   return items.reduce(
     (sum, item) =>
       sum +
-      (taipeiDate(item.paidAt.toDate()).startsWith(prefix)
-        ? item.amountTwd
+      (taipeiDate(item.paidAt.toDate()).startsWith(prefix) &&
+      (item.currency ?? "TWD") === currency
+        ? (item.amount ?? item.amountTwd ?? 0)
         : 0),
     0,
+  );
+}
+export function expenseTotalLabel(
+  items: ExpenseAmount[],
+  prefix: string,
+): string {
+  return (
+    "JPY " +
+    sumExpenses(items, prefix, "JPY").toLocaleString() +
+    " ／ TWD " +
+    sumExpenses(items, prefix, "TWD").toLocaleString()
   );
 }

@@ -62,16 +62,12 @@ export async function recurringExpenseAction(
   input:
     | { action: "saveTemplate"; id?: string; template: RecurringExpenseInput }
     | { action: "setActive"; id: string; active: boolean }
-    | { action: "skipBill"; id: string }
-    | {
-        action: "confirmBill";
-        id: string;
-        paidDate: string;
-        amountTwd: number;
-      },
+    | { action: "sync" },
 ) {
   try {
-    await httpsCallable(functions, "manageRecurringExpenses")(input);
+    await httpsCallable(functions, "manageRecurringExpenses", {
+      timeout: 540000,
+    })(input);
   } catch {
     throw new Error(
       "操作未完成，請確認資料與網路連線；紀錄若已處理，請重新整理查看。",

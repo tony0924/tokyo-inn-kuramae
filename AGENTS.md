@@ -157,7 +157,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 排程：
 
-- `generateMonthlyExpenseBills`：00:15，每月固定支出待確認紀錄與漏跑補齊
+- `generateMonthlyExpenseBills`：00:15，每月固定日圓支出到期自動入帳與歷史補齊
 - `sendUpcomingCheckInReminders`：09:00，入住前一天 Email
 - `sendTodayCheckInAdminPushes`：09:00，入住日／缺訪客碼
 - `sendTodayCheckoutAdminPushes`：11:00，退房／未還鑰匙
@@ -165,7 +165,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 HTTP / callable：
 
-- `manageRecurringExpenses`：Admin 固定支出設定與付款確認
+- `manageRecurringExpenses`：Admin 固定日圓支出設定、歷史回溯與自動入帳同步
 - `createGuestCommunityMessage`：驗證 Guest 身分後寫入共享推薦牆。
 - `getGuestPortalData`：驗證訪客碼後回傳私密指南與清理過的住宿摘要。
 - `lookupGoogleMapPlace`：Admin callable，解析允許的 Google Maps URL。

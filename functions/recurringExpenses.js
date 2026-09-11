@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 export const monthNow = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
@@ -17,7 +17,7 @@ export function dueDate(month, day) {
   return `${month}-${String(Math.min(day, new Date(Date.UTC(y, m, 0)).getUTCDate())).padStart(2, "0")}`;
 }
 const positiveAmount = (n) => Number.isSafeInteger(n) && n > 0 && n <= 1e9;
-export function validateTemplate(input, currentMonth) {
+export function validateTemplate(input) {
   const {
     name,
     category,
@@ -45,13 +45,12 @@ export function validateTemplate(input, currentMonth) {
       "其他",
     ].includes(category) ||
     !positiveAmount(amount) ||
-    !["JPY", "TWD"].includes(currency) ||
+    currency !== "JPY" ||
     !Number.isInteger(day) ||
     day < 1 ||
     day > 31 ||
     typeof startMonth !== "string" ||
     !/^(20\d{2}|2100)-(0[1-9]|1[0-2])$/.test(startMonth) ||
-    startMonth < currentMonth ||
     !["轉帳", "信用卡", "現金", "其他"].includes(method) ||
     typeof note !== "string" ||
     note.length > 2000
@@ -71,39 +70,184 @@ export function validateTemplate(input, currentMonth) {
     note: note.trim(),
   };
 }
-// Each transaction advances the cursor together with the unique monthly bill.
-export async function generateTemplateBills(db, id, currentMonth) {
+const todayDate = (now) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+function autoExpense(bill, billId) {
+  return {
+    name: bill.name,
+    category: bill.category,
+    amount: bill.amount,
+    currency: "JPY",
+    amountTwd: null,
+    paidAt: Timestamp.fromDate(new Date(`${bill.dueDate}T12:00:00+08:00`)),
+    expenseMonth: bill.month,
+    method: bill.method,
+    note: bill.note,
+    recurringBillId: billId,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    createdBy: "system:recurring",
+    updatedBy: "system:recurring",
+  };
+}
+// Handle old pending JPY bills without changing existing paid/skipped history or TWD amounts.
+async function settleLegacyBills(db, id, today) {
+  let cursor;
+  while (true) {
+    let query = db
+      .collection("recurringExpenseBills")
+      .where("templateId", "==", id)
+      .orderBy("__name__")
+      .limit(100);
+    if (cursor) query = query.startAfter(cursor);
+    const page = await query.get();
+    for (const item of page.docs) {
+      if (
+        item.data().status !== "pending" ||
+        item.data().currency !== "JPY" ||
+        item.data().dueDate > today
+      )
+        continue;
+      await db.runTransaction(async (tx) => {
+        const template = await tx.get(
+          db.collection("recurringExpenses").doc(id),
+        );
+        const current = await tx.get(item.ref);
+        if (!template.data()?.active || !current.exists) return;
+        const bill = current.data();
+        if (
+          bill.status !== "pending" ||
+          bill.currency !== "JPY" ||
+          bill.dueDate > today
+        )
+          return;
+        const expenseRef = db
+          .collection("expenses")
+          .doc(`recurring_${item.id}`);
+        const expense = await tx.get(expenseRef);
+        if (!expense.exists) tx.create(expenseRef, autoExpense(bill, item.id));
+        tx.update(item.ref, {
+          status: "paid",
+          expenseId: expenseRef.id,
+          updatedAt: Timestamp.now(),
+          updatedBy: "system:recurring",
+        });
+      });
+    }
+    if (page.size < 100) return;
+    cursor = page.docs.at(-1);
+  }
+}
+export async function generateTemplateBills(db, id, now = new Date()) {
+  const today = todayDate(now);
   const ref = db.collection("recurringExpenses").doc(id);
-  for (let i = 0; i < 12; i++) {
+  // Up to 24 months per atomic chunk; continue until the entire requested history is complete.
+  while (true) {
     const advanced = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists) return false;
       const t = snap.data();
-      if (!t.active || t.nextMonth > currentMonth) return false;
-      const month = t.nextMonth;
-      const billRef = db
-        .collection("recurringExpenseBills")
-        .doc(`${id}_${month}`);
-      const bill = await tx.get(billRef);
-      if (!bill.exists)
-        tx.create(billRef, {
-          templateId: id,
-          month,
-          name: t.name,
-          category: t.category,
-          amount: t.amount,
-          currency: t.currency,
-          method: t.method,
-          note: t.note,
-          dueDate: dueDate(month, t.day),
-          status: "pending",
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
+      if (!t.active || t.currency !== "JPY") return false;
+      const months = [];
+      const resume = (m) =>
+        t.backfillEndMonth &&
+        m >= t.backfillEndMonth &&
+        m < t.backfillResumeMonth
+          ? t.backfillResumeMonth
+          : m;
+      let month = resume(t.nextMonth);
+      while (
+        months.length < 24 &&
+        month <= today.slice(0, 7) &&
+        dueDate(month, t.day) <= today
+      ) {
+        months.push(month);
+        month = resume(nextMonth(month));
+      }
+      if (!months.length) {
+        if (month !== t.nextMonth)
+          tx.update(ref, {
+            nextMonth: month,
+            backfillEndMonth: FieldValue.delete(),
+            backfillResumeMonth: FieldValue.delete(),
+          });
+        return false;
+      }
+      const records = [];
+      for (const m of months) {
+        const billRef = db
+          .collection("recurringExpenseBills")
+          .doc(`${id}_${m}`);
+        const expenseRef = db
+          .collection("expenses")
+          .doc(`recurring_${billRef.id}`);
+        records.push({
+          billRef,
+          expenseRef,
+          bill: await tx.get(billRef),
+          expense: await tx.get(expenseRef),
+          month: m,
         });
-      tx.update(ref, { nextMonth: nextMonth(month) });
+      }
+      for (const r of records) {
+        if (r.bill.exists && r.bill.data().status !== "pending") continue;
+        const bill = r.bill.exists
+          ? r.bill.data()
+          : {
+              templateId: id,
+              month: r.month,
+              name: t.name,
+              category: t.category,
+              amount: t.amount,
+              currency: "JPY",
+              method: t.method,
+              note: t.note,
+              dueDate: dueDate(r.month, t.day),
+              createdAt: Timestamp.now(),
+            };
+        if (bill.currency !== "JPY" || bill.dueDate > today) continue;
+        if (!r.expense.exists)
+          tx.create(r.expenseRef, autoExpense(bill, r.billRef.id));
+        tx.set(r.billRef, {
+          ...bill,
+          status: "paid",
+          expenseId: r.expenseRef.id,
+          updatedAt: Timestamp.now(),
+          updatedBy: "system:recurring",
+        });
+      }
+      tx.update(ref, {
+        nextMonth: month,
+        ...(t.backfillEndMonth && month >= t.backfillEndMonth
+          ? {
+              backfillEndMonth: FieldValue.delete(),
+              backfillResumeMonth: FieldValue.delete(),
+            }
+          : {}),
+      });
       return true;
     });
-    if (!advanced) return;
+    if (!advanced) break;
+  }
+  await settleLegacyBills(db, id, today);
+}
+export async function syncRecurringExpenses(db, now = new Date()) {
+  let cursor;
+  while (true) {
+    let query = db
+      .collection("recurringExpenses")
+      .orderBy("__name__")
+      .limit(100);
+    if (cursor) query = query.startAfter(cursor);
+    const page = await query.get();
+    for (const item of page.docs) await generateTemplateBills(db, item.id, now);
+    if (page.size < 100) return;
+    cursor = page.docs.at(-1);
   }
 }
 export async function processRecurringExpenseAction(
@@ -114,10 +258,15 @@ export async function processRecurringExpenseAction(
 ) {
   const currentMonth = monthNow(now);
   const action = input?.action;
+  if (action === "sync") {
+    await syncRecurringExpenses(db, now);
+    return {};
+  }
   if (action === "saveTemplate") {
     const id = input.id;
     if (id && (typeof id !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(id)))
       throw new HttpsError("invalid-argument", "固定支出代碼不正確。");
+    const data = validateTemplate(input.template ?? {});
     const ref = id
       ? db.collection("recurringExpenses").doc(id)
       : db.collection("recurringExpenses").doc();
@@ -125,15 +274,33 @@ export async function processRecurringExpenseAction(
       const previous = await tx.get(ref);
       if (id && !previous.exists)
         throw new HttpsError("not-found", "找不到固定支出。");
-      // Existing start month cannot be changed; allow historical start dates when editing.
-      const data = validateTemplate(
-        input.template ?? {},
-        previous.exists ? previous.data().startMonth : currentMonth,
-      );
-      if (previous.exists && data.startMonth !== previous.data().startMonth)
-        throw new HttpsError("invalid-argument", "起始月份建立後無法更改。");
+      if (previous.exists && previous.data().currency !== "JPY")
+        throw new HttpsError(
+          "failed-precondition",
+          "既有非日圓項目請先暫停，另建日圓項目，避免改寫歷史幣別。",
+        );
+      if (previous.exists && data.startMonth > previous.data().startMonth)
+        throw new HttpsError(
+          "invalid-argument",
+          "起始月份僅能往前延伸；既有紀錄不會刪除。",
+        );
       const audit = { updatedAt: Timestamp.now(), updatedBy: uid };
-      if (previous.exists) tx.update(ref, { ...data, ...audit });
+      if (previous.exists)
+        tx.update(ref, {
+          ...data,
+          ...audit,
+          ...(data.startMonth < previous.data().startMonth
+            ? {
+                nextMonth: data.startMonth,
+                backfillEndMonth:
+                  previous.data().backfillEndMonth ??
+                  previous.data().startMonth,
+                backfillResumeMonth:
+                  previous.data().backfillResumeMonth ??
+                  previous.data().nextMonth,
+              }
+            : {}),
+        });
       else
         tx.create(ref, {
           ...data,
@@ -144,10 +311,10 @@ export async function processRecurringExpenseAction(
           createdBy: uid,
         });
     });
-    await generateTemplateBills(db, ref.id, currentMonth);
+    await generateTemplateBills(db, ref.id, now);
     return { id: ref.id };
   }
-  if (typeof input.id !== "string" || !/^[a-zA-Z0-9_-]{1,120}$/.test(input.id))
+  if (typeof input?.id !== "string" || !/^[a-zA-Z0-9_-]{1,120}$/.test(input.id))
     throw new HttpsError("invalid-argument", "紀錄代碼不正確。");
   if (action === "setActive") {
     if (typeof input.active !== "boolean")
@@ -156,79 +323,33 @@ export async function processRecurringExpenseAction(
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists) throw new HttpsError("not-found", "找不到固定支出。");
+      if (input.active && snap.data().currency !== "JPY")
+        throw new HttpsError("failed-precondition", "請另建日圓固定支出項目。");
+      const resumeMonth =
+        snap.data().startMonth > currentMonth
+          ? snap.data().startMonth
+          : currentMonth;
       tx.update(ref, {
         active: input.active,
         ...(input.active && !snap.data().active
           ? {
-              nextMonth:
-                snap.data().startMonth > currentMonth
-                  ? snap.data().startMonth
-                  : currentMonth,
+              nextMonth: snap.data().backfillEndMonth
+                ? snap.data().nextMonth
+                : resumeMonth,
+              ...(snap.data().backfillEndMonth
+                ? { backfillResumeMonth: resumeMonth }
+                : {}),
             }
           : {}),
         updatedAt: Timestamp.now(),
         updatedBy: uid,
       });
     });
-    if (input.active) await generateTemplateBills(db, input.id, currentMonth);
+    if (input.active) await generateTemplateBills(db, input.id, now);
     return {};
   }
-  if (!["confirmBill", "skipBill"].includes(action))
-    throw new HttpsError("invalid-argument", "不支援的操作。");
-  const ref = db.collection("recurringExpenseBills").doc(input.id);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw new HttpsError("not-found", "找不到每月支出。");
-    const bill = snap.data();
-    if (bill.status !== "pending")
-      throw new HttpsError(
-        "failed-precondition",
-        "這筆紀錄已處理，請重新整理。",
-      );
-    if (action === "skipBill") {
-      tx.update(ref, {
-        status: "skipped",
-        updatedAt: Timestamp.now(),
-        updatedBy: uid,
-      });
-      return;
-    }
-    const date = input.paidDate;
-    const amountTwd = bill.currency === "TWD" ? bill.amount : input.amountTwd;
-    if (
-      typeof date !== "string" ||
-      !/^(20\d{2}|2100)-\d{2}-\d{2}$/.test(date) ||
-      !Number.isFinite(Date.parse(`${date}T12:00:00+08:00`)) ||
-      new Date(`${date}T12:00:00+08:00`).toISOString().slice(0, 10) !== date ||
-      !positiveAmount(amountTwd)
-    )
-      throw new HttpsError(
-        "invalid-argument",
-        "請填入有效付款日期與折合新臺幣金額。",
-      );
-    const expenseRef = db.collection("expenses").doc(`recurring_${input.id}`);
-    tx.create(expenseRef, {
-      name: bill.name,
-      category: bill.category,
-      amount: bill.amount,
-      currency: bill.currency,
-      amountTwd,
-      paidAt: Timestamp.fromDate(new Date(`${date}T12:00:00+08:00`)),
-      expenseMonth: bill.month,
-      method: bill.method,
-      note: bill.note,
-      recurringBillId: input.id,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-      createdBy: uid,
-      updatedBy: uid,
-    });
-    tx.update(ref, {
-      status: "paid",
-      expenseId: expenseRef.id,
-      updatedAt: Timestamp.now(),
-      updatedBy: uid,
-    });
-  });
-  return {};
+  throw new HttpsError(
+    "invalid-argument",
+    "固定支出現已自動入帳，請重新整理頁面。",
+  );
 }

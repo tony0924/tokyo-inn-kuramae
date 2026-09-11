@@ -22,11 +22,13 @@ export function RecurringExpenseManagement() {
   const [billError, setBillError] = useState(false);
   const [form, setForm] = useState<RecurringExpenseInput | null>(null);
   const [id, setId] = useState<string>();
-  const [paying, setPaying] = useState<RecurringExpenseBill | null>(null);
-  const [paidDate, setPaidDate] = useState(taipeiDate());
-  const [amountTwd, setAmountTwd] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    void recurringExpenseAction({ action: "sync" }).catch(() =>
+      setError("自動入帳同步未完成，請重新整理重試；每日排程也會再次處理。"),
+    );
+  }, []);
   useEffect(
     () =>
       watchRecurringTemplates(
@@ -61,7 +63,6 @@ export function RecurringExpenseManagement() {
   const close = useCallback(() => {
     if (!busy) {
       setForm(null);
-      setPaying(null);
       setError("");
     }
   }, [busy]);
@@ -74,7 +75,7 @@ export function RecurringExpenseManagement() {
             name: template.name,
             category: template.category,
             amount: template.amount,
-            currency: template.currency,
+            currency: "JPY",
             day: template.day,
             startMonth: template.startMonth,
             method: template.method,
@@ -99,7 +100,6 @@ export function RecurringExpenseManagement() {
     try {
       await recurringExpenseAction(input);
       setForm(null);
-      setPaying(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "操作失敗，請稍後再試。");
     } finally {
@@ -115,16 +115,17 @@ export function RecurringExpenseManagement() {
       <div className="admin-page-header">
         <div>
           <h2 className="admin-section-title">每月固定支出</h2>
-          <p>設定一次，每月自動產生待確認紀錄；確認已付款後才列入財務總覽。</p>
+          <p>以日圓設定固定扣款，每月到期自動入帳，不需換匯或逐月確認。</p>
         </div>
         <button className="btn-gold" disabled={busy} onClick={() => open()}>
           新增固定項目
         </button>
       </div>
-      {!form && !paying && error && <p role="alert">{error}</p>}
+      {!form && error && <p role="alert">{error}</p>}
       <h3>固定項目設定</h3>
       <p>
-        每月付款日遇短月份會改為月底。修改設定只影響尚未產生的月份；暫停不會取消已產生的紀錄，恢復後從當月繼續。
+        起始月份可回溯，例如 2025 年 9
+        月；儲存後補齊已到扣款日的月份。每月扣款日遇短月份改為月底。調整金額不改寫已入帳月份，回溯新增月份使用本次設定金額。暫停保留歷史，恢復從當月繼續。
       </p>
       {templatesLoading ? (
         <p role="status">設定載入中…</p>
@@ -190,16 +191,14 @@ export function RecurringExpenseManagement() {
         </label>
       </div>
       <h3>{month} 每月紀錄</h3>
-      <p>
-        待確認金額不計入支出。日圓固定項目請在每次付款時填入實際折合新臺幣金額。
-      </p>
+      <p>紀錄按每月扣款日自動列入日圓支出，金額保留日圓，無須確認付款。</p>
       {billsLoading ? (
         <p role="status">每月紀錄載入中…</p>
       ) : billError ? (
         <p role="alert">每月紀錄載入失敗，請重新整理。</p>
       ) : bills.length === 0 ? (
         <p className="admin-empty-state">
-          此月份尚無固定支出紀錄。每月紀錄由每日凌晨排程產生，新設定的當月項目會立即產生。
+          此月份尚無已到期的固定支出紀錄。歷史到期月份在儲存時補齊，之後每日凌晨自動檢查扣款日。
         </p>
       ) : (
         <div className="expense-list">
@@ -210,7 +209,7 @@ export function RecurringExpenseManagement() {
                   {b.name} ·{" "}
                   {
                     {
-                      pending: "待確認付款",
+                      pending: "等待到期自動入帳",
                       paid: "已入帳",
                       skipped: "本月已略過",
                     }[b.status]
@@ -224,46 +223,17 @@ export function RecurringExpenseManagement() {
                   <p>請至「已付款明細」查看或編輯此筆支出。</p>
                 )}
               </div>
-              {b.status === "pending" && (
-                <div className="expense-actions">
-                  <button
-                    className="btn-gold"
-                    disabled={busy}
-                    onClick={() => {
-                      setPaying(b);
-                      setPaidDate(taipeiDate());
-                      setAmountTwd(
-                        b.currency === "TWD" ? String(b.amount) : "",
-                      );
-                      setError("");
-                    }}
-                  >
-                    確認已付款
-                  </button>
-                  <button
-                    className="btn-ghost"
-                    disabled={busy}
-                    onClick={() => {
-                      if (
-                        confirm(
-                          `略過 ${b.month} 的「${b.name}」？本月不再自動產生，也不計入支出。`,
-                        )
-                      )
-                        void perform({ action: "skipBill", id: b.id });
-                    }}
-                  >
-                    本月略過
-                  </button>
-                </div>
-              )}
             </article>
           ))}
         </div>
       )}
-      <Modal open={form !== null || paying !== null} onClose={close}>
+      <Modal open={form !== null} onClose={close}>
         {form && (
           <form className="expense-form" onSubmit={submit}>
             <h2>{id ? "修改固定項目" : "新增固定項目"}</h2>
+            <p>
+              可從過去月份開始；已存在的月份不會重複入帳。既有項目的起始月份只能往前延伸。
+            </p>
             <fieldset disabled={busy}>
               <label>
                 固定項目名稱
@@ -287,23 +257,9 @@ export function RecurringExpenseManagement() {
                   ))}
                 </select>
               </label>
+              <p>幣別：JPY 日圓</p>
               <label>
-                幣別
-                <select
-                  value={form.currency}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      currency: e.target.value as "JPY" | "TWD",
-                    })
-                  }
-                >
-                  <option value="JPY">JPY 日圓</option>
-                  <option value="TWD">TWD 新臺幣</option>
-                </select>
-              </label>
-              <label>
-                每月固定金額
+                每月固定金額（日圓）
                 <input
                   type="number"
                   required
@@ -317,7 +273,7 @@ export function RecurringExpenseManagement() {
                 />
               </label>
               <label>
-                每月付款日
+                每月扣款日
                 <input
                   type="number"
                   required
@@ -335,8 +291,7 @@ export function RecurringExpenseManagement() {
                 <input
                   type="month"
                   required
-                  disabled={!!id}
-                  min={taipeiDate().slice(0, 7)}
+                  min="2000-01"
                   max="2100-12"
                   value={form.startMonth}
                   onChange={(e) =>
@@ -376,66 +331,6 @@ export function RecurringExpenseManagement() {
               </button>
               <button className="btn-gold" disabled={busy}>
                 {busy ? "儲存中…" : "儲存固定項目"}
-              </button>
-            </div>
-          </form>
-        )}
-        {paying && (
-          <form
-            className="expense-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void perform({
-                action: "confirmBill",
-                id: paying.id,
-                paidDate,
-                amountTwd: Number(amountTwd),
-              });
-            }}
-          >
-            <h2>確認已付款：{paying.name}</h2>
-            <p>
-              {paying.month}・{paying.currency} {paying.amount.toLocaleString()}
-            </p>
-            <fieldset disabled={busy}>
-              <label>
-                實際付款日期
-                <input
-                  type="date"
-                  required
-                  min="2000-01-01"
-                  max="2100-12-31"
-                  value={paidDate}
-                  onChange={(e) => setPaidDate(e.target.value)}
-                />
-              </label>
-              {paying.currency === "JPY" && (
-                <label>
-                  實際折合新臺幣金額
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    max="1000000000"
-                    step="1"
-                    value={amountTwd}
-                    onChange={(e) => setAmountTwd(e.target.value)}
-                  />
-                </label>
-              )}
-            </fieldset>
-            {error && <p role="alert">{error}</p>}
-            <div className="expense-actions">
-              <button
-                type="button"
-                className="btn-ghost"
-                disabled={busy}
-                onClick={close}
-              >
-                取消
-              </button>
-              <button className="btn-gold" disabled={busy}>
-                {busy ? "處理中…" : "確認付款並入帳"}
               </button>
             </div>
           </form>

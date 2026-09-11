@@ -24,13 +24,15 @@ test("固定支出：驗證金額與起始月份", () => {
     method: "轉帳",
     note: "",
   };
-  assert.equal(validateTemplate(t, "2026-09").amount, 10000);
+  assert.equal(validateTemplate(t).amount, 10000);
+  assert.equal(validateTemplate({ ...t, startMonth: "2025-09" }).startMonth, "2025-09");
   for (const patch of [
     { day: 32 },
     { day: 0 },
     { amount: -1 },
     { amount: 1.5 },
-    { startMonth: "2026-08" },
+    { startMonth: "2025-13" },
+    { currency: "TWD" },
     { currency: "USD" },
   ])
     assert.throws(() => validateTemplate({ ...t, ...patch }, "2026-09"));
