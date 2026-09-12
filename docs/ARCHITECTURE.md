@@ -211,8 +211,8 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 ## 支出管理與財務總覽（2026-09-12）
 
 - `/admin/expenses` 分為「已付款明細」與「每月固定支出」，管理者可依年度、月份、分類及來源篩選。`?year=2025&month=09` 可連結明細，`?scope=all` 查看全部期間。桌面導覽及手機「更多」保留入口。
-- `/admin/revenue` 顯示年度與期間支出，JPY／TWD 各自以原幣加總，日圓不折算成新臺幣，也不與 TWD 收入相減。既有換算金額保留在文件，但不列入支出統計。
-- `expenses/{id}` 保存名稱、分類、原幣整數金額、付款日 Timestamp、費用月份、方式、備註與操作者／時間。固定 JPY 支出 `amountTwd: null`，手動支出維持原有換算參考欄位。付款日期採 `Asia/Taipei`；曆年依付款日歸屬。
+- `/admin/revenue` 顯示年度與期間支出，JPY／TWD 各自以原幣加總，只顯示期間內實際存在的幣別，日圓不折算成新臺幣，也不與 TWD 收入相減。既有換算金額保留在文件，但不列入支出統計。
+- `expenses/{id}` 保存名稱、分類、原幣整數金額、付款日 Timestamp、費用月份、方式、備註與操作者／時間。固定 JPY 支出 `amountTwd: null`，手動支出不再填寫或寫入換算欄位；amountTwd 僅容忍舊資料存在，不參與驗證原幣或加總。付款日期採 `Asia/Taipei`；曆年依付款日歸屬。
 - 固定支出具有不可更改的 `recurringBillId`，可編輯付款資料，不可直接刪除或改幣別。手動支出可新增、編輯、複製、刪除。client 不可偽造固定來源。所有資料僅管理者可讀寫。
 - `useExpenses` → `lib/expenses.ts` → Firestore 以 paidAt 範圍與排序查詢，無需複合索引。每次最多 10,001 筆，超過 10,000 顯示錯誤而不呈現不完整總額。
 
@@ -226,3 +226,11 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - 新固定帳單直接為 paid；支出 paidAt 為設定扣款日、currency 為 JPY、amountTwd 為 null，系統操作者為 system:recurring。既有 pending JPY 依原帳單快照與扣款日自動入帳，已 paid／skipped 保留；舊 TWD 固定資料不自行改幣別。
 - 兩個固定支出 collections 均禁止 client 寫入，只能透過 callable 或排程操作。交易及固定文件 ID 防止並行同步或重試重複入帳。模板與月份清單超過 1,000 筆顯示錯誤。
 - 驗證：Functions 測試、Firestore Emulator 的 Rules 與 recurringExpenses.integration.test.mjs（13 個月／超過 24 個月完整回溯、月末、到期、暫停恢復、延伸起始月份、legacy 遷移、防重複）、expenseFinance.test.mjs（幣別分開及跨年）、390px 與桌面 UI、npm run build。部署 Rules → manageRecurringExpenses／generateMonthlyExpenseBills → Hosting。
+
+## App 重開後的支出讀取恢復
+
+- `lib/expenseSubscription.ts` 管理即時監聽與備援生命週期。Firestore 首次 12 秒沒有伺服器回應或監聽報錯時，改由 `loadExpenseOverview` 讀取；每 30 秒重試／更新，較慢的備援回應不得覆蓋已恢復的即時資料。離開頁面清除 timer 與 listener。
+- 備援首次讀取刷新既有 Firebase 登入憑證。App 回到前景、恢復網路、支出修改後會重新讀取；UI 提供「重新載入」，並區分登入／權限、資料量上限及連線錯誤。只記錄錯誤代碼，不記錄支出內容或憑證。
+- `loadExpenseOverview`（asia-east1，60 秒）再次驗證登入及 users Admin 角色後，以相同付款年度、排序及 10,001 筆上限查詢 expenses，僅回傳原幣資料與時間數值。不得放寬 Firestore Rules 或對房客開放備援讀取。
+- 已以正式資料的相同查詢確認可讀取、確認已部署 Rules 與本機一致；未取得回報裝置的錯誤碼，因此不斷言其具體斷線原因。測試涵蓋串流失敗／逾時、自動重試、競態回應、清理、備援管理者授權與原幣手動新增。
+- 部署 Rules → loadExpenseOverview → Hosting。既有固定支出排程不變。

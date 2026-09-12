@@ -16,7 +16,6 @@ const fresh = (): ExpenseInput => ({
   category: "管理費",
   amount: 0,
   currency: "JPY",
-  amountTwd: 0,
   paidDate: taipeiDate(),
   expenseMonth: "",
   method: "轉帳",
@@ -34,7 +33,7 @@ export function ExpenseManagement() {
   const [tab, setTab] = useState<'paid' | 'recurring'>('paid');
   const [source, setSource] = useState('all');
   const [category, setCategory] = useState("");
-  const { items, loading, error } = useExpenses(all ? null : year);
+  const { items, loading, error, retry } = useExpenses(all ? null : year);
   const [form, setForm] = useState<ExpenseInput | null>(null);
   const [editing, setEditing] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -169,7 +168,7 @@ export function ExpenseManagement() {
           </select>
         </label>
       </div>
-      {error && <p role="alert">{error}</p>}
+      {error && <div role="alert"><p>{error}</p><button className="btn-ghost" onClick={retry}>重新載入</button></div>}
       {message && !form && <p role="alert">{message}</p>}
       {loading ? (
         <p role="status">載入中…</p>
@@ -280,7 +279,7 @@ export function ExpenseManagement() {
           >
             <h2>{editing ? "編輯支出" : "新增支出"}</h2>
             <p>
-              {form.recurringBillId ? "固定支出以日圓記錄，不需換算新臺幣。" : "手動支出可保留折合金額供參考；財務總額依原幣分別統計。"}
+              請填寫實際付款的幣別與原幣金額。財務總額依原幣分別統計。
             </p>
             <fieldset disabled={busy}>
               <label>
@@ -335,22 +334,6 @@ export function ExpenseManagement() {
                   }
                 />
               </label>
-              {form.currency === "JPY" && !form.recurringBillId && (
-                <label>
-                  折合新臺幣金額
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    max="1000000000"
-                    step="1"
-                    value={form.amountTwd || ""}
-                    onChange={(e) =>
-                      setForm({ ...form, amountTwd: Number(e.target.value) })
-                    }
-                  />
-                </label>
-              )}
               <label>
                 付款日期
                 <input

@@ -160,7 +160,7 @@ test('支出僅限管理者讀寫，金額與操作者不可偽造', async () =>
   await assertFails(getDoc(doc(guest, 'expenses', 'expense-1')));
   await assertFails(getDoc(doc(anon, 'expenses', 'expense-1')));
   await assertFails(setDoc(doc(guest, 'expenses', 'guest-expense'), data));
-  for (const patch of [{ amount: -1 }, { amount: 1.5 }, { currency: 'USD' }, { currency: 'TWD' }, { updatedBy: 'guest-uid' }, { category: '無效分類' }]) {
+  for (const patch of [{ amount: -1 }, { amount: 1.5 }, { currency: 'USD' }, { updatedBy: 'guest-uid' }, { category: '無效分類' }]) {
     await assertFails(setDoc(doc(admin, 'expenses', 'invalid-expense'), { ...data, ...patch }));
   }
   const { updateDoc, deleteDoc } = await import('firebase/firestore');
@@ -191,7 +191,7 @@ test('固定支出入帳來源不可冒用、移除或直接刪除；可編輯�
   await assertSucceeds(updateDoc(doc(admin, 'expenses', 'recurring-paid'), { amountTwd: 2400, updatedAt: serverTimestamp() }));
 });
 
-test('日圓固定支出允許無換算金額，手動支出不可冒用；幣別不可更換', async () => {
+test('支出不要求換算金額，固定來源幣別不可更換', async () => {
   const admin=environment.authenticatedContext('admin-uid').firestore();
   const {updateDoc}=await import('firebase/firestore');
   await assertSucceeds(updateDoc(doc(admin,'expenses','recurring-paid'),{amountTwd:null,updatedAt:serverTimestamp()}));
@@ -199,5 +199,15 @@ test('日圓固定支出允許無換算金額，手動支出不可冒用；幣�
   await assertSucceeds(updateDoc(doc(admin,'expenses','recurring-paid'),{amount:12000,updatedAt:serverTimestamp()}));
   const manual = (await getDoc(doc(admin,'expenses','recurring-paid'))).data();
   delete manual.recurringBillId;
-  await assertFails(setDoc(doc(admin,'expenses','manual-null-conversion'),{...manual,createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+  await assertSucceeds(setDoc(doc(admin,'expenses','manual-null-conversion'),{...manual,createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+});
+
+test('手動支出只填原幣金額即可新增與修改', async () => {
+  const admin=environment.authenticatedContext('admin-uid').firestore();
+  const {updateDoc}=await import('firebase/firestore');
+  for(const currency of ['JPY','TWD']) {
+    const ref=doc(admin,'expenses','native-'+currency);
+    await assertSucceeds(setDoc(ref,{name:'原幣費用',category:'管理費',amount:10000,currency,paidAt:Timestamp.now(),expenseMonth:'',method:'轉帳',note:'',createdAt:serverTimestamp(),updatedAt:serverTimestamp(),createdBy:'admin-uid',updatedBy:'admin-uid'}));
+    await assertSucceeds(updateDoc(ref,{amount:12000,updatedAt:serverTimestamp()}));
+  }
 });

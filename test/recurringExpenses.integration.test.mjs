@@ -46,3 +46,14 @@ test('暫停中往前延伸起始月份，恢復時補齊新增歷史且保留�
   await act(db,'admin',{action:'setActive',id,active:true},date('2026-04-10'));
   assert.equal((await expense(id,'2025-12')).exists,true);assert.equal((await expense(id,'2026-04')).exists,true);assert.equal((await expense(id,'2026-02')).exists,false);assert.equal((await expense(id,'2026-03')).exists,false);
 });
+
+test('支出備援讀取驗證管理者，支援年度範圍並只回傳原幣',async()=>{
+ const {readExpenseOverview}=await import('../functions/expenseOverview.js');
+ await db.collection('users').doc('read-admin').set({role:'admin'});
+ await db.collection('users').doc('read-guest').set({role:'guest'});
+ await assert.rejects(()=>readExpenseOverview(db,null,'2025'),e=>e.code==='unauthenticated');
+ await assert.rejects(()=>readExpenseOverview(db,'read-guest','2025'),e=>e.code==='permission-denied');
+ await assert.rejects(()=>readExpenseOverview(db,'read-admin','invalid'),e=>e.code==='invalid-argument');
+ const result=await readExpenseOverview(db,'read-admin','2025');assert(result.items.length>0);
+ for(const item of result.items){assert.equal(item.currency,'JPY');assert.equal('amountTwd' in item,false);assert.equal(new Date(item.paidAt).getUTCFullYear(),2025);assert.equal(typeof item.amount,'number');}
+});

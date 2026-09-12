@@ -272,7 +272,7 @@ export function RevenueOverview() {
             <StatCard label="未收費住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
 
-          {expenses.error ? <p role="alert">{expenses.error}</p> : expenses.loading ? <p role="status">支出載入中…</p> : <div className="stats-grid revenue-stats-grid">
+          {expenses.error ? <div role="alert"><p>{expenses.error}</p><button className="btn-ghost" onClick={expenses.retry}>重新載入</button></div> : expenses.loading ? <p role="status">支出載入中…</p> : <div className="stats-grid revenue-stats-grid">
             <Link className="expense-summary-link" to={`/admin/expenses?year=${expenseYear}`}><div className="stat-card amber"><div className="stat-label">{expenseYear} 年支出</div><div className="expense-currency-total">{expenseTotalLabel(expenses.items, expenseYear)}</div></div></Link>
             <Link className="expense-summary-link" to={scope === 'all' ? '/admin/expenses?scope=all' : `/admin/expenses?year=${expenseYear}${scope === 'month' ? '&month=' + month.slice(5, 7) : ''}`}><div className="stat-card amber"><div className="stat-label">{scopeLabel}支出</div><div className="expense-currency-total">{expenseTotalLabel(expenses.items, expensePrefix)}</div></div></Link>
           </div>}

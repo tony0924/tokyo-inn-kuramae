@@ -1,3 +1,4 @@
+import { readExpenseOverview } from './expenseOverview.js';
 import { syncRecurringExpenses, processRecurringExpenseAction } from './recurringExpenses.js';
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
@@ -1478,4 +1479,8 @@ export const manageRecurringExpenses = onCall({ region: REGION, timeoutSeconds: 
 });
 export const generateMonthlyExpenseBills = onSchedule({ region: REGION, schedule: '15 0 * * *', timeZone: TIME_ZONE, retryCount: 3, timeoutSeconds: 540 }, async () => {
   await syncRecurringExpenses(db);
+});
+
+export const loadExpenseOverview = onCall({ region: REGION, timeoutSeconds: 60 }, async request => {
+  return readExpenseOverview(db, request.auth?.uid, request.data?.year ?? null);
 });

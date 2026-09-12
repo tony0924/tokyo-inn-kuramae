@@ -12,7 +12,9 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { auth, db, functions } from "./firebase";
+import { httpsCallable } from "firebase/functions";
+import { resilientExpenseSubscription } from "./expenseSubscription";
 import type { Expense, ExpenseDoc } from "@/types";
 import {
   EXPENSE_CATEGORIES,
@@ -25,7 +27,6 @@ export interface ExpenseInput {
   category: string;
   amount: number;
   currency: "JPY" | "TWD";
-  amountTwd: number | null;
   paidDate: string;
   expenseMonth: string;
   method: string;
@@ -52,39 +53,103 @@ export function watchExpenses(
         ),
       ]
     : [];
-  return onSnapshot(
-    query(
-      collection(db, "expenses"),
-      ...constraints,
-      orderBy("paidAt", "desc"),
-      limit(10001),
-    ),
-    (snap) => {
-      if (snap.size > 10000) {
-        onError(
-          "支出超過顯示上限，請縮小至單一年度；年度資料過多時請聯絡系統管理者。",
-        );
-        return;
-      }
-      cb(
-        snap.docs.map((item) => ({
-          id: item.id,
-          ...(item.data() as ExpenseDoc),
-        })),
-      );
-    },
-    () => onError(),
+  const expenseQuery = query(
+    collection(db, "expenses"),
+    ...constraints,
+    orderBy("paidAt", "desc"),
+    limit(10001),
   );
+  let refreshedToken = false;
+  const subscription = resilientExpenseSubscription<Expense>({
+    listen: (next, failed) =>
+      onSnapshot(
+        expenseQuery,
+        { includeMetadataChanges: true },
+        (snap) => {
+          if (snap.metadata.fromCache) return;
+          if (snap.size > 10000) {
+            failed({ code: "resource-exhausted" });
+            return;
+          }
+          next(
+            snap.docs.map((item) => ({
+              ...(item.data() as ExpenseDoc),
+              id: item.id,
+            })),
+          );
+        },
+        (error) => {
+          console.warn("Expense subscription failed", { code: error.code });
+          failed(error);
+        },
+      ),
+    fetch: async () => {
+      if (!auth.currentUser) throw { code: "unauthenticated" };
+      if (!refreshedToken) {
+        await auth.currentUser.getIdToken(true);
+        refreshedToken = true;
+      }
+      type WireExpense = Omit<
+        Expense,
+        "paidAt" | "createdAt" | "updatedAt" | "recurringBillId"
+      > & {
+        paidAt: number;
+        createdAt: number | null;
+        updatedAt: number | null;
+        recurringBillId: string | null;
+      };
+      const result = await httpsCallable<
+        { year: string | null },
+        { items: WireExpense[] }
+      >(functions, "loadExpenseOverview", { timeout: 30000 })({ year });
+      return result.data.items.map((item) => ({
+        ...item,
+        recurringBillId: item.recurringBillId ?? undefined,
+        paidAt: Timestamp.fromMillis(item.paidAt),
+        createdAt:
+          item.createdAt === null ? null : Timestamp.fromMillis(item.createdAt),
+        updatedAt:
+          item.updatedAt === null ? null : Timestamp.fromMillis(item.updatedAt),
+      }));
+    },
+    next: cb,
+    failed: (error) => {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String(error.code)
+          : "";
+      console.warn("Expense fallback failed", { code });
+      if (
+        /unauthenticated|permission-denied|user-token-expired|invalid-user-token/.test(
+          code,
+        )
+      )
+        onError("登入狀態已失效或沒有管理者權限，請重新登入後再試。");
+      else if (code.includes("resource-exhausted"))
+        onError("支出超過讀取上限，請縮小查詢期間。");
+      else
+        onError(
+          "支出暫時無法載入，請確認網路後按「重新載入」。系統也會自動重試。",
+        );
+    },
+  });
+  const refresh = () => subscription.refresh();
+  const visible = () => {
+    if (document.visibilityState === "visible") refresh();
+  };
+  window.addEventListener("online", refresh);
+  window.addEventListener("expenses-changed", refresh);
+  document.addEventListener("visibilitychange", visible);
+  return () => {
+    subscription.stop();
+    window.removeEventListener("online", refresh);
+    window.removeEventListener("expenses-changed", refresh);
+    document.removeEventListener("visibilitychange", visible);
+  };
 }
 export async function saveExpense(input: ExpenseInput, id?: string) {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("請重新登入後再試。");
-  const amountTwd =
-    input.recurringBillId && input.currency === "JPY"
-      ? null
-      : input.currency === "TWD"
-        ? input.amount
-        : input.amountTwd;
   if (
     !input.name.trim() ||
     input.name.trim().length > 120 ||
@@ -95,16 +160,9 @@ export async function saveExpense(input: ExpenseInput, id?: string) {
       input.method as (typeof EXPENSE_METHODS)[number],
     ) ||
     !["JPY", "TWD"].includes(input.currency) ||
-    ![
-      input.amount,
-      ...(input.recurringBillId && input.currency === "JPY" ? [] : [amountTwd]),
-    ].every(
-      (n) =>
-        typeof n === "number" &&
-        Number.isSafeInteger(n) &&
-        n > 0 &&
-        n <= 1000000000,
-    ) ||
+    !Number.isSafeInteger(input.amount) ||
+    input.amount <= 0 ||
+    input.amount > 1000000000 ||
     !validExpenseDate(input.paidDate) ||
     (input.expenseMonth &&
       !/^(20\d{2}|2100)-(0[1-9]|1[0-2])$/.test(input.expenseMonth)) ||
@@ -116,7 +174,6 @@ export async function saveExpense(input: ExpenseInput, id?: string) {
     category: input.category,
     amount: input.amount,
     currency: input.currency,
-    amountTwd,
     paidAt: Timestamp.fromDate(new Date(`${input.paidDate}T12:00:00+08:00`)),
     expenseMonth: input.expenseMonth,
     method: input.method,
@@ -132,10 +189,12 @@ export async function saveExpense(input: ExpenseInput, id?: string) {
         createdAt: serverTimestamp(),
         createdBy: uid,
       });
+    window.dispatchEvent(new Event("expenses-changed"));
   } catch {
     throw new Error("支出儲存失敗，請確認網路連線後再試。");
   }
 }
 export async function deleteExpense(id: string) {
   await deleteDoc(doc(db, "expenses", id));
+  window.dispatchEvent(new Event("expenses-changed"));
 }

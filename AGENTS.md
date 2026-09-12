@@ -165,6 +165,7 @@ UI pages/components → hooks / src/lib → Firebase SDK
 
 HTTP / callable：
 
+- `loadExpenseOverview`：Admin 支出讀取備援，恢復 App 重開後的支出載入。
 - `manageRecurringExpenses`：Admin 固定日圓支出設定、歷史回溯與自動入帳同步
 - `createGuestCommunityMessage`：驗證 Guest 身分後寫入共享推薦牆。
 - `getGuestPortalData`：驗證訪客碼後回傳私密指南與清理過的住宿摘要。

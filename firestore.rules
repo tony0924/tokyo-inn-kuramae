@@ -299,8 +299,7 @@ service cloud.firestore {
           && d.category in ['水費', '電費', '瓦斯', '管理費', '網路', '清潔', '維修', '設備耗材', '稅費', '其他']
           && d.currency in ['JPY', 'TWD']
           && d.amount is int && d.amount > 0 && d.amount <= 1000000000
-          && ((d.get('recurringBillId', '') != '' && d.currency == 'JPY' && d.amountTwd == null) || (d.amountTwd is int && d.amountTwd > 0 && d.amountTwd <= 1000000000))
-          && (d.currency != 'TWD' || d.amountTwd == d.amount)
+          && (d.get('amountTwd', null) == null || (d.amountTwd is int && d.amountTwd > 0 && d.amountTwd <= 1000000000))
           && d.paidAt is timestamp && d.paidAt >= timestamp.date(1999, 12, 31) && d.paidAt < timestamp.date(2101, 1, 1)
           && d.expenseMonth is string && (d.expenseMonth == '' || d.expenseMonth.matches('^(20[0-9]{2}|2100)-(0[1-9]|1[0-2])$'))
           && d.method in ['轉帳', '信用卡', '現金', '其他']

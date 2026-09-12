@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { watchExpenses } from "@/lib/expenses";
 import type { Expense } from "@/types";
 export function useExpenses(year: string | null) {
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
   const [state, setState] = useState<{
     key: string | null;
     items: Expense[];
@@ -21,6 +23,9 @@ export function useExpenses(year: string | null) {
           error: message ?? "支出載入失敗，請重新整理後再試。",
         }),
     );
-  }, [year]);
-  return state.key === year ? state : { items: [], loading: true, error: null };
+  }, [year, attempt]);
+  return {
+    ...(state.key === year ? state : { items: [], loading: true, error: null }),
+    retry,
+  };
 }

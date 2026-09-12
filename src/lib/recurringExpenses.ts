@@ -68,6 +68,7 @@ export async function recurringExpenseAction(
     await httpsCallable(functions, "manageRecurringExpenses", {
       timeout: 540000,
     })(input);
+    window.dispatchEvent(new Event("expenses-changed"));
   } catch {
     throw new Error(
       "操作未完成，請確認資料與網路連線；紀錄若已處理，請重新整理查看。",

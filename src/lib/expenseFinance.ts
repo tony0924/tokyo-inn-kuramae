@@ -30,9 +30,8 @@ export function validExpenseDate(value: string): boolean {
 }
 type ExpenseAmount = {
   paidAt: { toDate(): Date };
-  amountTwd: number | null;
-  amount?: number;
-  currency?: "JPY" | "TWD";
+  amount: number;
+  currency: "JPY" | "TWD";
 };
 export function sumExpenses(
   items: ExpenseAmount[],
@@ -43,8 +42,8 @@ export function sumExpenses(
     (sum, item) =>
       sum +
       (taipeiDate(item.paidAt.toDate()).startsWith(prefix) &&
-      (item.currency ?? "TWD") === currency
-        ? (item.amount ?? item.amountTwd ?? 0)
+      item.currency === currency
+        ? item.amount
         : 0),
     0,
   );
@@ -53,10 +52,21 @@ export function expenseTotalLabel(
   items: ExpenseAmount[],
   prefix: string,
 ): string {
-  return (
-    "JPY " +
-    sumExpenses(items, prefix, "JPY").toLocaleString() +
-    " ／ TWD " +
-    sumExpenses(items, prefix, "TWD").toLocaleString()
+  const currencies = (["JPY", "TWD"] as const).filter((currency) =>
+    items.some(
+      (item) =>
+        item.currency === currency &&
+        taipeiDate(item.paidAt.toDate()).startsWith(prefix),
+    ),
   );
+  return currencies.length
+    ? currencies
+        .map(
+          (currency) =>
+            currency +
+            " " +
+            sumExpenses(items, prefix, currency).toLocaleString(),
+        )
+        .join(" ／ ")
+    : "JPY 0";
 }

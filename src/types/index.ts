@@ -356,7 +356,7 @@ export interface ExpenseDoc {
   category: string;
   amount: number;
   currency: 'JPY' | 'TWD';
-  amountTwd: number | null;
+  amountTwd?: number | null; // Legacy reference only; never required or used for totals.
   paidAt: Timestamp;
   expenseMonth: string;
   method: string;
