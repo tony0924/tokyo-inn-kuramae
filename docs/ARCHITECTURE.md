@@ -234,3 +234,8 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - `loadExpenseOverview`（asia-east1，60 秒）再次驗證登入及 users Admin 角色後，以相同付款年度、排序及 10,001 筆上限查詢 expenses，僅回傳原幣資料與時間數值。不得放寬 Firestore Rules 或對房客開放備援讀取。
 - 已以正式資料的相同查詢確認可讀取、確認已部署 Rules 與本機一致；未取得回報裝置的錯誤碼，因此不斷言其具體斷線原因。測試涵蓋串流失敗／逾時、自動重試、競態回應、清理、備援管理者授權與原幣手動新增。
 - 部署 Rules → loadExpenseOverview → Hosting。既有固定支出排程不變。
+
+## 支出分類圓餅圖
+
+- 已付款明細上方的 `ExpenseCompositionChart` 沿用財務總覽環形圖樣式，依目前年度、月份、分類與手動／固定來源篩選後的明細加總分類，顯示金額、占比與筆數。JPY／TWD 分圖以原幣統計，不換匯。
+- 圖表共用 `useExpenses` 已載入資料，不新增查詢；載入、錯誤或無符合明細時不顯示圖表。SVG 提供可讀取的標題、金額說明，圖例同步列出各分類。

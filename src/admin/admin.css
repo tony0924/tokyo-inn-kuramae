@@ -5776,3 +5776,7 @@
 .recurring-expenses .expense-filters input { padding: 10px; background: var(--bg-mid); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }
 .expense-currency-total { font-size: 22px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
 .expense-item .stat-value { overflow-wrap: anywhere; }
+
+.expense-composition {
+  margin-bottom: 20px;
+}

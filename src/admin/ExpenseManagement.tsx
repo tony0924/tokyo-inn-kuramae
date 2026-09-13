@@ -1,4 +1,5 @@
 import { RecurringExpenseManagement } from './RecurringExpenseManagement';
+import { ExpenseCompositionChart } from './ExpenseCompositionChart';
 import { useCallback, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Modal } from "./Modal";
@@ -196,6 +197,7 @@ export function ExpenseManagement() {
                 </div>
               </div>
             </div>
+            <ExpenseCompositionChart items={visible} scopeLabel={all ? '全部期間' : `${year} 年${month ? ` ${Number(month)} 月` : ''}`} />
             <h2 className="admin-section-title">支出明細</h2>
             <p>
               {visible.length} 筆・篩選合計 {expenseTotalLabel(visible, "")}
