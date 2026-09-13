@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { OccupancyOverview } from './OccupancyOverview';
 import { useExpenses } from './useExpenses';
 import { expenseTotalLabel, taipeiDate } from '@/lib/expenseFinance';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -46,7 +47,7 @@ function todayInput(): string {
 }
 
 export function RevenueOverview() {
-  const { bookings, loading } = useBookings();
+  const { bookings, loading, error: bookingsError } = useBookings();
   const [payments, setPayments] = useState<BookingPayment[]>([]);
   const now = new Date();
   const [scope, setScope] = useState<RevenueScope>('month');
@@ -228,7 +229,7 @@ export function RevenueOverview() {
         </div>
       </div>
 
-      {loading ? (
+      {bookingsError ? <p role="alert">{bookingsError}</p> : loading ? (
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
         <>
@@ -271,6 +272,8 @@ export function RevenueOverview() {
             <StatCard label="尚待收款" value={summary.outstanding} tone="amber" />
             <StatCard label="未收費住宿價值" value={summary.nonCashValue} tone="muted" />
           </div>
+
+          <OccupancyOverview bookings={bookings} />
 
           {expenses.error ? <div role="alert"><p>{expenses.error}</p><button className="btn-ghost" onClick={expenses.retry}>重新載入</button></div> : expenses.loading ? <p role="status">支出載入中…</p> : <div className="stats-grid revenue-stats-grid">
             <Link className="expense-summary-link" to={`/admin/expenses?year=${expenseYear}`}><div className="stat-card amber"><div className="stat-label">{expenseYear} 年支出</div><div className="expense-currency-total">{expenseTotalLabel(expenses.items, expenseYear)}</div></div></Link>

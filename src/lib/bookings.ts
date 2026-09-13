@@ -20,7 +20,7 @@ import { generateGuestCode, normalizeGuestCode } from './guestAccessCodes';
 
 const BOOKINGS = 'bookings';
 
-export function watchAllBookings(cb: (bookings: Booking[]) => void): Unsubscribe {
+export function watchAllBookings(cb: (bookings: Booking[]) => void, onError?: (error: Error) => void): Unsubscribe {
   const q = query(collection(db, BOOKINGS), orderBy('checkIn', 'desc'));
   return onSnapshot(q, (snap) => {
     const items: Booking[] = snap.docs.map((d) => ({
@@ -28,7 +28,7 @@ export function watchAllBookings(cb: (bookings: Booking[]) => void): Unsubscribe
       ...(d.data() as BookingDoc),
     }));
     cb(items);
-  });
+  }, onError);
 }
 
 export function watchBooking(

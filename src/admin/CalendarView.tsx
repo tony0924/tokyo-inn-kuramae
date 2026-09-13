@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -15,6 +16,9 @@ const PAY_COLOR: Record<PaymentStatus, string> = {
 
 export function CalendarView() {
   const { bookings, loading } = useBookings();
+  const [params] = useSearchParams();
+  const requestedMonth = params.get('month') ?? '';
+  const initialDate = /^(20\d{2}|2100)-(0[1-9]|1[0-2])$/.test(requestedMonth) ? `${requestedMonth}-01` : undefined;
   const [editing, setEditing] = useState<Booking | null>(null);
   const [createDate, setCreateDate] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -65,6 +69,8 @@ export function CalendarView() {
         <p style={{ color: 'var(--text-mid)' }}>載入中…</p>
       ) : (
         <FullCalendar
+          key={initialDate ?? "today"}
+          initialDate={initialDate}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           height="auto"

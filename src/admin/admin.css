@@ -5780,3 +5780,42 @@
 .expense-composition {
   margin-bottom: 20px;
 }
+
+.occupancy-panel { margin: 24px 0; padding: 24px; }
+.occupancy-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.occupancy-panel p { color: var(--text-mid); font-size: 12px; line-height: 1.7; }
+.occupancy-panel label { display: grid; gap: 6px; font-size: 12px; color: var(--text-mid); }
+.occupancy-panel select, .occupancy-panel input { min-height: 40px; max-width: 100%; background: var(--ink); color: var(--text); border: 1px solid var(--border-card); border-radius: 6px; padding: 8px; }
+.occupancy-options { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.occupancy-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 16px 0; }
+.occupancy-panel .stat-value { font-size: 26px; }
+.occupancy-note { margin: 12px 0; }
+.occupancy-panel h3 { margin-top: 20px; font-size: 15px; }
+.occupancy-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; font-size: 12px; color: var(--text-mid); }
+.occupancy-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.occupancy-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.occupancy-stayed { background: #6fcf97; }
+.occupancy-upcoming { background: #e0a84f; }
+.occupancy-unbooked, .occupancy-track { background: #34363c; }
+.occupancy-chart { display: grid; gap: 6px; }
+.occupancy-month { display: grid; grid-template-columns: 40px minmax(0, 1fr) 160px; align-items: center; gap: 12px; padding: 9px 0; font-size: 12px; color: var(--text); text-decoration: none; }
+.occupancy-month:hover { background: rgba(255,255,255,.04); }
+.occupancy-month:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
+.occupancy-track { display: flex; height: 18px; border-radius: 4px; overflow: hidden; }
+.occupancy-month-total { text-align: right; font-variant-numeric: tabular-nums; }
+.occupancy-details { margin-top: 16px; }
+.occupancy-details summary { cursor: pointer; color: var(--gold-light); padding: 12px 0; }
+.occupancy-month-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.occupancy-month-cards article { border: 1px solid var(--border-card); border-radius: 8px; padding: 14px; }
+.occupancy-month-cards a { color: var(--gold-light); }
+.occupancy-month-cards dl { margin-top: 10px; font-size: 12px; }
+.occupancy-month-cards dl div { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.occupancy-month-cards dt { color: var(--text-mid); }
+@media (max-width: 900px) { .occupancy-month-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .occupancy-panel { padding: 16px; }
+  .occupancy-stats { grid-template-columns: 1fr; }
+  .occupancy-month { grid-template-columns: 34px minmax(0, 1fr); gap: 6px 10px; }
+  .occupancy-month-total { grid-column: 2; font-size: 11px; }
+  .occupancy-month-cards { grid-template-columns: 1fr; }
+}
