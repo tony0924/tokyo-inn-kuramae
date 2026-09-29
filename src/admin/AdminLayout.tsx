@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { signOut } from '@/lib/auth';
@@ -44,6 +44,14 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moreEntered, setMoreEntered] = useState(false);
+  const [moreClosing, setMoreClosing] = useState(false);
+  const [moreDragging, setMoreDragging] = useState(false);
+  const [moreDragY, setMoreDragY] = useState(0);
+  const moreCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const moreDragRef = useRef<{ pointerId: number; startY: number; startTime: number } | null>(null);
+  const moreCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const moreReturnFocusRef = useRef<HTMLElement | null>(null);
   const [guestPreviewOpen, setGuestPreviewOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
@@ -56,8 +64,17 @@ export function AdminLayout() {
   ).length;
 
   useEffect(() => {
+    if (moreCloseTimerRef.current) clearTimeout(moreCloseTimerRef.current);
+    moreCloseTimerRef.current = null;
     setMoreOpen(false);
+    setMoreEntered(false);
+    setMoreClosing(false);
+    setMoreDragY(0);
   }, [location.key]);
+
+  useEffect(() => () => {
+    if (moreCloseTimerRef.current) clearTimeout(moreCloseTimerRef.current);
+  }, []);
 
   useEffect(
     () => watchAdminNotifications(
@@ -91,12 +108,73 @@ export function AdminLayout() {
 
   useEffect(() => {
     if (!moreOpen) return;
+    const frame = requestAnimationFrame(() => setMoreEntered(true));
+    moreReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    moreCloseButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMore();
+    };
+    document.addEventListener('keydown', onKeyDown);
     return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
+      moreReturnFocusRef.current?.focus();
     };
   }, [moreOpen]);
+
+  function closeMore() {
+    if (moreCloseTimerRef.current || !moreOpen) return;
+    setMoreDragging(false);
+    setMoreClosing(true);
+    setMoreEntered(false);
+    moreCloseTimerRef.current = setTimeout(() => {
+      setMoreOpen(false);
+      setMoreClosing(false);
+      setMoreDragY(0);
+      moreCloseTimerRef.current = null;
+    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 220);
+  }
+
+  function handleMorePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0 || moreClosing) return;
+    moreDragRef.current = { pointerId: event.pointerId, startY: event.clientY, startTime: performance.now() };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setMoreDragging(true);
+  }
+
+  function handleMorePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (moreDragRef.current?.pointerId !== event.pointerId) return;
+    setMoreDragY(Math.max(0, event.clientY - moreDragRef.current.startY));
+  }
+
+  function handleMorePointerUp(event: PointerEvent<HTMLDivElement>) {
+    const drag = moreDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = Math.max(0, event.clientY - drag.startY);
+    const velocity = distance / Math.max(1, performance.now() - drag.startTime);
+    moreDragRef.current = null;
+    setMoreDragging(false);
+    if (distance > 110 || (distance > 38 && velocity > 0.7)) closeMore();
+    else setMoreDragY(0);
+  }
+
+  function trapMoreFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   const moreActive = [
     '/admin/revenue',
@@ -113,6 +191,7 @@ export function AdminLayout() {
   ].some((path) => location.pathname.startsWith(path));
 
   function openGuestPreviewPicker() {
+    moreReturnFocusRef.current = null;
     setMoreOpen(false);
     setGuestPreviewOpen(true);
   }
@@ -223,7 +302,7 @@ export function AdminLayout() {
           className={`admin-mobile-nav-item${moreActive || moreOpen ? ' active' : ''}`}
           aria-expanded={moreOpen}
           aria-controls="admin-more-menu"
-          onClick={() => setMoreOpen(true)}
+          onClick={() => { setMoreDragY(0); setMoreClosing(false); setMoreEntered(false); setMoreOpen(true); }}
         >
           <MobileNavIcon name="more" />
           <span>更多</span>
@@ -231,21 +310,33 @@ export function AdminLayout() {
       </nav>
 
       {moreOpen && (
-        <div className="admin-more-menu" id="admin-more-menu">
+        <div
+          className={`admin-more-menu${moreEntered ? ' entered' : ''}${moreClosing ? ' closing' : ''}${moreDragging ? ' dragging' : ''}`}
+          id="admin-more-menu"
+          style={{ '--more-drag': `${moreDragY}px`, '--more-backdrop-opacity': Math.max(0.35, 0.72 - moreDragY / 800) } as CSSProperties}
+        >
           <button
             type="button"
             className="admin-more-backdrop"
             aria-label="關閉更多選單"
-            onClick={() => setMoreOpen(false)}
+            onClick={closeMore}
           />
-          <section className="admin-more-sheet" role="dialog" aria-modal="true" aria-labelledby="admin-more-title">
-            <div className="admin-more-handle" aria-hidden="true" />
+          <section className="admin-more-sheet" role="dialog" aria-modal="true" aria-labelledby="admin-more-title" onKeyDown={trapMoreFocus}>
+            <div
+              className="admin-more-handle-zone"
+              onPointerDown={handleMorePointerDown}
+              onPointerMove={handleMorePointerMove}
+              onPointerUp={handleMorePointerUp}
+              onPointerCancel={handleMorePointerUp}
+            >
+              <div className="admin-more-handle" aria-hidden="true" />
+            </div>
             <div className="admin-more-heading">
               <div>
                 <p>KURACHEN 管理</p>
                 <h2 id="admin-more-title">更多功能</h2>
               </div>
-              <button type="button" onClick={() => setMoreOpen(false)} aria-label="關閉更多選單">×</button>
+              <button ref={moreCloseButtonRef} type="button" onClick={closeMore} aria-label="關閉更多選單">×</button>
             </div>
             <div className="admin-more-grid">
               <MoreLink to="/admin/revenue" label="財務總覽" icon="revenue" />

@@ -2256,6 +2256,7 @@
   z-index: 300;
   padding: 24px;
   overflow-y: auto;
+  animation: modal-backdrop-enter 180ms ease-out both;
 }
 
 .modal-card {
@@ -2268,6 +2269,14 @@
   max-height: min(90vh, 900px);
   overflow-y: auto;
   overflow-x: hidden;
+  animation: modal-card-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes modal-backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-card-enter { from { opacity: 0; transform: translateY(12px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop { animation-duration: 100ms; }
+  .modal-card { animation: none; }
 }
 
 .modal-card h2 {
@@ -3391,8 +3400,11 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, var(--more-backdrop-opacity, 0.72));
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 220ms ease-out;
   }
   .admin-more-sheet {
     position: relative;
@@ -3405,15 +3417,40 @@
     border: 1px solid var(--border-card);
     border-bottom: 0;
     border-radius: 24px 24px 0 0;
-    background: var(--bg-mid);
+    background: rgba(25, 25, 29, 0.96);
     box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(22px) saturate(130%);
+    -webkit-backdrop-filter: blur(22px) saturate(130%);
+    transform: translate3d(0, 100%, 0);
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .admin-more-menu.entered .admin-more-backdrop { opacity: 1; }
+  .admin-more-menu.entered .admin-more-sheet { transform: translate3d(0, var(--more-drag, 0px), 0); }
+  .admin-more-menu.dragging .admin-more-sheet { transition: none; }
+  .admin-more-menu.closing .admin-more-sheet { transform: translate3d(0, 100%, 0); transition-duration: 220ms; }
+  .admin-more-menu.closing .admin-more-backdrop { opacity: 0; }
+  .admin-more-handle-zone {
+    height: 36px;
+    display: grid;
+    place-items: start center;
+    touch-action: none;
+    cursor: grab;
+  }
+  .admin-more-menu.dragging .admin-more-handle-zone { cursor: grabbing; }
   .admin-more-handle {
     width: 42px;
     height: 4px;
-    margin: 0 auto 16px;
+    margin: 0 auto;
     border-radius: 999px;
     background: var(--border);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .admin-more-sheet, .admin-more-menu.closing .admin-more-sheet { transition: none; }
+    .admin-more-backdrop { transition-duration: 100ms; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .admin-more-backdrop, .admin-more-sheet { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .admin-more-sheet { background: var(--bg-mid); }
   }
   .admin-more-heading {
     display: flex;

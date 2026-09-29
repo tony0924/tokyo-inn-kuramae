@@ -40,6 +40,11 @@ Run locally:
 npm run dev
 ```
 
+For the local interaction design review, open `http://localhost:5173/design-preview.html`
+after starting Vite. This page uses sample content and does not connect to Firebase.
+It demonstrates the guest image viewer, admin dialog, and mobile admin menu.
+The review HTML files are not part of the production `vite build` output.
+
 Build:
 
 ```bash

@@ -3473,13 +3473,15 @@
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(0,0,0,0.92);
-      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,var(--lightbox-dim,0.92));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       align-items: center;
       justify-content: center;
       cursor: zoom-out;
     }
-    .lightbox.open { display: flex; animation: fadeUp 0.2s ease both; }
+    .lightbox.open { display: flex; animation: lightbox-enter 220ms ease-out both; }
+    .lightbox.closing { animation: lightbox-exit 220ms ease-in both; }
     .lightbox img {
       max-width: 92vw;
       max-height: 88vh;
@@ -3488,12 +3490,18 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.8);
       cursor: default;
       user-select: none;
+      touch-action: none;
+      transform: translate3d(0, var(--lightbox-drag, 0px), 0) scale(var(--lightbox-scale, 1));
+      transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
     }
+    .lightbox.dragging img { transition: none; cursor: grabbing; }
     .lightbox-close {
       position: absolute;
-      top: 16px; right: 20px;
+      top: calc(16px + env(safe-area-inset-top)); right: calc(20px + env(safe-area-inset-right));
+      width: 44px;
+      height: 44px;
       color: rgba(255,255,255,0.7);
-      font-size: 2rem;
+      font-size: 1.7rem;
       cursor: pointer;
       line-height: 1;
       transition: color 0.2s;
@@ -3501,14 +3509,25 @@
       border: 0;
     }
     .lightbox-close:hover { color: white; }
+    .lightbox-close:active { transform: scale(0.92); }
+    .lightbox-close:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
     .lightbox-caption {
       position: absolute;
-      bottom: 20px;
+      bottom: calc(20px + env(safe-area-inset-bottom));
       left: 50%; transform: translateX(-50%);
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.76);
       font-size: 0.78rem;
       letter-spacing: 0.05em;
       white-space: nowrap;
+    }
+    @keyframes lightbox-enter { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lightbox-exit { from { opacity: 1; } to { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .lightbox.open, .lightbox.closing { animation-duration: 100ms; }
+      .lightbox img { transition: none; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .lightbox { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(0,0,0,0.97); }
     }
     .img-item img.loaded, .img-single img { cursor: zoom-in; }
 

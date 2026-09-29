@@ -1,0 +1,46 @@
+body { margin: 0; background: #0c0c0e; color: var(--text); }
+.design-review-page { max-width: 1320px; margin: 0 auto; padding: 64px 36px 100px; }
+.design-review-header { margin-bottom: 40px; }
+.design-review-kicker, .design-review-number { color: var(--gold); font-size: 11px; letter-spacing: .2em; font-weight: 700; }
+.design-review-header h1 { font-family: 'Noto Serif TC', serif; font-size: clamp(34px, 4vw, 58px); letter-spacing: -.025em; line-height: 1.15; margin: 14px 0; }
+.design-review-header p { color: var(--text-mid); font-size: 16px; line-height: 1.7; max-width: 680px; }
+.design-review-note { display: inline-flex; margin-top: 20px; padding: 9px 13px; border: 1px solid var(--border); border-radius: 999px; color: var(--gold-light); background: var(--gold-pale); font-size: 12px; }
+.design-review-grid { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 22px; align-items: stretch; }
+.design-review-card { min-width: 0; padding: 28px; border: 1px solid var(--border-card); background: var(--bg-high); border-radius: 24px; box-shadow: var(--shadow-md); }
+.design-review-card h2 { font-family: 'Noto Serif TC', serif; font-size: 24px; color: var(--text); margin: 13px 0 12px; }
+.design-review-card p { min-height: 92px; color: var(--text-mid); font-size: 14px; line-height: 1.75; }
+.design-review-photo { width: 100%; aspect-ratio: 4 / 3; display: block; object-fit: cover; border-radius: 16px; margin-top: 20px; border: 1px solid var(--border-card); transition: transform 180ms ease-out, box-shadow 180ms ease-out; }
+.design-review-photo:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.design-review-photo:active { transform: scale(.985); }
+.design-review-photo:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 4px; }
+.design-review-hint { color: var(--gold-light); font-size: 12px; margin-top: 14px; }
+.design-review-modal-sample { display: flex; flex-direction: column; gap: 8px; padding: 23px; margin: 20px 0; border: 1px solid var(--border); background: var(--bg-mid); border-radius: 16px; }
+.design-review-modal-sample span, .design-review-modal-sample small { color: var(--text-mid); font-size: 12px; }
+.design-review-modal-sample strong { font-family: 'Noto Serif TC', serif; color: var(--text); font-size: 19px; }
+.design-review-action { width: 100%; min-height: 48px; display: flex; justify-content: space-between; align-items: center; padding: 12px 17px; border: 0; border-radius: 12px; background: var(--gold); color: var(--ink); font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 120ms ease-out, background 120ms ease-out; }
+.design-review-action:hover { background: var(--gold-light); }
+.design-review-action:active { transform: scale(.985); }
+.design-review-action:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+.design-review-phone-shell { width: min(100%, 390px); height: 650px; margin: 20px auto 0; padding: 7px; border-radius: 28px; background: #050505; border: 1px solid rgba(255,255,255,.22); box-shadow: 0 16px 50px rgba(0,0,0,.5); overflow: hidden; }
+.design-review-phone-shell iframe { width: 100%; height: 100%; border: 0; border-radius: 21px; background: var(--bg); }
+.design-review-dialog { max-width: 520px; margin: 0 auto; }
+.design-review-dialog p { color: var(--text-mid); line-height: 1.7; margin: 14px 0 24px; }
+.design-review-dialog-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border-card); }
+.design-review-dialog-row span { color: var(--text-mid); }
+.design-review-dialog .design-review-action { margin-top: 26px; justify-content: center; }
+.design-phone-page { min-height: 100dvh; background: var(--bg); }
+.design-phone-header { display: flex; align-items: center; gap: 10px; padding: 18px; border-bottom: 1px solid var(--border-card); font-weight: 700; }
+.design-phone-bell { margin-left: auto; font-size: 20px; color: var(--gold-light); }
+.design-phone-content { padding: 28px 18px 110px; }
+.design-phone-content h1 { font-family: 'Noto Serif TC', serif; font-size: 27px; margin: 12px 0; }
+.design-phone-content p { color: var(--text-mid); font-size: 13px; margin-bottom: 30px; }
+.design-phone-stat { padding: 20px; margin-bottom: 12px; border: 1px solid var(--border-card); border-radius: 15px; background: var(--bg-high); display: flex; flex-direction: column; gap: 6px; }
+.design-phone-stat span, .design-phone-stat small { color: var(--text-mid); font-size: 12px; }
+.design-phone-stat strong { color: var(--gold-light); font-size: 23px; }
+.design-phone-icon { font-size: 20px; line-height: 1; }
+.design-phone-page .admin-mobile-nav-item { border: 0; background: transparent; }
+.design-phone-page .admin-mobile-nav-item.active { background: var(--gold-pale); }
+.design-phone-menu-icon { color: var(--gold-light); font-size: 20px; line-height: 1; }
+@media (max-width: 1050px) { .design-review-grid { grid-template-columns: 1fr 1fr; } .design-review-phone-card { grid-column: 1 / -1; } }
+@media (max-width: 680px) { .design-review-page { padding: 36px 18px 72px; } .design-review-grid { grid-template-columns: 1fr; } .design-review-phone-card { grid-column: auto; } .design-review-card p { min-height: 0; } }
+@media (prefers-reduced-motion: reduce) { .design-review-photo, .design-review-action { transition: none; } }
