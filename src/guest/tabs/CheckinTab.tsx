@@ -1,25 +1,42 @@
 import { Accordion } from '@/guest/shared/Accordion';
-import { useJumpTo } from '@/guest/shared/useJumpAnchor';
+import { useOutletContext } from 'react-router-dom';
+import type { GuestOutletContext } from '@/guest/GuestLayout';
+import { CheckoutChecklist } from '@/guest/shared/CheckoutChecklist';
+import { useJumpAnchor, useJumpTo } from '@/guest/shared/useJumpAnchor';
 
 export function CheckinTab() {
+  useJumpAnchor();
   const jumpTo = useJumpTo();
+  const { booking } = useOutletContext<GuestOutletContext>();
 
   return (
-    <div className="section active">
-      <div className="page-header">
-        <div className="page-header-icon">📋</div>
-        <h2>入退房</h2>
-      </div>
-
-      <div className="callout warn">
-        <span className="callout-icon">🔑</span>
-        <div>
-          <strong>取得鑰匙：</strong>
-          請聯絡我們拿鑰匙，並轉帳住宿費用。同時取得電子鎖數位密碼。
+    <div className="section active checkin-page">
+      <header className="stay-guide-intro">
+        <span className="arrival-eyebrow">YOUR STAY, STEP BY STEP</span>
+        <h2>住得自在，離開也從容。</h2>
+        <p>入住前確認鑰匙，住下來熟悉設備，離開前照著清單整理。</p>
+        <nav className="arrival-shortcuts" aria-label="入退房指南段落">
+          <a href="#anchor-before-checkin">入住前</a>
+          <a href="#anchor-checkin">入住準備</a>
+          <a href="#anchor-during-stay">住宿中</a>
+          <a href="#anchor-checkout">退房前</a>
+        </nav>
+      </header>
+      <section className="stay-guide-before" id="anchor-before-checkin" aria-labelledby="stay-before-title">
+        <h3 id="stay-before-title">入住前，先確認這兩件事。</h3>
+        <div className="stay-guide-times"><div><span>CHECK-IN · 入住</span><strong>15:00 後</strong></div><div><span>CHECK-OUT · 退房</span><strong>11:00 前</strong></div></div>
+        <div className="callout warn">
+          <span className="callout-icon">🔑</span>
+          <div>
+            <strong>取得鑰匙：</strong>
+            請聯絡我們拿鑰匙，並轉帳住宿費用。同時取得電子鎖數位密碼。
+          </div>
         </div>
-      </div>
 
-      <Accordion id="anchor-checkin" icon="✅" title="Check-In 注意事項" defaultOpen>
+        <button type="button" className="checkout-detail-link" onClick={() => jumpTo('arrival', 'anchor-building')}>查看抵達與進房指引 →</button>
+      </section>
+
+      <Accordion id="anchor-checkin" icon="✅" title="入住準備｜床單與設備" defaultOpen>
         <ul className="checklist">
           <li>冰箱插電（如有需要使用）</li>
         </ul>
@@ -62,12 +79,15 @@ export function CheckinTab() {
           </li>
         </ul>
 
+      </Accordion>
+
+      <Accordion id="anchor-during-stay" icon="🏠" title="住宿中｜室內規則與使用提醒" defaultOpen>
         <ul className="checklist">
           <li>
-            客廳的壁櫃內為主人個人物品，<strong>請勿翻動</strong>
+            <span>客廳的壁櫃內為主人個人物品，<strong>請勿翻動</strong></span>
           </li>
           <li>
-            全室（含陽台）<strong>禁菸</strong>
+            <span>全室（含陽台）<strong>禁菸</strong></span>
           </li>
           <li>
             <span>
@@ -89,33 +109,9 @@ export function CheckinTab() {
         </ul>
       </Accordion>
 
-      <Accordion id="anchor-checkout" icon="🏁" title="Check-Out 注意事項" defaultOpen>
-        <ul className="checklist">
-          <li>冷氣＆電視遙控器擺回客廳餐桌上</li>
-          <li>全室地板用吸塵器清潔</li>
-          <li>移除拋棄式床單</li>
-          <li>清空冰箱</li>
-          <li>確認微波爐內沒有留下食物或容器</li>
-          <li>
-            <span>
-              丟棄所有垃圾（
-              <a
-                href="#"
-                className="inline-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  jumpTo('arrival', 'anchor-garbage');
-                }}
-              >
-                請見「抵達」頁垃圾分類說明 →
-              </a>
-              ）
-            </span>
-          </li>
-          <li>關燈、關浴室抽風機、關熱水機</li>
-          <li>拍照或錄影並回傳：臥室、客廳、冰箱、廚房、浴室</li>
-        </ul>
-      </Accordion>
+      <div id="anchor-checkout">
+        <CheckoutChecklist bookingId={booking?.id} details />
+      </div>
     </div>
   );
 }

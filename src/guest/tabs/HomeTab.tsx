@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { StayOverviewCard } from '@/guest/shared/StayOverviewCard';
 import { GuestWeatherCard } from '@/guest/shared/GuestWeatherCard';
 import { DailyRecommendationsCard } from '@/guest/shared/DailyRecommendationsCard';
 import { useAuth } from '@/auth/AuthProvider';
 import { useGuestGuide } from '@/guest/GuestGuideProvider';
+import { useJumpAnchor } from '@/guest/shared/useJumpAnchor';
 import { getStayStatus } from '@/lib/stayStatus';
 import type { GuestOutletContext } from '@/guest/GuestLayout';
 
 export function HomeTab() {
+  useJumpAnchor();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { guide } = useGuestGuide();
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
   const [statusNow, setStatusNow] = useState(() => new Date());
   const {
     booking,
@@ -52,50 +56,23 @@ export function HomeTab() {
     try {
       if (!guide) return;
       await navigator.clipboard.writeText(guide.wifi.password);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
+      setCopyState('copied');
     } catch {
-      /* ignore */
+      setCopyState('error');
     }
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopyState('idle'), 3000);
   };
 
   const navTo = (tab: string) => navigate(`/guest/${tab}`);
 
   return (
-    <div className="section active">
-      <div className="hero">
-        {greetingName && (
-          <div className="hero-personal-greeting" aria-live="polite">
-            <span>Hi,</span>
-            <strong>{greetingName}</strong>
-          </div>
-        )}
-        <div className="hero-badge">{heroBadge}</div>
-        <h1>
-          KURACHEN Stay
-          <br />
-          房客指南
-        </h1>
-        <div className="hero-divider"></div>
-        <p className="hero-sub">
-          {guide?.accommodation.buildingName} · {guide?.accommodation.roomLabel}
-          <br />
-          {guide?.accommodation.address}
-        </p>
-        <div className="hero-actions">
-          <a
-            href={guide?.accommodation.mapUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-primary"
-          >
-            📍 開啟地圖
-          </a>
-          <button className="btn-ghost" onClick={() => navTo('checkin')}>
-            📋 查看入退房須知
-          </button>
-        </div>
-      </div>
+    <div className="section active guest-home-page">
+      <header className="guest-home-header">
+        <span className="arrival-eyebrow">KURACHEN STAY · 藏前</span>
+        <div className="guest-home-greeting"><h1>{greetingName ? `Hi, ${greetingName}` : '歡迎來到藏前。'}</h1><span>{heroBadge}</span></div>
+        <p>你的住宿資訊與今天需要的事，都在這裡。</p>
+      </header>
 
       {bookingLoading ? (
         <div className="stay-overview-loading">正在整理你的住宿資訊…</div>
@@ -111,14 +88,7 @@ export function HomeTab() {
         </div>
       ) : null}
 
-      {showDailyStay && (
-        <>
-          <GuestWeatherCard />
-          <DailyRecommendationsCard stayDay={stayStatus.stayDay ?? 1} />
-        </>
-      )}
-
-      {guide && showWifi && <div className="wifi-card">
+      {guide && showWifi && <section className="home-wifi-section" id="anchor-home-wifi" aria-label="Wi-Fi 連線資訊"><div className="wifi-card">
         <div className="wifi-icon-wrap">📶</div>
         <div className="wifi-info">
           <div className="wifi-row">
@@ -131,9 +101,16 @@ export function HomeTab() {
           </div>
         </div>
         <button className="copy-btn" onClick={copyWifi}>
-          {copied ? '已複製 ✓' : '複製密碼'}
+          {copyState === 'copied' ? '已複製 ✓' : '複製密碼'}
         </button>
-      </div>}
+      </div><p className="home-wifi-feedback" role="status">{copyState === 'error' ? '無法自動複製，請長按上方密碼選取文字。' : copyState === 'copied' ? 'Wi-Fi 密碼已複製。' : '連上 Wi-Fi，開始今天的東京生活。'}</p></section>}
+
+      {showDailyStay && (
+        <>
+          <GuestWeatherCard />
+          <DailyRecommendationsCard stayDay={stayStatus.stayDay ?? 1} />
+        </>
+      )}
 
       {stayStatus?.stage === 'checkin_today' && <div className="glass-card must-see-card">
         <div className="card-header">

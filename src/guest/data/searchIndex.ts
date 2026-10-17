@@ -23,8 +23,9 @@ export interface SearchEntry {
 
 export const searchIndex: SearchEntry[] = [
   { section: '使用指南', tab: 'guide', title: '網站使用指南', content: '如何使用網站 新手教學 搜尋 功能 導覽 使用說明 help guide' },
-  { section: '入退房', tab: 'checkin', title: 'Check-In 注意事項', content: '入住 冰箱 床單 枕頭套 禁菸 熱水機 checkin 入房', anchor: 'anchor-checkin' },
-  { section: '入退房', tab: 'checkin', title: 'Check-Out 注意事項', content: '退房 遙控器 吸塵器 清潔 冰箱 垃圾 關燈 checkout', anchor: 'anchor-checkout' },
+  { section: '入退房', tab: 'checkin', title: '入住準備｜床單與設備', content: '入住 冰箱 床單 枕頭套 禁菸 熱水機 checkin 入房', anchor: 'anchor-checkin' },
+  { section: '入退房', tab: 'checkin', title: '退房前勾選清單', content: '退房 遙控器 吸塵器 清潔 冰箱 垃圾 關燈 checkout', anchor: 'anchor-checkout' },
+  { section: '入退房', tab: 'checkin', title: '住宿中｜室內規則與使用提醒', content: '禁菸 個人物品 熱水機 必需品 收據 住宿 規則', anchor: 'anchor-during-stay' },
   { section: '地鐵／公車', tab: 'transit', title: '附近地鐵與公車', content: '大江戶線 淺草線 銀座線 藏前站 田原町站 電梯 車站 地鐵 捷運 都營公車 都02 東42 東京站 錦糸町 Google Maps 地圖' },
   { section: '機場交通', tab: 'airport', title: '成田機場交通', content: '成田機場 sky access skyliner 淺草線 機場 交通 narita airport google maps 住宿到機場 回程' },
   { section: '機場交通', tab: 'airport', title: '羽田機場交通', content: '羽田機場 京急 淺草線 機場 交通 haneda airport google maps 住宿到機場 回程' },

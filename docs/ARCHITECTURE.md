@@ -260,3 +260,18 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
   以及向下滑動關閉。相簿循環瀏覽，取消的手勢只復位，不關閉或切圖。
 - 開啟期間鎖住背景捲動，Tab 焦點保持在相簿內，切圖不重設焦點；關閉後返回
   原縮圖。示意預覽維持本機用途，不納入 Hosting 建置。
+
+### 房客首頁與入退房指南
+
+- 首頁以精簡問候開頭，住宿摘要優先呈現；使用既有 `getStayStatus` 與 Admin
+  預覽日期判斷住宿階段。入住中／退房日的 Wi-Fi 位於天氣與推薦前方。
+- 住宿中主要操作可定位到首頁 Wi-Fi；退房日可定位到入退房清單。未綁定預約、
+  載入中或失敗時仍保留通用指南與既有狀態提示，不臆測入住日期。
+- 入退房頁依入住前、入住準備、住宿中與退房前分段，保留 `anchor-checkin`、
+  `anchor-checkout` 與原本的床單／設備／清潔要求，搜尋索引同步段落名稱。
+- `shared/CheckoutChecklist.tsx` 為首頁與入退房頁共用的八項清單。Guest 沿用
+  `guest-checkout-checklist:{bookingId}` 的本機紀錄；不同預約分開保存，
+  跨頁重載與其他分頁的 storage event 會同步進度。無預約或儲存不可用時，
+  清單仍能在記憶體操作並顯示限制。
+- Admin 預覽使用獨立 `preview:` 儲存鍵，不覆寫同裝置的房客進度。
+  勾選不會更新 booking 或代替正式退房回報；互動事件仍經 `recordGuestPageEvent`。

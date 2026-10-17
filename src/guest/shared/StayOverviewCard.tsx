@@ -1,23 +1,9 @@
-import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import type { StayStage, StayStatus } from '@/lib/stayStatus';
 import type { Booking } from '@/types';
-import { useAuth } from '@/auth/AuthProvider';
-import { getStoredGuestAccessCode } from '@/lib/guestAccessCodes';
-import { recordGuestPageEvent } from '@/lib/guestAnalytics';
-
-const CHECKOUT_ITEMS = [
-  { id: 'remotes', label: '冷氣與電視遙控器放回客廳餐桌' },
-  { id: 'floor', label: '用吸塵器清潔全室地板' },
-  { id: 'sheets', label: '移除使用過的拋棄式床單' },
-  { id: 'fridge', label: '清空冰箱內的食物與飲料' },
-  { id: 'microwave', label: '確認微波爐內沒有留下食物或容器' },
-  { id: 'garbage', label: '依分類丟棄所有垃圾' },
-  { id: 'power', label: '關閉燈、浴室抽風機與熱水機' },
-  { id: 'photos', label: '拍照或錄影回傳房內狀態' },
-] as const;
+import { CheckoutChecklist } from './CheckoutChecklist';
 
 const STAGE_COPY: Record<
   StayStage,
@@ -55,19 +41,6 @@ const STAGE_COPY: Record<
   },
 };
 
-function checklistStorageKey(bookingId: string): string {
-  return `guest-checkout-checklist:${bookingId}`;
-}
-
-function loadCheckedItems(bookingId: string): string[] {
-  try {
-    const value = JSON.parse(localStorage.getItem(checklistStorageKey(bookingId)) || '[]');
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
 export function StayOverviewCard({
   booking,
   status,
@@ -76,7 +49,6 @@ export function StayOverviewCard({
   status: StayStatus;
 }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const baseCopy = STAGE_COPY[status.stage];
   const copy =
     status.stage === 'staying' && status.stayDay
@@ -86,38 +58,6 @@ export function StayOverviewCard({
   const checkOut = booking.checkOut.toDate();
   const primary = primaryAction(status.stage);
   const secondary = secondaryAction(status.stage);
-  const [checked, setChecked] = useState<string[]>(() => loadCheckedItems(booking.id));
-
-  useEffect(() => {
-    setChecked(loadCheckedItems(booking.id));
-  }, [booking.id]);
-
-  const toggleItem = (id: string) => {
-    setChecked((current) => {
-      const next = current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id];
-      try {
-        localStorage.setItem(checklistStorageKey(booking.id), JSON.stringify(next));
-      } catch {
-        // Keep checklist usable in memory when storage is unavailable.
-      }
-      const completed = CHECKOUT_ITEMS.filter((item) => next.includes(item.id)).length;
-      recordGuestPageEvent({
-        eventType: 'checkout_checklist',
-        path: '/guest/home',
-        user,
-        guestAccessCode: !user ? getStoredGuestAccessCode() : null,
-        targetId: id,
-        value: Math.round((completed / CHECKOUT_ITEMS.length) * 100),
-      }).catch((error) => console.warn('record checkout checklist failed', error));
-      return next;
-    });
-  };
-
-  const completedCount = CHECKOUT_ITEMS.filter((item) => checked.includes(item.id)).length;
-  const showChecklist = status.stage === 'checkout_today';
-
   return (
     <>
       <section className={`stay-overview-card stage-${status.stage}`} aria-labelledby="stay-overview-title">
@@ -194,46 +134,7 @@ export function StayOverviewCard({
         </section>
       )}
 
-      {showChecklist && (
-        <section className={`checkout-widget ${status.stage === 'checkout_today' ? 'urgent' : ''}`} aria-labelledby="checkout-widget-title">
-          <div className="checkout-widget-heading">
-            <div>
-              <p>退房 Checklist</p>
-              <h2 id="checkout-widget-title">離開前逐項確認</h2>
-            </div>
-            <strong>{completedCount}/{CHECKOUT_ITEMS.length}</strong>
-          </div>
-          <div
-            className="checkout-progress"
-            role="progressbar"
-            aria-label="退房清單完成進度"
-            aria-valuemin={0}
-            aria-valuemax={CHECKOUT_ITEMS.length}
-            aria-valuenow={completedCount}
-          >
-            <span style={{ width: `${(completedCount / CHECKOUT_ITEMS.length) * 100}%` }} />
-          </div>
-          <div className="checkout-checklist">
-            {CHECKOUT_ITEMS.map((item) => {
-              const isChecked = checked.includes(item.id);
-              return (
-                <label key={item.id} className={isChecked ? 'checked' : ''}>
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleItem(item.id)}
-                  />
-                  <span aria-hidden="true">{isChecked ? '✓' : ''}</span>
-                  <strong>{item.label}</strong>
-                </label>
-              );
-            })}
-          </div>
-          <button type="button" className="checkout-detail-link" onClick={() => navigate('/guest/checkin', { state: { anchor: 'anchor-checkout' } })}>
-            查看完整退房說明 →
-          </button>
-        </section>
-      )}
+      {status.stage === 'checkout_today' && <CheckoutChecklist bookingId={booking.id} urgent />}
     </>
   );
 }
@@ -266,9 +167,9 @@ function primaryAction(stage: StayStage): StayAction {
     case 'checkin_today':
       return { label: '🔑 開啟進房教學', path: '/guest/arrival' };
     case 'staying':
-      return { label: '🍜 查看今日推薦', path: '/guest/restaurant' };
+      return { label: '📶 查看 Wi-Fi', path: '/guest/home', state: { anchor: 'anchor-home-wifi' } };
     case 'checkout_today':
-      return { label: '🏁 查看退房須知', path: '/guest/checkin' };
+      return { label: '🏁 查看退房須知', path: '/guest/checkin', state: { anchor: 'anchor-checkout' } };
     case 'completed':
       return { label: '🗺️ 查看東京推薦', path: '/guest/cityguide' };
   }
