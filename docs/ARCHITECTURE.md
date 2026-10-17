@@ -247,3 +247,16 @@ client 直接讀取 `guestAccessCodes` 或 `bookings`；`getGuestPortalData` 驗
 - 顯示年度已入住晚數、已過期間住房率、全年已訂率；月圖與可展開明細列出已入住、今天起已訂、未訂、比率。分母為曆年／月天數，可輸入本次檢視的營運起日縮短分母，未填採完整曆年；不推測開業日、不扣除未建模的維修封房。零分母顯示「—」。
 - 月份連結到 `/admin/calendar?month=YYYY-MM`，CalendarView 驗證參數並定位該月。日期異常的預約不計並顯示筆數提醒。圖表無房客個資。
 - 驗證：bookingOccupancy.test.mjs 日期邊界／去重／營運日／空資料；320px、390px、桌面 UI，年度與起日切換、明細展開、閏年月份行事曆跳轉；npm run build。僅部署 Hosting。
+
+### 房客抵達指南與照片瀏覽
+
+- `/guest/arrival` 依導航、抵達流程、建築進入方式排列，保留既有跨頁定位
+  `anchor-arrival-flow`、`anchor-building`、`anchor-garbage`，並提供段落快速連結。
+- 私密地址與進房內容仍來自 `GuestGuideProvider`，通過既有 Guest 授權後才顯示。
+  複製地址會顯示成功或失敗回饋，失敗時可手動選取文字。
+- `ZoomableImg` 可傳入 `gallery`；抵達頁將屋內與備品照片組成同一組相簿。
+  單張照片維持原有使用方式，其他頁面不需要提供相簿。
+- Lightbox 支援上一張／下一張、張數與照片說明、左右方向鍵、水平滑動切換，
+  以及向下滑動關閉。相簿循環瀏覽，取消的手勢只復位，不關閉或切圖。
+- 開啟期間鎖住背景捲動，Tab 焦點保持在相簿內，切圖不重設焦點；關閉後返回
+  原縮圖。示意預覽維持本機用途，不納入 Hosting 建置。
