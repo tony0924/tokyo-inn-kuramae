@@ -4,6 +4,8 @@
 
 Cloud Build `regular` 頻道已於 2026-10-17 通過隔離建置、15 項測試與 20 個函式入口載入檢查；目前無須因 2027-03-28 的預設頻道切換調整程式。環境版本、驗證範圍與後續注意事項見 [驗證紀錄](./docs/CLOUD_BUILD_VALIDATION.md)。
 
+2026-10-19 已完成 Functions 安全相依更新（Admin SDK 14、Functions SDK 7、Nodemailer 10），全新安裝後 npm audit 為 0 項漏洞，17 項回歸測試通過。部署 Functions 前須在 `functions/` 執行 `npm ci`、`npm audit` 與 `npm test`，以確認 lockfile 與通知套件相容性。
+
 ## 1. 進入專案資料夾
 
 ```bash
